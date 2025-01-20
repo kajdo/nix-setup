@@ -152,6 +152,12 @@ in {
     PATH = [ "/home/kajdo/.local/bin" ];
   };
 
+  # # Set GTK environment variables
+  # environment.variables = {
+  #   GTK_THEME = "Adwaita"; # Replace with your desired GTK theme
+  #   GTK_ICON_THEME = "Adwaita"; # Replace with your desired icon theme
+  # };
+
   # Font setup
   fonts = {
     packages = with pkgs; [
@@ -187,6 +193,16 @@ in {
      unzip
      python39
      pipx
+     networkmanagerapplet
+     # GTK Themes
+     gtk3
+     gtk-engine-murrine # For GTK theme engines
+     gtk_engines
+     # adwaita-icon-theme
+     papirus-icon-theme # Popular icon theme
+     gnome-themes-extra
+     # Notfications
+     dunst
 
      # LSPs
      nodePackages.typescript-language-server
