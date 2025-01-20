@@ -187,6 +187,7 @@ in {
      st
      xfce.thunar
      neovim
+     unclutter-xfixes
      gcc
      lua
      luajitPackages.luarocks_bootstrap
