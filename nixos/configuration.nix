@@ -19,7 +19,7 @@ in {
 
   # Bootloader.
   boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/vda";
+  boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
 
   networking.hostName = "nixos"; # Define your hostname.
@@ -56,6 +56,8 @@ in {
   # Enable the X11 windowing system.
    services.xserver.enable = true;
    services.xserver.resolutions = [ { x = 1920; y = 1080; } ];
+   # services.xserver.libinput.naturalScrolling = true;
+   services.libinput.touchpad.naturalScrolling = true;
 
   # Enable the LXQT Desktop Environment.
    services.xserver.displayManager.lightdm.enable = true;
