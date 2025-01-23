@@ -70,7 +70,7 @@ in {
       CPU_BOOST_ON_AC = 1;
       CPU_BOOST_ON_BAT = 0;
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      CPU_SCALING_GOVERNOR_ON_BAT = "schedutil";
     };
   };
 
@@ -110,6 +110,11 @@ in {
 
   # Enable sound with pipewire.
   # hardware.pulseaudio.enable = false;
+
+  hardware.bluetooth.enable = true; # enables support for Bluetooth
+  hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
+  services.blueman.enable = true; # service to configure bluetooth
+
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
