@@ -4,8 +4,10 @@ static const Block blocks[] = {
 	/*{"Mem:", "free -h | awk '/^Mem/ { print $3\"/\"$2 }' | sed s/i//g",	30,		0},*/
 
 	/*{"", "date '+%b %d (%a) %I:%M%p'",					5,		0},*/
-	/*{"", "date '+%Y-%m-%d %H:%M'",					5,		0},*/
-	{"", "date '+%H:%M'",					5,		0},
+	/*{"󰃭 ", "date '+%Y-%m-%d %H:%M'",					5,		0},*/
+	{"󰃭 ", "date '+%Y-%m-%d'",					5,		0},
+	{"󰥔 ", "date '+%H:%M'",					5,		0},
+	/*{"|", "",					0,		0},*/
 	/*{"", "dwmblocks-wifi",				5,		0},*/
 };
 
