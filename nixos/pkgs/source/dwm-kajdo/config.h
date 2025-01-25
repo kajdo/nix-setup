@@ -53,11 +53,14 @@ static const Rule rules[] = {
 	 *	WM_NAME(STRING) = title
 	 */
 	/* class        instance      title        tags mask     isfloating   monitor */
-	{ "Terminator", NULL,         NULL,         0,           1,           -1 },
-	{ "gnome-calculator", NULL,         NULL,         0,           1,           -1 },
-	{ "Brave-browser", NULL,         "Bitwarden",         0,           1,           -1 },
-	{ "crx_nngceckbapebfimnlniiiahkandclblb", NULL,         NULL,         0,           1,           -1 },
-	{ "AlacrittyScratchpad", NULL,         NULL,         0,           1,           -1 },
+	/*{ "Terminator", NULL,         NULL,         0,           1,0,           -1 },*/
+	/*{ "Brave-browser", NULL,         "Bitwarden",         0,           1,           -1 },*/
+	/*{ "crx_nngceckbapebfimnlniiiahkandclblb", NULL,         NULL,         0,           1,           -1 },*/
+	/* class                 instance    title       tags mask     isfloating   isfakefullscreen    monitor */
+	{ "gnome-calculator",    NULL,       NULL,       0,            1,           0,                  -1 },
+	{ "AlacrittyScratchpad", NULL,       NULL,       0,            1,           0,                  -1 },
+	{ "Firefox",             NULL,       NULL,       1 << 8,       0,           1,                  -1 },
+	{ "Thorium-browser",     NULL,       NULL,       0,            0,           1,                  -1 },
 };
 
 /* layout(s) */
