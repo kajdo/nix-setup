@@ -168,6 +168,8 @@ in {
        xclip
        tailscale
        chatblade
+       ncdu
+       cava
     ];
   };
 

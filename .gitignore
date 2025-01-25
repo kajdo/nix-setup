@@ -1,0 +1,3 @@
+# ignore hardwareinfo
+./nixos/hardware-configuration.nix
+
