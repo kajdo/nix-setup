@@ -227,7 +227,8 @@ in {
      # adwaita-icon-theme
      papirus-icon-theme # Popular icon theme
      gnome-themes-extra
-     # Notfications
+     # Notifications
+     libnotify
      dunst
 
      # LSPs
