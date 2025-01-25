@@ -128,7 +128,7 @@ in {
   users.users.kajdo = {
     isNormalUser = true;
     description = "kajdo";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "video" ];
     packages = with pkgs; [
     #  thunderbird
        btop
@@ -179,6 +179,7 @@ in {
     PATH = [ "/home/kajdo/.local/bin" ];
   };
 
+
   # # Set GTK environment variables
   # environment.variables = {
   #   GTK_THEME = "Adwaita"; # Replace with your desired GTK theme
@@ -208,7 +209,7 @@ in {
   nixpkgs.config.packageOverrides = pkgs: {
     intel-vaapi-driver = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
   };
-  hardware.opengl = { # hardware.graphics since NixOS 24.11
+  hardware.graphics = { 
     enable = true;
     extraPackages = with pkgs; [
       intel-media-driver # LIBVA_DRIVER_NAME=iHD
@@ -218,6 +219,17 @@ in {
   };
   environment.sessionVariables = { LIBVA_DRIVER_NAME = "iHD"; }; # Force intel-media-drive
 
+  # enable backlight settings
+  # light -U 30 --> darker
+  # light -A 30 --> brighter
+  programs.light.enable = true;
+  # services.actkbd = {
+  #   enable = true;
+  #   bindings = [
+  #     { keys = [ 233 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -A 10"; }
+  #     { keys = [ 232 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }
+  #   ];
+  # };
 
 
 
@@ -254,6 +266,9 @@ in {
      dunst
      # volumecontrol
      volumeicon
+     # keyboard shortcut daemon
+     sxhkd
+
 
      # LSPs
      nodePackages.typescript-language-server
@@ -303,6 +318,10 @@ in {
 
   # enable the tailscale service
   services.tailscale.enable = true;
+
+  # enable sxhkd for shortcut management
+  # services.sxhkd.enable = true;
+  # services.sxhkd.extraPath = "/run/current-system/sw/bin/";
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
