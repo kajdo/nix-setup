@@ -173,7 +173,9 @@ in {
        pulsemixer
        tree
        feh
-       picom
+       # picom
+       # try to install patched picom
+       picom-pijulius
        xclip
        tailscale
        chatblade
