@@ -277,6 +277,8 @@ in {
      volumeicon
      # keyboard shortcut daemon
      sxhkd
+     # lockscreen
+     betterlockscreen
 
 
      # LSPs
