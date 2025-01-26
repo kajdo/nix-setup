@@ -10,7 +10,7 @@ static const Block blocks[] = {
 	{"󰸗 ", "date '+%b %d'",					5,		0},
 	{"󰥔 ", "date '+%H:%M'",					5,		0},
 	{"", "get_volume_block",					1,		0},
-	{"", "get_bluetooth_block",					5,		0},
+	{"", "get_bluetooth_block",					2,		0},
 	/*{"|", "",					0,		0},*/
 	/*{"", "dwmblocks-wifi",				5,		0},*/
 };
