@@ -113,7 +113,16 @@ in {
 
   hardware.bluetooth.enable = true; # enables support for Bluetooth
   hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
-  services.blueman.enable = true; # service to configure bluetooth
+  # services.blueman.enable = true; # service to configure bluetooth
+
+  # set default timeout to 10s - many times reboot waits 90s
+  # not sure what causes the issue, but occured when started to
+  # mess around with bluetooth and bluetooth blocks script
+  # maybe it shouldn't run every second #TODO
+  systemd.extraConfig = ''
+    DefaultTimeoutStopSec=10s
+  '';
+
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;

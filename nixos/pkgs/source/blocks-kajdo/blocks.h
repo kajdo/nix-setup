@@ -5,8 +5,12 @@ static const Block blocks[] = {
 
 	/*{"", "date '+%b %d (%a) %I:%M%p'",					5,		0},*/
 	/*{"󰃭 ", "date '+%Y-%m-%d %H:%M'",					5,		0},*/
-	{"󰃭 ", "date '+%Y-%m-%d'",					5,		0},
+	{"", "get_battery_block",					1,		0},
+	/*{"󰃭 ", "date '+%Y-%m-%d'",					5,		0},*/
+	{"󰸗 ", "date '+%b %d'",					5,		0},
 	{"󰥔 ", "date '+%H:%M'",					5,		0},
+	{"", "get_volume_block",					1,		0},
+	{"", "get_bluetooth_block",					5,		0},
 	/*{"|", "",					0,		0},*/
 	/*{"", "dwmblocks-wifi",				5,		0},*/
 };
