@@ -183,6 +183,7 @@ in {
        cmatrix
        cava
        moonlight-qt
+       libreoffice-qt6-fresh
     ];
   };
 
@@ -265,6 +266,8 @@ in {
      python39
      pipx
      networkmanagerapplet
+     # pulseaudio full for various check scripts
+     pulseaudioFull
      # GTK Themes
      gtk3
      gtk-engine-murrine # For GTK theme engines
