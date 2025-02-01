@@ -15,6 +15,7 @@ in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      # ./modules/thinkpad.nix
     ];
 
   # Bootloader.
@@ -84,6 +85,8 @@ in {
   services.thermald.enable = true;
 
 
+  # docker setup
+  virtualisation.docker.enable = true;
 
    services.xserver.displayManager.lightdm.enable = true;
    #services.xserver.desktopManager.lxqt.enable = true;
@@ -137,7 +140,7 @@ in {
   users.users.kajdo = {
     isNormalUser = true;
     description = "kajdo";
-    extraGroups = [ "networkmanager" "wheel" "video" ];
+    extraGroups = [ "networkmanager" "wheel" "video" "docker" ];
     packages = with pkgs; [
     #  thunderbird
        btop
@@ -184,6 +187,7 @@ in {
        cava
        moonlight-qt
        libreoffice-qt6-fresh
+       obsidian
     ];
   };
 
@@ -203,6 +207,7 @@ in {
     packages = with pkgs; [
       # fira-code-nerdfont  # Keep Fira Code if you still want it
       nerd-fonts.fira-code
+      noto-fonts-emoji
     ];
   };
 
@@ -251,6 +256,7 @@ in {
   # $ nix search wget
   environment.systemPackages = with pkgs; [
      vim 
+     evtest
      wget
      wget2 # better for some downloads
      toybox # pgrep and other fun stuff
