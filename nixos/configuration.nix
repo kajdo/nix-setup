@@ -111,6 +111,9 @@ in {
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
+  # avahi for chromecast
+  services.avahi.enable = true;
+
   # Enable sound with pipewire.
   # hardware.pulseaudio.enable = false;
 
@@ -185,6 +188,7 @@ in {
        ncdu
        cmatrix
        cava
+       chromium
        moonlight-qt
        libreoffice-qt6-fresh
        obsidian
@@ -350,6 +354,12 @@ in {
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
+  networking.firewall = {
+    # for chromecast via brave
+    allowedUDPPorts = [ 5353 ];  # For device discovery
+    allowedUDPPortRanges = [{ from = 32768; to = 61000; }];  # For streaming
+    allowedTCPPorts = [ 8010 ];  # For Chromecast server
+  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

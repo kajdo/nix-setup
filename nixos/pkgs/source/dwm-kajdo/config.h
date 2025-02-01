@@ -63,6 +63,8 @@ static const Rule rules[] = {
 	{ "Firefox",                  NULL,       NULL,       0,            0,           1,                  -1 },
 	{ "firefox",                  NULL,       NULL,       0,            0,           1,                  -1 },
 	{ "Navigator",                NULL,       NULL,       0,            0,           1,                  -1 },
+	{ "brave-browser",            NULL,       NULL,       0,            0,           1,                  -1 },
+	{ "Brave-browser",            NULL,       NULL,       0,            0,           1,                  -1 },
 	{ "Thorium-browser",          NULL,       NULL,       0,            0,           1,                  -1 },
 };
 
