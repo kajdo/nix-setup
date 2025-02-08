@@ -192,13 +192,22 @@ in {
        moonlight-qt
        libreoffice-qt6-fresh
        obsidian
+       lazydocker
     ];
   };
 
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.common.default = "*";
+  };
+  services.flatpak.enable = true;
+  # dont forget to: `flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`
+
   environment.sessionVariables = {
     PATH = [ "/home/kajdo/.local/bin" ];
+    XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
   };
-
 
   # # Set GTK environment variables
   # environment.variables = {
@@ -295,6 +304,13 @@ in {
      # lockscreen
      betterlockscreen
 
+     # codeium is special
+     # codeium
+     # libsecret
+     # openssl
+     # zlib
+     # stdenv.cc.cc.lib
+     # nodejs_23
 
      # LSPs
      nodePackages.typescript-language-server
@@ -329,6 +345,13 @@ in {
      # Add more as needed
   ];
 
+  # environment.variables = {
+  #   # Point to your manual installation
+  #   CODEIUM_CHROMIUM = "$HOME/.codeium/codeium_chromium";
+  # };
+  
+  # Open required ports
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -358,7 +381,10 @@ in {
     # for chromecast via brave
     allowedUDPPorts = [ 5353 ];  # For device discovery
     allowedUDPPortRanges = [{ from = 32768; to = 61000; }];  # For streaming
+    # allowedTCPPorts = [ 8010 42100 50001];  # For Chromecast server, codeium1 und codeum2
     allowedTCPPorts = [ 8010 ];  # For Chromecast server
+      # networking.firewall.allowedTCPPorts = [ 42100 50001 ];
+
   };
 
   # This value determines the NixOS release from which the default
