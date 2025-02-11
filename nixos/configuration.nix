@@ -188,6 +188,7 @@ in {
        ncdu
        cmatrix
        cava
+       typioca
        chromium
        moonlight-qt
        libreoffice-qt6-fresh
@@ -297,10 +298,10 @@ in {
      # Notifications
      libnotify
      dunst
-     # volumecontrol
-     volumeicon
      # keyboard shortcut daemon
      sxhkd
+     # clipboard manager to keep clipboard if alacritty is killed
+     clipit
      # lockscreen
      betterlockscreen
 
