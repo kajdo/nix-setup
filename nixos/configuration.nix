@@ -7,15 +7,17 @@
 let
   # Define the individual build packages
   dwmblocks    = pkgs.callPackage ./pkgs/dwmblocks.nix {};
-  st           = pkgs.callPackage ./pkgs/st.nix {};
+  # st           = pkgs.callPackage ./pkgs/st.nix {};
 in {
   # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" ];
 
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       # ./modules/thinkpad.nix
+      # ./modules/makima.nix
     ];
 
   # Bootloader.
@@ -59,6 +61,9 @@ in {
    services.xserver.resolutions = [ { x = 1920; y = 1080; } ];
    services.libinput.touchpad.naturalScrolling = true;
    services.xserver.videoDrivers = [ "modesetting" ];
+
+  # Enable makima for having the keyboard overwrite done
+  # services.makima.enable = true;
 
   # Battery life improvement
   # Better scheduling for CPU cycles - thanks System76!!!
@@ -188,12 +193,20 @@ in {
        ncdu
        cmatrix
        cava
+       vivaldi
+       vivaldi-ffmpeg-codecs
        typioca
        chromium
        moonlight-qt
        libreoffice-qt6-fresh
        obsidian
        lazydocker
+       nextcloud-client
+       portfolio
+       galculator
+       httpie
+       chromedriver
+       makima
     ];
   };
 
@@ -208,6 +221,7 @@ in {
   environment.sessionVariables = {
     PATH = [ "/home/kajdo/.local/bin" ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
+    # MAKIMA_CONFIG = [ "/home/kajdo/.config/makima" ];
   };
 
   # # Set GTK environment variables
@@ -275,7 +289,7 @@ in {
      wget2 # better for some downloads
      toybox # pgrep and other fun stuff
      dwmblocks 
-     st
+     # st
      xfce.thunar
      neovim
      unclutter-xfixes
@@ -331,6 +345,7 @@ in {
      shfmt
      stylua
      prettierd
+     biome
 
      # Tree-sitter parsers
      tree-sitter
@@ -343,7 +358,16 @@ in {
      vimPlugins.nvim-treesitter-parsers.yaml
      vimPlugins.nvim-treesitter-parsers.html
      vimPlugins.nvim-treesitter-parsers.css
+
+     # features for nvim
+     ripgrep
      # Add more as needed
+
+     # gemini needs stdenv.cc.cc.lib
+     # stdenv.cc.cc.lib
+     # signal-desktop # signal had problems with update to unstable -- installed via flatpak
+
+
   ];
 
   # environment.variables = {
