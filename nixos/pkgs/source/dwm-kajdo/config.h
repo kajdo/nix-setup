@@ -58,6 +58,7 @@ static const Rule rules[] = {
 	/*{ "crx_nngceckbapebfimnlniiiahkandclblb", NULL,         NULL,         0,           1,           -1 },*/
 	/* class                      instance    title       tags mask     isfloating   isfakefullscreen    monitor */
 	{ "gnome-calculator",         NULL,       NULL,       0,            1,           0,                  -1 },
+	{ "Galculator",         NULL,       NULL,       0,            1,           0,                  -1 },
 	{ ".blueman-manager-wrapped", NULL,       NULL,       0,            1,           0,                  -1 },
 	{ "AlacrittyScratchpad",      NULL,       NULL,       0,            1,           0,                  -1 },
 	{ "Firefox",                  NULL,       NULL,       0,            0,           1,                  -1 },

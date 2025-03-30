@@ -10,8 +10,8 @@ let
   # st           = pkgs.callPackage ./pkgs/st.nix {};
 in {
   # Enable flakes
-  # nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nix.settings.experimental-features = [ "nix-command" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # nix.settings.experimental-features = [ "nix-command" ];
 
   imports =
     [ # Include the results of the hardware scan.
@@ -193,6 +193,7 @@ in {
        ncdu
        cmatrix
        cava
+       glow
        vivaldi
        vivaldi-ffmpeg-codecs
        typioca
@@ -207,6 +208,8 @@ in {
        httpie
        chromedriver
        makima
+       signal-desktop # signal had problems with update to unstable -- installed via flatpak
+
     ];
   };
 
@@ -326,6 +329,9 @@ in {
      # zlib
      # stdenv.cc.cc.lib
      # nodejs_23
+     # === Add Dependencies for Supermaven ===
+     curl     # Likely needed for network communication/authentication
+     xdg-utils # Provides xdg-open for browser authentication flow
 
      # LSPs
      nodePackages.typescript-language-server
