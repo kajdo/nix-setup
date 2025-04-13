@@ -157,7 +157,6 @@ in {
        stow
        git
        alacritty
-       aider-chat
        starship
        ueberzugpp
        yazi
