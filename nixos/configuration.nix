@@ -8,9 +8,25 @@ let
   # Define the individual build packages
   dwmblocks    = pkgs.callPackage ./pkgs/dwmblocks.nix {};
   # st           = pkgs.callPackage ./pkgs/st.nix {};
+  #### VSCODIUM CUSTOM
+  # Define the source directory for your custom files
+  # Adjust this path (./pkgs/source/vscode-custom) to match where you actually place
+  # your custom.css and custom.js relative to THIS configuration.nix file.
+  customFilesSrc = ./pkgs/source/vscode-custom; # <-- ADJUST THIS PATH if needed
+
+  # Call the separate file that defines the VSCodium patch logic
+  # This evaluates ./pkgs/vscode-custom.nix and passes it the required arguments.
+  # We pass pkgs, pkgs.lib (as lib), and customFilesSrc.
+  vscodeOverrideAttrs = pkgs.callPackage ./pkgs/vscode-custom.nix {
+    inherit pkgs customFilesSrc; # Pass pkgs and customFilesSrc (which is defined in this let block)
+    lib = pkgs.lib;              # Explicitly pass the lib attribute from pkgs
+  };
+
 in {
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # increase download buffer
+  nix.settings.download-buffer-size = 1048576000;
   # nix.settings.experimental-features = [ "nix-command" ];
 
   imports =
@@ -96,12 +112,16 @@ in {
    services.xserver.displayManager.lightdm.enable = true;
    #services.xserver.desktopManager.lxqt.enable = true;
 
-   services.xserver.windowManager.dwm.enable = true;
-   nixpkgs.overlays = [
-      (final: prev: {
-         dwm = prev.dwm.overrideAttrs (old: {src = ./pkgs/source/dwm-kajdo;}); 
-      })
-   ];
+  services.xserver.windowManager.dwm.enable = true;
+  nixpkgs.overlays = [
+    # Your existing DWM overlay (first element in the list)
+    (final: prev: {
+       dwm = prev.dwm.overrideAttrs (old: {src = ./pkgs/source/dwm-kajdo;});
+       vscodium = prev.vscodium.overrideAttrs (oldAttrs: oldAttrs // vscodeOverrideAttrs oldAttrs);
+       # If you had other overrides in THIS specific overlay function, they'd go here
+    }) # <--- End of the first overlay function definition
+  ];
+
 
   services.xserver.displayManager.sessionCommands = ''
     ${dwmblocks}/bin/dwmblocks &
@@ -165,7 +185,7 @@ in {
        mcfly
        mcfly-fzf
        fzf
-       chatterino2
+       # chatterino2
        peazip
        mpv
        vlc
@@ -279,10 +299,6 @@ in {
   #   ];
   # };
 
-
-
-
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -303,7 +319,7 @@ in {
     lua
     luajitPackages.luarocks_bootstrap
     unzip
-    python39
+    python313
     pipx
     networkmanagerapplet
     # pulseaudio full for various check scripts
@@ -375,6 +391,10 @@ in {
     # zed-editor experiment -- does not allow for a minimalistic
     # no window decoration / top bar visualization, therefore skipped for now
     # zed-editor
+
+    # another vscode experiment kajdo
+    vscodium
+
   ];
 
   # environment.variables = {
