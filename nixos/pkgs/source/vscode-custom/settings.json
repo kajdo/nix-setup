@@ -1,6 +1,6 @@
 {
-    "vscode_custom_css.imports": ["file:///C:/xxx/xxx/AppData/Roaming/Code/User/custom.css"], // C:\xxx\xxx\AppData\Roaming\Code\User
     "vim.leader": "<Space>",
+    "vim.useSystemClipboard": true,
     "vim.insertModeKeyBindingsNonRecursive": [
         //get out of insert mode
         {"before": ["j","k"], "after": ["<Esc>"]},
