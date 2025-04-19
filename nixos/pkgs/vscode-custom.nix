@@ -1,25 +1,14 @@
 # ./pkgs/vscode-custom.nix
-{ pkgs, lib, customFilesSrc }:
+{ pkgs, lib }:
 
-let
-  workbenchHtmlRelPath = "lib/vscode/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html";
-  rawScriptContent = builtins.readFile ./vscode-custom-script.sh;
-
-  # Remove __OUT_SHELL__ replacement, keep others
-  processedScript = lib.replaceStrings
-    [ "__CUSTOM_FILES_SRC_NIX__" "__WORKBENCH_REL_PATH_NIX__" ]
-    [ "${customFilesSrc}"         "${workbenchHtmlRelPath}" ]
-    rawScriptContent;
-in
-oldAttrs:
-{
+oldAttrs: rec {
   postInstall = ''
-    ${oldAttrs.postInstall or ""}
+    workbench_html="$out/lib/vscode/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html"
+    static_css_tag='<link rel="stylesheet" href="file:///etc/nixos/pkgs/source/vscode-custom/custom.css">'
+    static_js_tag='<script src="file:///etc/nixos/pkgs/source/vscode-custom/custom.js"></script>'
+    injection_tags="$static_css_tag\n$static_js_tag\n"
 
-    # The environment variable $out is available here automatically
-    # Execute the processed script content directly
-    ${processedScript}
+    echo "Injecting static custom tags into $workbench_html"
+    sed -i "s|</html>|$injection_tags</html>|" "$workbench_html"
   '';
-  # Ensure bash is available if the script uses bash features
-  nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.bash ];
 }

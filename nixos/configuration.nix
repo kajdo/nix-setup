@@ -8,20 +8,6 @@ let
   # Define the individual build packages
   dwmblocks    = pkgs.callPackage ./pkgs/dwmblocks.nix {};
   # st           = pkgs.callPackage ./pkgs/st.nix {};
-  #### VSCODIUM CUSTOM
-  # Define the source directory for your custom files
-  # Adjust this path (./pkgs/source/vscode-custom) to match where you actually place
-  # your custom.css and custom.js relative to THIS configuration.nix file.
-  customFilesSrc = ./pkgs/source/vscode-custom; # <-- ADJUST THIS PATH if needed
-
-  # Call the separate file that defines the VSCodium patch logic
-  # This evaluates ./pkgs/vscode-custom.nix and passes it the required arguments.
-  # We pass pkgs, pkgs.lib (as lib), and customFilesSrc.
-  vscodeOverrideAttrs = pkgs.callPackage ./pkgs/vscode-custom.nix {
-    inherit pkgs customFilesSrc; # Pass pkgs and customFilesSrc (which is defined in this let block)
-    lib = pkgs.lib;              # Explicitly pass the lib attribute from pkgs
-  };
-
 in {
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -115,10 +101,12 @@ in {
   services.xserver.windowManager.dwm.enable = true;
   nixpkgs.overlays = [
     # Your existing DWM overlay (first element in the list)
-    (final: prev: {
+    (final: prev: let
+       vscodeOverrideAttrs = import ./pkgs/vscode-custom.nix { pkgs = prev; lib = prev.lib; };
+    in {
        dwm = prev.dwm.overrideAttrs (old: {src = ./pkgs/source/dwm-kajdo;});
-       vscodium = prev.vscodium.overrideAttrs (oldAttrs: oldAttrs // vscodeOverrideAttrs oldAttrs);
-       # If you had other overrides in THIS specific overlay function, they'd go here
+       vscodium = prev.vscodium.overrideAttrs (vscodeOverrideAttrs);
+# If you had other overrides in THIS specific overlay function, they'd go here
     }) # <--- End of the first overlay function definition
   ];
 
