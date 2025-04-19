@@ -156,6 +156,7 @@ in {
        fastfetch
        stow
        git
+       delta        # git diff viewer
        alacritty
        starship
        ueberzugpp
@@ -207,7 +208,7 @@ in {
        httpie
        chromedriver
        makima
-       signal-desktop # signal had problems with update to unstable -- installed via flatpak
+       signal-desktop-bin # signal had problems with update to unstable -- installed via flatpak
 
     ];
   };
@@ -285,94 +286,95 @@ in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-     vim 
-     evtest
-     wget
-     wget2 # better for some downloads
-     toybox # pgrep and other fun stuff
-     dwmblocks 
-     # st
-     xfce.thunar
-     neovim
-     unclutter-xfixes
-     gcc
-     lua
-     luajitPackages.luarocks_bootstrap
-     unzip
-     python39
-     pipx
-     networkmanagerapplet
-     # pulseaudio full for various check scripts
-     pulseaudioFull
-     # GTK Themes
-     gtk3
-     gtk-engine-murrine # For GTK theme engines
-     gtk_engines
-     # adwaita-icon-theme
-     papirus-icon-theme # Popular icon theme
-     gnome-themes-extra
-     # Notifications
-     libnotify
-     dunst
-     # keyboard shortcut daemon
-     sxhkd
-     # clipboard manager to keep clipboard if alacritty is killed
-     clipit
-     # lockscreen
-     betterlockscreen
+    vim 
+    evtest
+    wget
+    wget2 # better for some downloads
+    toybox # pgrep and other fun stuff
+    dwmblocks 
+    # st
+    xfce.thunar
+    neovim
+    unclutter-xfixes
+    gcc # to make avante build
+    gnumake # to make avante build
+    cargo # to make avante build
+    go
+    lua
+    luajitPackages.luarocks_bootstrap
+    unzip
+    python39
+    pipx
+    networkmanagerapplet
+    # pulseaudio full for various check scripts
+    pulseaudioFull
+    # GTK Themes
+    gtk3
+    gtk-engine-murrine # For GTK theme engines
+    gtk_engines
+    # adwaita-icon-theme
+    papirus-icon-theme # Popular icon theme
+    gnome-themes-extra
+    # Notifications
+    libnotify
+    dunst
+    # keyboard shortcut daemon
+    sxhkd
+    # clipboard manager to keep clipboard if alacritty is killed
+    clipit
+    # lockscreen
+    betterlockscreen
 
-     # codeium is special
-     # codeium
-     # libsecret
-     # openssl
-     # zlib
-     # stdenv.cc.cc.lib
-     # nodejs_23
-     # === Add Dependencies for Supermaven ===
-     curl     # Likely needed for network communication/authentication
-     xdg-utils # Provides xdg-open for browser authentication flow
+    # codeium is special
+    # codeium
+    # libsecret
+    # openssl
+    # zlib
+    # stdenv.cc.cc.lib
+    # nodejs_23
+    # === Add Dependencies for Supermaven ===
+    curl     # Likely needed for network communication/authentication
+    xdg-utils # Provides xdg-open for browser authentication flow
 
-     # LSPs
-     nodePackages.typescript-language-server
-     nodePackages.vscode-langservers-extracted
-     pyright
-     nodePackages.bash-language-server
-     nodePackages.dockerfile-language-server-nodejs
-     nodePackages.yaml-language-server
-     nodePackages.vim-language-server
-     #nodePackages.json-language-server
-     nodePackages.eslint
-     nodePackages.prettier
+    # LSPs
+    nodePackages.typescript-language-server
+    nodePackages.vscode-langservers-extracted
+    pyright
+    nodePackages.bash-language-server
+    nodePackages.dockerfile-language-server-nodejs
+    nodePackages.yaml-language-server
+    nodePackages.vim-language-server
+    #nodePackages.json-language-server
+    nodePackages.eslint
+    nodePackages.prettier
 
-     # Formatters
-     black
-     nixpkgs-fmt
-     shfmt
-     stylua
-     prettierd
-     biome
+    # Formatters
+    black
+    nixpkgs-fmt
+    shfmt
+    stylua
+    prettierd
+    biome
 
-     # Tree-sitter parsers
-     tree-sitter
-     vimPlugins.nvim-treesitter-parsers.python
-     vimPlugins.nvim-treesitter-parsers.lua
-     vimPlugins.nvim-treesitter-parsers.javascript
-     vimPlugins.nvim-treesitter-parsers.typescript
-     vimPlugins.nvim-treesitter-parsers.bash
-     vimPlugins.nvim-treesitter-parsers.json
-     vimPlugins.nvim-treesitter-parsers.yaml
-     vimPlugins.nvim-treesitter-parsers.html
-     vimPlugins.nvim-treesitter-parsers.css
+    # Tree-sitter parsers
+    tree-sitter
+    vimPlugins.nvim-treesitter-parsers.python
+    vimPlugins.nvim-treesitter-parsers.lua
+    vimPlugins.nvim-treesitter-parsers.javascript
+    vimPlugins.nvim-treesitter-parsers.typescript
+    vimPlugins.nvim-treesitter-parsers.bash
+    vimPlugins.nvim-treesitter-parsers.json
+    vimPlugins.nvim-treesitter-parsers.yaml
+    vimPlugins.nvim-treesitter-parsers.html
+    vimPlugins.nvim-treesitter-parsers.css
 
-     # features for nvim
-     ripgrep
-     # Add more as needed
+    # features for nvim / development
+    ripgrep
+    # Add more as needed
 
-     # gemini needs stdenv.cc.cc.lib
-     # stdenv.cc.cc.lib
-     # signal-desktop # signal had problems with update to unstable -- installed via flatpak
-
-
+    # zed-editor experiment -- does not allow for a minimalistic
+    # no window decoration / top bar visualization, therefore skipped for now
+    # zed-editor
   ];
 
   # environment.variables = {
