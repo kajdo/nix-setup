@@ -1,9 +1,9 @@
 /* Code comment style */
-.mtk3 {
+/* .mtk3 {
     font-family: 'Monaspace Radon', monospace !important;
     font-style: italic !important;
     color: #008c7d !important;
-}
+} */
 
 /* *:not() {
     border: none !important;
@@ -54,19 +54,19 @@
 }
 
 /* File Explorer Item Label */
-.monaco-tree .monaco-tree-row .label-name,
+/* .monaco-tree .monaco-tree-row .label-name,
 .monaco-list .monaco-list-row
 .monaco-icon-label .label-name {
-    font-family: 'Geist Mono', monospace !important;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    color: #FFF !important;
-}
+    /* font-family: 'Geist Mono', monospace !important; */
+    /* font-size: 14px !important; */
+    /* font-weight: 400 !important; */
+    /* color: #FFF !important; */
+/* } */ */
 
-.explorer-item-edited {
+/* .explorer-item-edited {
   font-family: Geist Mono !important;
   font-size: 14px !important;
-}
+} */
 
 /* .monaco-workbench .codicon[class*=codicon-] {
     opacity: 0 !important;
@@ -97,12 +97,12 @@
     align-items: center !important;
     justify-items: center !important;
 }
-.composite.title h2 {
+/* .composite.title h2 {
     font-weight: bold !important;
     font-size: 12px !important;
     text-transform: uppercase;
     color: #bc9abc !important;
-}
+} */
 
 /* .composite.title h2::before {
     display: inline-block;
@@ -155,12 +155,12 @@
 }
 
 /* Search Label */
-.search-label {
+/* .search-label {
     font-family: 'Geist Mono' !important;
     font-size: 14px !important;
     color: #fff;
     display: block;
-}
+} */
 
 /* Search icon */
 .search-icon {
