@@ -291,6 +291,7 @@ in {
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim 
+    aider-chat
     evtest
     wget
     wget2 # better for some downloads
@@ -308,6 +309,7 @@ in {
     luajitPackages.luarocks_bootstrap
     unzip
     python313
+    python313Packages.flake8
     pipx
     networkmanagerapplet
     # pulseaudio full for various check scripts
@@ -329,16 +331,14 @@ in {
     # lockscreen
     betterlockscreen
 
-    # codeium is special
-    # codeium
-    # libsecret
-    # openssl
-    # zlib
-    # stdenv.cc.cc.lib
-    # nodejs_23
-    # === Add Dependencies for Supermaven ===
+    # codeium is specia    # === Add Dependencies for Supermaven ===
     curl     # Likely needed for network communication/authentication
     xdg-utils # Provides xdg-open for browser authentication flow
+    # some dev helpers
+    jq
+
+    # --- because nix-shell didn't install the unstable version of awscli
+    awscli2
 
     # LSPs
     nodePackages.typescript-language-server
