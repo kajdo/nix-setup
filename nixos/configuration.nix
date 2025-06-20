@@ -169,13 +169,11 @@ in {
        starship
        ueberzugpp
        yazi
-       yt-dlp
        mcfly
        mcfly-fzf
        fzf
-       # chatterino2
+       chatterino2
        peazip
-       mpv
        vlc
        pyradio
        bat
@@ -192,8 +190,6 @@ in {
        pulsemixer
        tree
        feh
-       # picom
-       # try to install patched picom
        picom-pijulius
        xclip
        tailscale
@@ -233,6 +229,10 @@ in {
     PATH = [ "/home/kajdo/.local/bin" ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
     # MAKIMA_CONFIG = [ "/home/kajdo/.config/makima" ];
+
+    # Explicitly set Qt platform and plugin path ... moonlight fix
+    QT_QPA_PLATFORM = "xcb";
+    QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/lib/qt-${pkgs.qt5.qtbase.version}/plugins";
   };
 
   # # Set GTK environment variables
@@ -291,7 +291,7 @@ in {
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim 
-    aider-chat
+    # aider-chat
     evtest
     wget
     wget2 # better for some downloads
@@ -304,7 +304,7 @@ in {
     gcc # to make avante build
     gnumake # to make avante build
     cargo # to make avante build
-    go
+    # go
     lua
     luajitPackages.luarocks_bootstrap
     unzip
@@ -330,6 +330,48 @@ in {
     clipit
     # lockscreen
     betterlockscreen
+    # for remote moonlight script
+    xdotool
+
+    # # Core Qt5 if not already pulled by Moonlight
+    # qt5.qtbase 
+    # # Essential XCB utility libraries for Qt XCB plugin
+    # xorg.libxcb
+    # xorg.xcbutil
+    # xorg.xcbutilwm
+    # xorg.xcbutilimage
+    # xorg.xcbutilkeysyms
+    # xorg.xcbutilrenderutil
+    # xcb-util-cursor # Often specifically needed for newer Qt versions (>=6.5.0)
+    # # Add libxkbcommon and fontconfig if not already explicitly pulled in by other apps
+    # libxkbcommon # Important for keyboard handling, a common Qt dependency
+    # fontconfig   # Important for fonts in Qt apps
+    # # Check for other potential missing X.org libs for Qt
+    # xorg.libXrender
+    # xorg.libXi
+    # xorg.libXext
+    # xorg.libXdmcp
+    # xorg.libSM
+    # xorg.libICE
+    # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
+    # You have some of this, but double check they are pulling in all needed parts
+    mesa # This ensures all standard Mesa drivers are available
+
+    # mpv
+    # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
+    (mpv.overrideAttrs (oldAttrs: {
+      propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [ yt-dlp ];
+    }))
+    yt-dlp
+
+
+    # tooltest
+    # opencode removed because of confusing versions
+    # https://github.com/sst/opencode is the one i want
+    # opencode
+    # Browsertest
+    # vieb
+    qutebrowser-qt5
 
     # codeium is specia    # === Add Dependencies for Supermaven ===
     curl     # Likely needed for network communication/authentication
