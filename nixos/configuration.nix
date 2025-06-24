@@ -106,7 +106,7 @@ in {
     in {
        dwm = prev.dwm.overrideAttrs (old: {src = ./pkgs/source/dwm-kajdo;});
        vscodium = prev.vscodium.overrideAttrs (vscodeOverrideAttrs);
-# If you had other overrides in THIS specific overlay function, they'd go here
+       # If you had other overrides in THIS specific overlay function, they'd go here
     }) # <--- End of the first overlay function definition
   ];
 
@@ -226,7 +226,11 @@ in {
   # dont forget to: `flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`
 
   environment.sessionVariables = {
-    PATH = [ "/home/kajdo/.local/bin" ];
+    # PATH = [ "/home/kajdo/.local/bin" "/home/kajdo/.npm-global/bin" ];
+    PATH = [
+      "/home/kajdo/.local/bin"
+      "/home/kajdo/.npm-global/bin"
+    ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
     # MAKIMA_CONFIG = [ "/home/kajdo/.config/makima" ];
 
@@ -371,13 +375,16 @@ in {
     # opencode
     # Browsertest
     # vieb
-    qutebrowser-qt5
+    # qutebrowser-qt5
 
     # codeium is specia    # === Add Dependencies for Supermaven ===
     curl     # Likely needed for network communication/authentication
     xdg-utils # Provides xdg-open for browser authentication flow
     # some dev helpers
     jq
+
+    # searching for that emoji issue
+    kitty
 
     # --- because nix-shell didn't install the unstable version of awscli
     awscli2
@@ -417,10 +424,10 @@ in {
     # features for nvim / development
     ripgrep
     # Add more as needed
-
-    # zed-editor experiment -- does not allow for a minimalistic
-    # no window decoration / top bar visualization, therefore skipped for now
-    # zed-editor
+    # try out nodejs for opencode
+    # to make node work you have to do `npm set prefix ~/.npm-global`
+    # and add it to PATH (see PATH below)
+    nodejs
 
     # another vscode experiment kajdo
     vscodium

@@ -61,6 +61,8 @@ static const Rule rules[] = {
 	{ "Galculator",         NULL,       NULL,       0,            1,           0,                  -1 },
 	{ ".blueman-manager-wrapped", NULL,       NULL,       0,            1,           0,                  -1 },
 	{ "AlacrittyScratchpad",      NULL,       NULL,       0,            1,           0,                  -1 },
+	{ "Kitty Scratchpad",      NULL,       NULL,       0,            1,           0,                  -1 },
+	{ "KittyScratchpad",      NULL,       NULL,       0,            1,           0,                  -1 },
 	{ "Firefox",                  NULL,       NULL,       0,            0,           1,                  -1 },
 	{ "firefox",                  NULL,       NULL,       0,            0,           1,                  -1 },
 	{ "Navigator",                NULL,       NULL,       0,            0,           1,                  -1 },
@@ -138,9 +140,9 @@ viewprev(const Arg *arg) {
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
-static const char *termcmd[]  = { "alacritty", NULL };
+static const char *termcmd[]  = { "kitty", NULL };
 /*static const char *termcmd[]  = { "st", NULL };*/
-static const char *scratchcmd[]  = { "scratch", NULL };
+static const char *scratchcmd[]  = { "scratch_kitty", NULL };
 static const char *wallpaperchangecmd[]  = { "set_random_wallpaper.sh", NULL };
 static const char *autostartcmd[]  = { "dwm_autostart_cmd.sh", NULL };
 static const char *browsercmd[]  = { "browser_start.sh", NULL };
