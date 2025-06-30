@@ -432,6 +432,9 @@ in {
     # another vscode experiment kajdo
     vscodium
 
+    # addon software
+    # readest # issue because build from source and therefore no oauth working - workaorund run in browser
+
   ];
 
   # environment.variables = {
