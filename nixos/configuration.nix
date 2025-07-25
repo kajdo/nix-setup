@@ -40,6 +40,11 @@ in {
   # Enable network manager applet
   # programs.nm-applet.enable = true;
 
+  # enable localsend
+  programs.localsend.enable = true;
+  programs.localsend.openFirewall = true;
+
+
   # Set your time zone.
   time.timeZone = "Europe/Vienna";
 
@@ -251,6 +256,8 @@ in {
       # fira-code-nerdfont  # Keep Fira Code if you still want it
       nerd-fonts.fira-code
       noto-fonts-emoji
+      atkinson-hyperlegible-next
+      atkinson-hyperlegible-mono
     ];
   };
 
@@ -370,6 +377,7 @@ in {
 
 
     # tooltest
+    scrcpy
     # opencode removed because of confusing versions
     # https://github.com/sst/opencode is the one i want
     # opencode
