@@ -1,4 +1,4 @@
-# Edit this configuration file to define what should be installed on
+# Edit this configuration file to define what shouln be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
@@ -26,6 +26,12 @@ in {
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
+  # IPv6 issue
+  boot.kernel.sysctl = {
+    "net.ipv6.conf.all.disable_ipv6" = true;
+    "net.ipv6.conf.default.disable_ipv6" = true;
+    "net.ipv6.conf.lo.disable_ipv6" = true;
+  };
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -100,17 +106,18 @@ in {
   # docker setup
   virtualisation.docker.enable = true;
 
-   services.xserver.displayManager.lightdm.enable = true;
-   #services.xserver.desktopManager.lxqt.enable = true;
+
+  services.xserver.displayManager.lightdm.enable = true;
+  #services.xserver.desktopManager.lxqt.enable = true;
 
   services.xserver.windowManager.dwm.enable = true;
   nixpkgs.overlays = [
     # Your existing DWM overlay (first element in the list)
     (final: prev: let
-       vscodeOverrideAttrs = import ./pkgs/vscode-custom.nix { pkgs = prev; lib = prev.lib; };
+       # vscodeOverrideAttrs = import ./pkgs/vscode-custom.nix { pkgs = prev; lib = prev.lib; };
     in {
        dwm = prev.dwm.overrideAttrs (old: {src = ./pkgs/source/dwm-kajdo;});
-       vscodium = prev.vscodium.overrideAttrs (vscodeOverrideAttrs);
+       # vscodium = prev.vscodium.overrideAttrs (vscodeOverrideAttrs);
        # If you had other overrides in THIS specific overlay function, they'd go here
     }) # <--- End of the first overlay function definition
   ];
@@ -143,9 +150,15 @@ in {
   # not sure what causes the issue, but occured when started to
   # mess around with bluetooth and bluetooth blocks script
   # maybe it shouldn't run every second #TODO
-  systemd.extraConfig = ''
-    DefaultTimeoutStopSec=10s
-  '';
+  # systemd.extraConfig = ''
+  # systemd.settings.Manager = ''
+  #   DefaultTimeoutStopSec=10s
+  # '';
+  systemd.settings = {
+    Manager = {
+      DefaultTimeoutStopSec = "10s";
+    };
+  };
 
 
   services.pulseaudio.enable = false;
@@ -240,15 +253,17 @@ in {
     # MAKIMA_CONFIG = [ "/home/kajdo/.config/makima" ];
 
     # Explicitly set Qt platform and plugin path ... moonlight fix
-    QT_QPA_PLATFORM = "xcb";
-    QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/lib/qt-${pkgs.qt5.qtbase.version}/plugins";
+    # QT_QPA_PLATFORM = "xcb";
+    # QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/lib/qt-${pkgs.qt5.qtbase.version}/plugins";
+    QT_QPA_PLATFORMTHEME = "qt5ct";
+    QT_STYLE_OVERRIDE = "kvantum";
   };
 
-  # # Set GTK environment variables
-  # environment.variables = {
-  #   GTK_THEME = "Adwaita"; # Replace with your desired GTK theme
-  #   GTK_ICON_THEME = "Adwaita"; # Replace with your desired icon theme
-  # };
+  # Set GTK environment variables
+  environment.variables = {
+    GTK_THEME = "Adwaita"; # Replace with your desired GTK theme
+    GTK_ICON_THEME = "Adwaita"; # Replace with your desired icon theme
+  };
 
   # Font setup
   fonts = {
@@ -329,7 +344,7 @@ in {
     gtk3
     gtk-engine-murrine # For GTK theme engines
     gtk_engines
-    # adwaita-icon-theme
+    adwaita-icon-theme
     papirus-icon-theme # Popular icon theme
     gnome-themes-extra
     # Notifications
@@ -367,6 +382,10 @@ in {
     # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
+
+    libsForQt5.qt5ct
+    qt6ct
+    catppuccin-kvantum
 
     # mpv
     # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
@@ -431,6 +450,8 @@ in {
 
     # features for nvim / development
     ripgrep
+    fd
+    mitmproxy
     # Add more as needed
     # try out nodejs for opencode
     # to make node work you have to do `npm set prefix ~/.npm-global`
@@ -438,7 +459,7 @@ in {
     nodejs
 
     # another vscode experiment kajdo
-    vscodium
+    # vscodium
 
     # addon software
     # readest # issue because build from source and therefore no oauth working - workaorund run in browser

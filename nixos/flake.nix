@@ -13,8 +13,7 @@
 
         modules = [
           ./configuration.nix
-          # readest-flake.nixosModules.readest
-          readest-web-flake.nixosModules.readest-web
+          # readest-web-flake.nixosModules.readest-web
         ];
 
         specialArgs = { inherit inputs; };
