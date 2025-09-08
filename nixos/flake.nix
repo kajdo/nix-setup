@@ -2,22 +2,19 @@
  {
    inputs = {
      nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-     # readest-flake.url = "path:./flakes/readest";
-     readest-web-flake.url = "path:./flakes/readest-web";
    };
 
-  outputs = { self, nixpkgs, readest-web-flake, ... } @ inputs: {
-    nixosConfigurations = {
-      nixos = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
+   outputs = { self, nixpkgs, ... } @ inputs: {
+     nixosConfigurations = {
+       nixos = nixpkgs.lib.nixosSystem {
+         system = "x86_64-linux";
 
-        modules = [
-          ./configuration.nix
-          # readest-web-flake.nixosModules.readest-web
-        ];
+         modules = [
+           ./configuration.nix
+         ];
 
-        specialArgs = { inherit inputs; };
-      };
-    };
-  };
-}
+         specialArgs = { inherit inputs; };
+       };
+     };
+   };
+ }
