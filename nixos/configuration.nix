@@ -1,22 +1,15 @@
-# Edit this configuration file to define what shouln be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 { config, pkgs, inputs, ... }:
 
 let
   # Define the individual build packages
   # dwmblocks    = pkgs.callPackage ./pkgs/dwmblocks.nix {};
-  # st          = pkgs.callPackage ./pkgs/st.nix {};
+  # st           = pkgs.callPackage ./pkgs/st.nix {};
 in {
-  # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  # increase download buffer
   nix.settings.download-buffer-size = 1048576000;
-  # nix.settings.experimental-features = [ "nix-command" ];
 
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
       # ./modules/thinkpad.nix
     ];
@@ -25,40 +18,27 @@ in {
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
-  # IPv6 issue
+  # IPv6 issue - not sure if ISP issue, but try to fix
+  # `ip -6 a` should not have any result after that
   boot.kernel.sysctl = {
     "net.ipv6.conf.all.disable_ipv6" = true;
     "net.ipv6.conf.default.disable_ipv6" = true;
     "net.ipv6.conf.lo.disable_ipv6" = true;
+    "net.ipv6.conf.wlp4s0.disable_ipv6" = true;
   };
 
   # after reboot keyboard and other usb devices "slept after 2-3 seconds"
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
   networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
   networking.networkmanager.enable = true;
-
-  # Enable network manager applet
-  # programs.nm-applet.enable = true;
 
   # enable localsend
   programs.localsend.enable = true;
   programs.localsend.openFirewall = true;
 
-
-  # Set your time zone.
   time.timeZone = "Europe/Vienna";
-
-  # Select internationalisation properties.
   i18n.defaultLocale = "de_AT.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "de_AT.UTF-8";
     LC_IDENTIFICATION = "de_AT.UTF-8";
@@ -71,51 +51,13 @@ in {
     LC_TIME = "de_AT.UTF-8";
   };
 
-  # Disable X11 windowing system for Wayland
-  services.xserver.enable = false;
-  
-  # Disable DWM and LightDM and enable SDDM for Hyprland
-  services.xserver.displayManager.lightdm.enable = false;
-  services.xserver.desktopManager.lxqt.enable = false;
-
-  # Comment out the entire DWM section
-  # services.xserver.windowManager.dwm.enable = true;
-  # nixpkgs.overlays = [
-  #   # Your existing DWM overlay (first element in the list)
-  #   (final: prev: let
-  #       # vscodeOverrideAttrs = import ./pkgs/vscode-custom.nix { pkgs = prev; lib = prev.lib; };
-  #   in {
-  #       dwm = prev.dwm.overrideAttrs (old: {
-  #          src = ./pkgs/source/dwm-kajdo;
-  #          # Inherit and add necessary build inputs for X11 headers
-  #          buildInputs = old.buildInputs ++ [
-  #            prev.xorg.libX11
-  #            prev.xorg.libXinerama
-  #            prev.xorg.libXft
-  #          ];
-  #       });
-  #       # vscodium = prev.vscodium.overrideAttrs (vscodeOverrideAttrs);
-  #       # If you had other overrides in THIS specific overlay function, they'd go here
-  #   }) # <--- End of the first overlay function definition
-  # ];
-
-  # services.xserver.displayManager.sessionCommands = ''
-  #   ${dwmblocks}/bin/dwmblocks &
-  # '';
-
-  # Disable DWM-related X11 configuration
-  # services.xserver.resolutions = [ { x = 1920; y = 1080; } ];
-  # services.libinput.touchpad.naturalScrolling = true;
-  # services.xserver.videoDrivers = [ "modesetting" ];
-
   # Enable Hyprland and SDDM
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.wayland.enable = true; # <-- ADD THIS LINE
   programs.hyprland.enable = true;
 
 
-  # Battery life improvement
-  # Better scheduling for CPU cycles - thanks System76!!!
+  # Battery life - Better scheduling for CPU cycles - thanks System76!!!
   services.system76-scheduler.settings.cfsProfiles.enable = true;
 
   # Enable TLP (better than gnomes internal power manager)
@@ -128,9 +70,6 @@ in {
       CPU_SCALING_GOVERNOR_ON_BAT = "schedutil";
     };
   };
-
-  # Disable GNOMEs power management
-  services.power-profiles-daemon.enable = false;
 
   # Enable powertop
   powerManagement.powertop.enable = true;
@@ -154,21 +93,11 @@ in {
   # avahi for chromecast
   services.avahi.enable = true;
 
-  # Enable sound with pipewire.
-  # hardware.pulseaudio.enable = false;
 
   hardware.bluetooth.enable = true; # enables support for Bluetooth
   hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
-  # services.blueman.enable = true; # service to configure bluetooth
 
   # set default timeout to 10s - many times reboot waits 90s
-  # not sure what causes the issue, but occured when started to
-  # mess around with bluetooth and bluetooth blocks script
-  # maybe it shouldn't run every second #TODO
-  # systemd.extraConfig = ''
-  # systemd.settings.Manager = ''
-  #    DefaultTimeoutStopSec=10s
-  # '';
   systemd.settings = {
     Manager = {
       DefaultTimeoutStopSec = "10s";
@@ -176,7 +105,6 @@ in {
   };
 
 
-  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -185,13 +113,18 @@ in {
     pulse.enable = true;
   };
 
+  # enable appimages to be runable as in other distros
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.kajdo = {
     isNormalUser = true;
     description = "kajdo";
     extraGroups = [ "networkmanager" "wheel" "video" "docker" ];
     packages = with pkgs; [
-    #  thunderbird
       btop
       tldr
       fastfetch
@@ -210,11 +143,8 @@ in {
       vlc
       pyradio
       bat
-      # xorg.xrandr # Remove, use wdisplays
-      # arandr # Remove, use wdisplays
       tmux
       rofi # Use wofi instead for Wayland
-      dmenu # Use wofi or rofi-wayland instead
       lsd
       tty-clock
       plocate
@@ -223,9 +153,7 @@ in {
       tree
       feh
       # picom-pijulius # Remove, Hyprland has a compositor
-      # xclip # Remove, use wl-clipboard
       tailscale
-      chatblade
       ncdu
       cmatrix
       cava
@@ -245,8 +173,6 @@ in {
       chromedriver
       makima
       signal-desktop-bin # signal had problems with update to unstable -- installed via flatpak
-      
-      # Add Wayland-native or compatible tools to make hyprland work nicely
       grim
       slurp
       swappy
@@ -254,35 +180,27 @@ in {
       # persistant clipboard
       wl-clip-persist
       waybar
-      wofi
       wdisplays
-
     ];
   };
 
   xdg.portal = {
     enable = true;
-    # Use the Wayland-specific portal for Hyprland
     extraPortals = [ pkgs.xdg-desktop-portal-wlr ];
     config.common.default = "*";
   };
-  services.flatpak.enable = true;
   # dont forget to: `flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`
+  services.flatpak.enable = true;
 
   environment.sessionVariables = {
-    # PATH = [ "/home/kajdo/.local/bin" "/home/kajdo/.npm-global/bin" ];
     PATH = [
       "/home/kajdo/.local/bin"
       "/home/kajdo/.npm-global/bin"
     ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
-    # MAKIMA_CONFIG = [ "/home/kajdo/.config/makima" ];
 
-    # Explicitly set Qt platform and plugin path ... moonlight fix
-    # QT_QPA_PLATFORM = "xcb";
-    # QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/lib/qt-${pkgs.qt5.qtbase.version}/plugins";
-    QT_QPA_PLATFORMTHEME = "qt5ct";
-    QT_STYLE_OVERRIDE = "kvantum";
+    # QT_QPA_PLATFORMTHEME = "qt5ct";
+    # QT_STYLE_OVERRIDE = "kvantum";
   };
 
   # Set GTK environment variables
@@ -294,7 +212,6 @@ in {
   # Font setup
   fonts = {
     packages = with pkgs; [
-      # fira-code-nerdfont  # Keep Fira Code if you still want it
       nerd-fonts.fira-code
       noto-fonts-emoji
       nerd-fonts.symbols-only
@@ -307,12 +224,8 @@ in {
   # Enable automatic login for the user.
   services.displayManager.autoLogin.enable = true;
   services.displayManager.autoLogin.user = "kajdo";
-  # Set the session for auto-login
-  # services.displayManager.autoLogin.session = "hyprland";
-  # THIS IS THE CORRECTED LINE
   services.displayManager.defaultSession = "hyprland";
 
-  # Install firefox.
   programs.firefox.enable = true;
 
   # Allow unfree packages
@@ -337,25 +250,14 @@ in {
   # light -U 30 --> darker
   # light -A 30 --> brighter
   programs.light.enable = true;
-  # services.actkbd = {
-  #    enable = true;
-  #    bindings = [
-  #      { keys = [ 233 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -A 10"; }
-  #      { keys = [ 232 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }
-  #    ];
-  # };
 
   # List packages installed in system profile. To search, run:
-  # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim  
-    # aider-chat
     evtest
     wget
     wget2 # better for some downloads
     toybox # pgrep and other fun stuff
-    # dwmblocks # Remove
-    # st
     xfce.thunar
     neovim
     # unclutter-xfixes # Remove
@@ -382,40 +284,16 @@ in {
     # Notifications
     libnotify
     dunst # Works on Wayland
-    # keyboard shortcut daemon
-    # sxhkd # Use Hyprland's built-in keybindings
-    # clipboard manager to keep clipboard if alacritty is killed
-    # clipit # Use wl-clipboard
-    # lockscreen
-    # betterlockscreen # Use swaylock
-    # for remote moonlight script
-    # xdotool # Remove, Wayland specific tools are needed
-    
-    # Removed X11-specific Qt stuff from `environment.systemPackages`
-    # xorg.libxcb
-    # xorg.xcbutil
-    # xorg.xcbutilwm
-    # xorg.xcbutilimage
-    # xorg.xcbutilkeysyms
-    # xorg.xcbutilrenderutil
-    # xcb-util-cursor # Often specifically needed for newer Qt versions (>=6.5.0)
-    # # Add libxkbcommon and fontconfig if not already explicitly pulled in by other apps
-    # # libxkbcommon # Important for keyboard handling, a common Qt dependency
-    # # fontconfig    # Important for fonts in Qt apps
-    # # Check for other potential missing X.org libs for Qt
-    # xorg.libXrender
-    # xorg.libXi
-    # xorg.libXext
-    # xorg.libXdmcp
-    # xorg.libSM
-    # xorg.libICE
     # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
 
-    libsForQt5.qt5ct
-    qt6ct
-    catppuccin-kvantum
+    # libsForQt5.qt5ct
+    # qt6ct
+    # catppuccin-kvantum
+
+    # rss reader
+    fluent-reader
 
     # mpv
     # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
@@ -427,31 +305,21 @@ in {
 
     # tooltest
     scrcpy
-    # opencode removed because of confusing versions
-    # https://github.com/sst/opencode is the one i want
     opencode
-    # Browsertest
-    # vieb
-    # qutebrowser-qt5
 
-    # codeium is specia    # === Add Dependencies for Supermaven ===
     curl      # Likely needed for network communication/authentication
     xdg-utils # Provides xdg-open for browser authentication flow
-    # some dev helpers
     jq
-
     # searching for that emoji issue
-    kitty # Works natively on Wayland
-
-    # --- because nix-shell didn't install the unstable version of awscli
-    awscli2
+    kitty # Works natively on Wayland and lets me configure emoticons correct
 
     # LSPs
     nodePackages.typescript-language-server
     nodePackages.vscode-langservers-extracted
     pyright
     nodePackages.bash-language-server
-    nodePackages.dockerfile-language-server-nodejs
+    # nodePackages.dockerfile-language-server-nodejs
+    dockerfile-language-server
     nodePackages.yaml-language-server
     nodePackages.vim-language-server
     #nodePackages.json-language-server
@@ -485,47 +353,23 @@ in {
     nodejs
     android-tools
 
-    # another vscode experiment kajdo
-    # vscodium
-
-    # addon software
-    # readest # issue because build from source and therefore no oauth working - workaorund run in browser
-    
-    # Remove xinit as it's for X11 sessions
-    # xorg.xinit
-
     # HYPRLAND Packages
     swww
     hyprlock
     hypridle
 
+    # appimage execution
+    appimage-run
   ];
 
   # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
   services.openssh.enable = true;
-
-  # enable the tailscale service
   services.tailscale.enable = true;
-
-  # enable sxhkd for shortcut management
-  # services.sxhkd.enable = true; # Removed because Hyprland has built-in keybindings
-  # services.sxhkd.extraPath = "/run/current-system/sw/bin/";
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
   networking.firewall = {
     # for chromecast via brave
     allowedUDPPorts = [ 5353 ];  # For device discovery
     allowedUDPPortRanges = [{ from = 32768; to = 61000; }];  # For streaming
-    # allowedTCPPorts = [ 8010 42100 50001];  # For Chromecast server, codeium1 und codeum2
     allowedTCPPorts = [ 8010 ];  # For Chromecast server
-      # networking.firewall.allowedTCPPorts = [ 42100 50001 ];
-
   };
 
   # This value determines the NixOS release from which the default
