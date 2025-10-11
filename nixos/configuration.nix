@@ -11,7 +11,6 @@ in {
   imports =
     [
       ./hardware-configuration.nix
-      # ./modules/thinkpad.nix
     ];
 
   # Bootloader.
@@ -29,13 +28,19 @@ in {
 
   # after reboot keyboard and other usb devices "slept after 2-3 seconds"
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+  # set default timeout to 10s - many times reboot waits 90s
+  systemd.settings = {
+    Manager = {
+      DefaultTimeoutStopSec = "10s";
+    };
+  };
 
   networking.hostName = "nixos"; # Define your hostname.
   networking.networkmanager.enable = true;
 
-  # enable localsend
   programs.localsend.enable = true;
   programs.localsend.openFirewall = true;
+  programs.firefox.enable = true;
 
   time.timeZone = "Europe/Vienna";
   i18n.defaultLocale = "de_AT.UTF-8";
@@ -97,12 +102,6 @@ in {
   hardware.bluetooth.enable = true; # enables support for Bluetooth
   hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
 
-  # set default timeout to 10s - many times reboot waits 90s
-  systemd.settings = {
-    Manager = {
-      DefaultTimeoutStopSec = "10s";
-    };
-  };
 
 
   security.rtkit.enable = true;
@@ -226,7 +225,6 @@ in {
   services.displayManager.autoLogin.user = "kajdo";
   services.displayManager.defaultSession = "hyprland";
 
-  programs.firefox.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -288,14 +286,8 @@ in {
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
 
-    # libsForQt5.qt5ct
-    # qt6ct
-    # catppuccin-kvantum
-
-    # rss reader
     fluent-reader
 
-    # mpv
     # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
     (mpv.overrideAttrs (oldAttrs: {
       propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [ yt-dlp ];
