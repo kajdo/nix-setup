@@ -7,18 +7,18 @@ let
 in {
   imports = [
     ./hardware-configuration.nix
-    ./modules/boot.nix
-    ./modules/networking.nix
-    ./modules/localization.nix
-    ./modules/display.nix
-    ./modules/power.nix
-    ./modules/audio.nix
-    ./modules/bluetooth.nix
-    ./modules/fonts.nix
-    ./modules/graphics.nix
-    ./modules/flatpak.nix
-    ./modules/user-packages.nix
-    ./modules/system-packages.nix
-    ./modules/development.nix
+    ./nixos-modules/boot.nix
+    ./nixos-modules/networking.nix
+    ./nixos-modules/localization.nix
+    ./nixos-modules/display.nix
+    ./nixos-modules/power.nix
+    ./nixos-modules/audio.nix
+    ./nixos-modules/bluetooth.nix
+    ./nixos-modules/fonts.nix
+    ./nixos-modules/graphics.nix
+    ./nixos-modules/flatpak.nix
+    ./nixos-modules/user-packages.nix
+    ./nixos-modules/system-packages.nix
+    ./nixos-modules/development.nix
   ];
 }

@@ -11,7 +11,6 @@
       delta         # git diff viewer
       alacritty     # Works natively on Wayland
       starship
-      chatterino2
       tmux
       rofi # Use wofi instead for Wayland
       tailscale
