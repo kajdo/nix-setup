@@ -20,6 +20,14 @@
   # docker setup
   virtualisation.docker.enable = true;
 
+  # virt-manager setup
+  virtualisation.libvirtd.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
+  # virtualisation.libguestfs.enable = true;
+  programs.virt-manager.enable = true;
+  users.groups.libvirtd.members = ["kajdo"];
+
+
   # List packages installed in system profile. To search, run:
   environment.systemPackages = with pkgs; [
     vim  
