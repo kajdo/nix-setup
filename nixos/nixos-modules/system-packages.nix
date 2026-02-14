@@ -17,6 +17,17 @@
   # avahi for chromecast
   services.avahi.enable = true;
 
+  # usb mount in thunar
+  services.gvfs.enable = true;
+  services.udisks2.enable = true;
+  services.tumbler.enable = true;
+  programs.thunar.enable = true; # Ensure Thunar is enabled
+  programs.thunar.plugins = with pkgs.xfce; [
+    thunar-volman
+    # You might also want the trash plugin
+    thunar-archive-plugin 
+  ];
+
   # docker setup
   virtualisation.docker.enable = true;
 
@@ -35,7 +46,8 @@
     wget
     wget2 # better for some downloads
     toybox # pgrep and other fun stuff
-    xfce.thunar
+    # xfce.thunar
+    # xfce.thunar-volman # for usb mount
     neovim
     gcc # to make avante build
     gnumake # to make avante build

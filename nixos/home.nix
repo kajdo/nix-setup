@@ -19,7 +19,8 @@
     ./home-manager/modules/tree.nix
     ./home-manager/modules/glow.nix
     ./home-manager/modules/lazydocker.nix
-    ./home-manager/modules/galculator.nix
+    # ./home-manager/modules/galculator.nix
+    ./home-manager/modules/gnome-calculator.nix
     ./home-manager/modules/peazip.nix
     ./home-manager/modules/zoxide.nix
     ./home-manager/modules/obsidian.nix
