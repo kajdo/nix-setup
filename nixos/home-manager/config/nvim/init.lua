@@ -139,6 +139,8 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
+	lockfile = vim.fn.stdpath("data") .. "/lazy/lazy-lock.json", -- Writable location for NixOS
+
 	-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 	"tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 
@@ -304,37 +306,41 @@ require("lazy").setup({
 	{ -- LSP Configuration & Plugins
 		"neovim/nvim-lspconfig",
 		config = function()
-			-- taken from nix_init.lua
-			local lspconfig = require("lspconfig")
-
-			-- Configure LSPs
-			lspconfig.ts_ls.setup({
+			-- Configure LSPs using Neovim 0.11+ vim.lsp.config API
+			vim.lsp.config('ts_ls', {
 				cmd = { "typescript-language-server", "--stdio" },
 			})
+			vim.lsp.enable('ts_ls')
 
-			lspconfig.pyright.setup({
+			vim.lsp.config('pyright', {
 				cmd = { "pyright-langserver", "--stdio" },
 			})
+			vim.lsp.enable('pyright')
 
-			lspconfig.bashls.setup({
+			vim.lsp.config('bashls', {
 				cmd = { "bash-language-server", "start" },
 			})
+			vim.lsp.enable('bashls')
 
-			lspconfig.dockerls.setup({
+			vim.lsp.config('dockerls', {
 				cmd = { "docker-langserver", "--stdio" },
 			})
+			vim.lsp.enable('dockerls')
 
-			lspconfig.yamlls.setup({
+			vim.lsp.config('yamlls', {
 				cmd = { "yaml-language-server", "--stdio" },
 			})
+			vim.lsp.enable('yamlls')
 
-			lspconfig.vimls.setup({
+			vim.lsp.config('vimls', {
 				cmd = { "vim-language-server", "--stdio" },
 			})
+			vim.lsp.enable('vimls')
 
-			lspconfig.eslint.setup({
+			vim.lsp.config('eslint', {
 				cmd = { "vscode-eslint-language-server", "--stdio" },
 			})
+			vim.lsp.enable('eslint')
 
 			-- kajdo - virtual text will be done via plugin (https://github.com/rachartier/tiny-inline-diagnostic.nvim)
 			vim.diagnostic.config({ virtual_text = false })
@@ -441,7 +447,7 @@ require("lazy").setup({
 
 			-- LSP servers and clients are able to communicate to each other what features they support.
 			--  By default, Neovim doesn't support everything that is in the LSP specification.
-			--  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
+			--  When you add nvim-cmp, etc. Neovim now has *more* capabilities.
 			--  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
 			local capabilities = vim.lsp.protocol.make_client_capabilities()
 			capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
@@ -551,8 +557,6 @@ require("lazy").setup({
 		event = "InsertEnter",
 		dependencies = {
 			-- ... your dependencies ...
-			"L3MON4D3/LuaSnip",
-			"saadparwaiz1/cmp_luasnip",
 			"hrsh7th/cmp-nvim-lsp",
 			"hrsh7th/cmp-path",
 		},
@@ -560,8 +564,6 @@ require("lazy").setup({
 		config = function()
 			-- See `:help cmp`
 			local cmp = require("cmp")
-			local luasnip = require("luasnip")
-			luasnip.config.setup({}) -- Setup luasnip first
 
 			-- *** Main cmp setup ***
 			-- Define your GLOBAL cmp settings here
@@ -578,7 +580,6 @@ require("lazy").setup({
 					-- { name = "supermaven", group_index = 1, priority = 100 },
 
 					{ name = "nvim_lsp", group_index = 1 },
-					{ name = "luasnip", group_index = 2 },
 					{ name = "path", group_index = 3 },
 					{ name = "buffer", group_index = 3 },
 					{ name = "lazydev", group_index = 0 },

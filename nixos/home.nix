@@ -35,6 +35,7 @@
     ./home-manager/modules/ueberzugpp.nix
     ./home-manager/modules/fastfetch.nix
     ./home-manager/modules/thunderbird.nix
+    ./home-manager/modules/nvim.nix
   ];
 
   home.username = "kajdo";
