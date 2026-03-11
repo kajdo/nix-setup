@@ -47,15 +47,8 @@
     wget2 # better for some downloads
     toybox # pgrep and other fun stuff
     # xfce.thunar
-    gcc # to make avante build
-    gnumake # to make avante build
-    cargo # to make avante build
     lua
-    luajitPackages.luarocks_bootstrap
     unzip
-    python313
-    python313Packages.flake8
-    pipx
     networkmanagerapplet
     # pulseaudio full for various check scripts
     pulseaudioFull
@@ -74,19 +67,9 @@
     mesa # This ensures all standard Mesa drivers are available
     # fluent-reader # fancy rss reader -- if needed - i will move it to home-manager
 
-    # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
-    (mpv.overrideAttrs (oldAttrs: {
-      propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [ yt-dlp ];
-    }))
-    yt-dlp
-
-    # tooltest
-    scrcpy
-    opencode
+    mpv
 
     curl      # Likely needed for network communication/authentication
-    xdg-utils # Provides xdg-open for browser authentication flow
-    jq
 
     # HYPRLAND Packages
     swww

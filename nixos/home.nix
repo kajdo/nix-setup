@@ -36,6 +36,7 @@
     ./home-manager/modules/fastfetch.nix
     ./home-manager/modules/thunderbird.nix
     ./home-manager/modules/nvim.nix
+    ./home-manager/modules/dev-tools.nix
     ./home-manager/modules/kitty.nix
   ];
 
