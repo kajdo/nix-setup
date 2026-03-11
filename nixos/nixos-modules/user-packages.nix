@@ -14,8 +14,8 @@
       tmux
       rofi # Use wofi instead for Wayland
       tailscale
-      vivaldi
-      vivaldi-ffmpeg-codecs
+      # vivaldi
+      # vivaldi-ffmpeg-codecs
       # moonlight-qt
       libreoffice-qt6-fresh
       makima

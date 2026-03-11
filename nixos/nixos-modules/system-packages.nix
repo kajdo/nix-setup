@@ -42,7 +42,7 @@
   # List packages installed in system profile. To search, run:
   environment.systemPackages = with pkgs; [
     vim  
-    evtest
+    evtest # test input like keyboard for key codes
     wget
     wget2 # better for some downloads
     toybox # pgrep and other fun stuff
@@ -73,8 +73,7 @@
     # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
-
-    fluent-reader
+    # fluent-reader # fancy rss reader -- if needed - i will move it to home-manager
 
     # This tells Nix to build/configure MPV such that yt-dlp is available in its runtime closure.
     (mpv.overrideAttrs (oldAttrs: {
@@ -89,45 +88,6 @@
     curl      # Likely needed for network communication/authentication
     xdg-utils # Provides xdg-open for browser authentication flow
     jq
-
-    # LSPs
-    nodePackages.typescript-language-server
-    nodePackages.vscode-langservers-extracted
-    pyright
-    nixd
-    nodePackages.bash-language-server
-    dockerfile-language-server
-    nodePackages.yaml-language-server
-    nodePackages.vim-language-server
-    nodePackages.eslint
-    nodePackages.prettier
-
-    # Formatters
-    black
-    nixpkgs-fmt
-    shfmt
-    stylua
-    prettierd
-    biome
-
-    # Tree-sitter parsers
-    tree-sitter
-    vimPlugins.nvim-treesitter-parsers.python
-    vimPlugins.nvim-treesitter-parsers.lua
-    vimPlugins.nvim-treesitter-parsers.javascript
-    vimPlugins.nvim-treesitter-parsers.typescript
-    vimPlugins.nvim-treesitter-parsers.bash
-    vimPlugins.nvim-treesitter-parsers.json
-    vimPlugins.nvim-treesitter-parsers.yaml
-    vimPlugins.nvim-treesitter-parsers.html
-    vimPlugins.nvim-treesitter-parsers.css
-
-    # features for nvim / development
-    ripgrep
-    fd
-    mitmproxy
-    nodejs
-    android-tools
 
     # HYPRLAND Packages
     swww
