@@ -47,7 +47,6 @@
     wget2 # better for some downloads
     toybox # pgrep and other fun stuff
     # xfce.thunar
-    neovim
     gcc # to make avante build
     gnumake # to make avante build
     cargo # to make avante build
