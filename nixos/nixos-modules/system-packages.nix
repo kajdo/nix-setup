@@ -89,8 +89,6 @@
     curl      # Likely needed for network communication/authentication
     xdg-utils # Provides xdg-open for browser authentication flow
     jq
-    # searching for that emoji issue
-    kitty # Works natively on Wayland and lets me configure emoticons correct
 
     # LSPs
     nodePackages.typescript-language-server
