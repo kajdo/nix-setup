@@ -96,6 +96,7 @@
     nodePackages.typescript-language-server
     nodePackages.vscode-langservers-extracted
     pyright
+    nixd
     nodePackages.bash-language-server
     dockerfile-language-server
     nodePackages.yaml-language-server
