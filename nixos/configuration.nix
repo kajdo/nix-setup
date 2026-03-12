@@ -2,8 +2,6 @@
 
 let
   # Define the individual build packages
-  # dwmblocks    = pkgs.callPackage ./pkgs/dwmblocks.nix {};
-  # st           = pkgs.callPackage ./pkgs/st.nix {};
 in {
   imports = [
     ./hardware-configuration.nix

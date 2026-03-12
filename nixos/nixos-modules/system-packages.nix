@@ -22,7 +22,7 @@
   services.udisks2.enable = true;
   services.tumbler.enable = true;
   programs.thunar.enable = true; # Ensure Thunar is enabled
-  programs.thunar.plugins = with pkgs.xfce; [
+  programs.thunar.plugins = with pkgs; [
     thunar-volman
     # You might also want the trash plugin
     thunar-archive-plugin 
@@ -44,9 +44,7 @@
     vim  
     evtest # test input like keyboard for key codes
     wget
-    wget2 # better for some downloads
     toybox # pgrep and other fun stuff
-    # xfce.thunar
     lua
     unzip
     networkmanagerapplet
@@ -65,7 +63,6 @@
     # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
-    # fluent-reader # fancy rss reader -- if needed - i will move it to home-manager
 
     mpv
 
@@ -92,8 +89,5 @@
       "/home/kajdo/.npm-global/bin"
     ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
-
-    # QT_QPA_PLATFORMTHEME = "qt5ct";
-    # QT_STYLE_OVERRIDE = "kvantum";
   };
 }

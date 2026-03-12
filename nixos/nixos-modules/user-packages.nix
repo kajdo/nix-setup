@@ -9,17 +9,13 @@
     packages = with pkgs; [
       git
       delta         # git diff viewer
-      alacritty     # Works natively on Wayland
       starship
       tmux
-      rofi # Use wofi instead for Wayland
+      rofi
       tailscale
-      # vivaldi
-      # vivaldi-ffmpeg-codecs
-      # moonlight-qt
       libreoffice-qt6-fresh
       makima
-      signal-desktop-bin # signal had problems with update to unstable -- installed via flatpak
+      signal-desktop-bin
       hyprprop
       waybar
       wdisplays
