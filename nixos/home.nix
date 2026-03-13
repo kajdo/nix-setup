@@ -7,6 +7,9 @@
     ./home-manager/modules/yazi.nix
     ./home-manager/modules/mcfly.nix
     ./home-manager/modules/fzf.nix
+    ./home-manager/modules/git.nix
+    ./home-manager/modules/starship.nix
+    ./home-manager/modules/tmux.nix
     ./home-manager/modules/lsd.nix
     ./home-manager/modules/tty-clock.nix
     ./home-manager/modules/tldr.nix
