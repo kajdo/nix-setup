@@ -7,18 +7,18 @@
 ## Priority 1: Quick Wins (Low Effort, High Impact)
 
 ### 1.1 Remove Dead/Commented Code
-- [ ] `nixos-modules/system-packages.nix:37` — Remove `# virtualisation.libguestfs.enable = true;`
-- [ ] `home-manager/modules/mcfly.nix:12` — Remove `# fzf.enable = true;`
+- [x] `nixos-modules/system-packages.nix:37` — Remove `# virtualisation.libguestfs.enable = true;`
+- [x] `home-manager/modules/mcfly.nix:12` — Remove `# fzf.enable = true;`
 
 ### 1.2 Resolve Package Conflicts
 
-- [ ] **Remove `vim` from system-packages.nix** (line 44)
-  - Reason: Using `neovim` from home-manager — no need for both
+- [x] **Remove `vim` from system-packages.nix** (line 44)
+  - Reason: Using `neovim` from home-manager — use `sudoedit` instead of `sudo vim`
   
-- [ ] **Remove `wget` from system-packages.nix** (line 47)
+- [x] **Remove `wget` from system-packages.nix** (line 47)
   - Reason: `wget2` already in home-manager/modules/dev-tools.nix
 
-- [ ] **Remove `pulseaudioFull` from system-packages.nix** (line 52)
+- [x] **Remove `pulseaudioFull` from system-packages.nix** (line 52)
   - Reason: Conflicts with `services.pipewire.pulse.enable = true` in audio.nix
   - PipeWire provides PulseAudio compatibility
 
@@ -221,14 +221,14 @@ These should remain in `system-packages.nix`:
 
 ## Summary
 
-| Priority | Tasks | Effort |
-|----------|-------|--------|
-| 1 - Quick Wins | 7 | ~30 min |
-| 2 - Medium | 12 | ~2 hours |
-| 3 - High (Refactor) | 10 | ~4 hours |
-| 4 - Formatting | 4 | ~30 min |
+| Priority | Tasks | Completed | Remaining |
+|----------|-------|-----------|-----------|
+| 1 - Quick Wins | 7 | 5 | 2 |
+| 2 - Medium | 12 | 0 | 12 |
+| 3 - High (Refactor) | 10 | 0 | 10 |
+| 4 - Formatting | 4 | 0 | 4 |
 
-**Total: 33 tasks**
+**Total: 33 tasks, 5 completed, 28 remaining**
 
 ---
 
