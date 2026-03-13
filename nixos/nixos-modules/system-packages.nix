@@ -64,14 +64,7 @@
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
 
-    mpv
-
     curl      # Likely needed for network communication/authentication
-
-    # HYPRLAND Packages
-    swww
-    hyprlock
-    hypridle
 
     # appimage execution
     appimage-run

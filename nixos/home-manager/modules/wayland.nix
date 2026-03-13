@@ -6,5 +6,8 @@
     hyprprop
     waybar
     wdisplays
+    swww
+    hyprlock
+    hypridle
   ];
 }

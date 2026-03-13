@@ -6,6 +6,7 @@
     ./home-manager/modules/btop.nix
     ./home-manager/modules/yazi.nix
     ./home-manager/modules/mcfly.nix
+    ./home-manager/modules/mpv.nix
     ./home-manager/modules/fzf.nix
     ./home-manager/modules/git.nix
     ./home-manager/modules/starship.nix
