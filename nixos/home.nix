@@ -41,6 +41,9 @@
     ./home-manager/modules/nvim.nix
     ./home-manager/modules/dev-tools.nix
     ./home-manager/modules/kitty.nix
+    ./home-manager/modules/wayland.nix
+    ./home-manager/modules/libreoffice.nix
+    ./home-manager/modules/signal.nix
   ];
 
   home.username = "kajdo";

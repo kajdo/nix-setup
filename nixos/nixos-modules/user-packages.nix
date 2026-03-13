@@ -7,13 +7,7 @@
     description = "kajdo";
     extraGroups = [ "networkmanager" "wheel" "video" "docker" ];
     packages = with pkgs; [
-      rofi
-      libreoffice-qt6-fresh
       makima
-      signal-desktop-bin
-      hyprprop
-      waybar
-      wdisplays
     ];
   };
 }
