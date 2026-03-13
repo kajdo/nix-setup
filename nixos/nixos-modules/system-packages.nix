@@ -34,22 +34,17 @@
   # virt-manager setup
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
-  # virtualisation.libguestfs.enable = true;
   programs.virt-manager.enable = true;
   users.groups.libvirtd.members = ["kajdo"];
 
 
   # List packages installed in system profile. To search, run:
   environment.systemPackages = with pkgs; [
-    vim  
     evtest # test input like keyboard for key codes
-    wget
     toybox # pgrep and other fun stuff
     lua
     unzip
     networkmanagerapplet
-    # pulseaudio full for various check scripts
-    pulseaudioFull
     # GTK Themes
     gtk3
     gtk-engine-murrine # For GTK theme engines
