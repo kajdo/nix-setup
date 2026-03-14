@@ -137,5 +137,54 @@
   # Terminal file manager
   programs.yazi = {
     enable = true;
+    enableBashIntegration = true;
+
+    # Theme: use catppuccin-mocha flavor
+    theme = {
+      flavor.dark = "catppuccin-mocha";
+    };
+
+    # Flavors: catppuccin-mocha
+    flavors = {
+      catppuccin-mocha = ./../config/yazi/flavors/catppuccin-mocha.yazi;
+    };
+
+    # Settings (yazi.toml content)
+    settings = {
+      mgr = {
+        ratio = [ 2 2 6 ];
+        sort_by = "mtime";
+        sort_sensitive = false;
+        sort_reverse = true;
+        sort_dir_first = true;
+        sort_translit = false;
+        linemode = "none";
+        show_hidden = false;
+        show_symlink = true;
+        scrolloff = 5;
+        mouse_events = [ "click" "scroll" ];
+        title_format = "Yazi: {cwd}";
+      };
+
+      preview = {
+        wrap = "no";
+        tab_size = 2;
+        max_width = 600;
+        max_height = 900;
+        cache_dir = "";
+        image_delay = 30;
+        image_filter = "triangle";
+        image_quality = 75;
+        sixel_fraction = 15;
+        ueberzug_scale = 1;
+        ueberzug_offset = [ 0 0 0 0 ];
+      };
+
+      input.cursor_blink = false;
+      log.enabled = false;
+    };
   };
+
+  # Yazi keymap (complex, keep as file)
+  xdg.configFile."yazi/keymap.toml".source = ./../config/yazi/keymap.toml;
 }
