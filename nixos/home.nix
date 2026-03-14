@@ -51,4 +51,10 @@
   home.username = "kajdo";
   home.homeDirectory = "/home/kajdo";
   home.stateVersion = "25.11";
+
+  # User-specific PATH additions
+  home.sessionPath = [
+    "$HOME/.local/bin"
+    "$HOME/.npm-global/bin"
+  ];
 }
