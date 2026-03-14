@@ -18,8 +18,8 @@ in {
     ./nixos-modules/virtualization.nix
     ./nixos-modules/desktop-services.nix
     ./nixos-modules/desktop-programs.nix
-    ./nixos-modules/user-packages.nix
+    ./nixos-modules/users.nix
     ./nixos-modules/system-packages.nix
-    ./nixos-modules/development.nix
+    ./nixos-modules/nix.nix
   ];
 }

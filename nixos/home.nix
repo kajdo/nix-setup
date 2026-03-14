@@ -29,16 +29,10 @@
     ./home-manager/modules/zoxide.nix
     ./home-manager/modules/obsidian.nix
     ./home-manager/modules/portfolio.nix
-    ./home-manager/modules/grim.nix
     ./home-manager/modules/theming.nix
-    ./home-manager/modules/slurp.nix
-    ./home-manager/modules/swappy.nix
-    ./home-manager/modules/wl-clipboard.nix
-    ./home-manager/modules/wl-clip-persist.nix
     ./home-manager/modules/nextcloud.nix
     ./home-manager/modules/moonlight.nix
     ./home-manager/modules/pyradio.nix
-    ./home-manager/modules/ueberzugpp.nix
     ./home-manager/modules/fastfetch.nix
     ./home-manager/modules/thunderbird.nix
     ./home-manager/modules/nvim.nix

@@ -133,7 +133,7 @@ The current file mixes 7 concerns. Split into:
 
 **26 of 43 modules are under 10 lines.** Consider consolidating:
 
-- [ ] **Merge Wayland screenshot tools into `wayland.nix`**
+- [x] **Merge Wayland screenshot tools into `wayland.nix`**
   - Files to merge: grim.nix, slurp.nix, swappy.nix, wl-clipboard.nix, wl-clip-persist.nix, ueberzugpp.nix
   - Result: All Wayland tools in one place
 
@@ -146,11 +146,11 @@ The current file mixes 7 concerns. Split into:
 
 ### 3.3 Rename Misleading Files
 
-- [ ] **Rename `user-packages.nix` → `users.nix`**
+- [x] **Rename `user-packages.nix` → `users.nix`**
   - File defines user account, not just packages
   - Update import in `configuration.nix`
 
-- [ ] **Rename `development.nix` → `nix.nix`**
+- [x] **Rename `development.nix` → `nix.nix`**
   - Contains nix.settings, nixpkgs.config, stateVersion
   - Update import in `configuration.nix`
 
@@ -197,10 +197,10 @@ These should remain in `system-packages.nix`:
 |----------|-------|-----------|-----------|
 | 1 - Quick Wins | 7 | 7 | 0 |
 | 2 - Medium | 11 | 11 | 0 |
-| 3 - High (Refactor) | 10 | 4 | 6 |
+| 3 - High (Refactor) | 10 | 7 | 3 |
 | 4 - Formatting | 4 | 1 | 3 |
 
-**Total: 32 tasks, 23 completed, 9 remaining**
+**Total: 32 tasks, 26 completed, 6 remaining**
 
 ---
 

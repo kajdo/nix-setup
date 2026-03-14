@@ -16,5 +16,13 @@
     hypridle
     dunst # Notification daemon
     networkmanagerapplet # GUI applet for network management
+
+    # Screenshot & clipboard tools
+    grim
+    slurp
+    swappy
+    wl-clipboard
+    wl-clip-persist
+    ueberzugpp
   ];
 }
