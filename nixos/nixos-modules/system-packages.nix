@@ -49,8 +49,6 @@
     gtk-engine-murrine # For GTK theme engines
     gtk_engines
     adwaita-icon-theme
-    papirus-icon-theme # Popular icon theme
-    gnome-themes-extra
     # Notifications
     libnotify
     dunst # Works on Wayland

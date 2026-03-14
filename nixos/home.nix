@@ -29,8 +29,7 @@
     ./home-manager/modules/obsidian.nix
     ./home-manager/modules/portfolio.nix
     ./home-manager/modules/grim.nix
-    ./home-manager/modules/gtk.nix
-    ./home-manager/modules/gtk.nix
+    ./home-manager/modules/theming.nix
     ./home-manager/modules/slurp.nix
     ./home-manager/modules/swappy.nix
     ./home-manager/modules/wl-clipboard.nix
