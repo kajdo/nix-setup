@@ -15,6 +15,9 @@ in {
     ./nixos-modules/fonts.nix
     ./nixos-modules/graphics.nix
     ./nixos-modules/flatpak.nix
+    ./nixos-modules/virtualization.nix
+    ./nixos-modules/desktop-services.nix
+    ./nixos-modules/desktop-programs.nix
     ./nixos-modules/user-packages.nix
     ./nixos-modules/system-packages.nix
     ./nixos-modules/development.nix

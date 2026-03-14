@@ -82,7 +82,7 @@
 
 The current file mixes 7 concerns. Split into:
 
-- [ ] **Create `nixos-modules/virtualization.nix`**
+- [x] **Create `nixos-modules/virtualization.nix`**
   - Move: docker, libvirtd, spiceUSBRedirection, virt-manager, libvirtd group membership
   ```nix
   { config, pkgs, ... }:
@@ -95,7 +95,7 @@ The current file mixes 7 concerns. Split into:
   }
   ```
 
-- [ ] **Create `nixos-modules/desktop-services.nix`**
+- [x] **Create `nixos-modules/desktop-services.nix`**
   - Move: printing, avahi, gvfs, udisks2, tumbler
   ```nix
   { config, pkgs, ... }:
@@ -108,7 +108,7 @@ The current file mixes 7 concerns. Split into:
   }
   ```
 
-- [ ] **Create `nixos-modules/desktop-programs.nix`**
+- [x] **Create `nixos-modules/desktop-programs.nix`**
   - Move: appimage, localsend, firefox, thunar
   ```nix
   { config, pkgs, ... }:
@@ -126,7 +126,7 @@ The current file mixes 7 concerns. Split into:
   }
   ```
 
-- [ ] **Update `configuration.nix` imports**
+- [x] **Update `configuration.nix` imports**
   - Add new modules to import list
 
 ### 3.2 Consolidate Home Manager Modules
@@ -197,10 +197,10 @@ These should remain in `system-packages.nix`:
 |----------|-------|-----------|-----------|
 | 1 - Quick Wins | 7 | 7 | 0 |
 | 2 - Medium | 11 | 11 | 0 |
-| 3 - High (Refactor) | 10 | 0 | 10 |
+| 3 - High (Refactor) | 10 | 4 | 6 |
 | 4 - Formatting | 4 | 1 | 3 |
 
-**Total: 32 tasks, 19 completed, 13 remaining**
+**Total: 32 tasks, 23 completed, 9 remaining**
 
 ---
 
