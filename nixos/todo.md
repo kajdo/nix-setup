@@ -1,6 +1,6 @@
 # NixOS Configuration Cleanup Tasks
 
-*Generated: 2026-03-13 • Updated: 2026-03-14 18:45*
+*Generated: 2026-03-13 • Updated: 2026-03-14 19:00*
 
 ---
 
@@ -145,6 +145,14 @@ The current file mixes 7 concerns. Split into:
   - Combined: glow, moonlight, mpv, obsidian, peazip, portfolio, pyradio
   - Result: All media apps in one module (7 files → 1)
 
+- [x] **Further consolidate home-manager modules**
+  - Created `productivity.nix`: gnome-calculator, libreoffice, thunderbird, yazi, obsidian, portfolio
+  - Enhanced `media-apps.nix`: Added feh, pulsemixer; removed obsidian, portfolio, peazip
+  - Enhanced `dev-tools.nix`: Added git, lazydocker
+  - Enhanced `cli-utils.nix`: Added mcfly, starship, tldr, coreutils
+  - Deleted nextcloud.nix (no longer used)
+  - Result: 11 files deleted, imports reduced from 21 to 10 modules
+
 ### 3.3 Rename Misleading Files
 
 - [x] **Rename `user-packages.nix` → `users.nix`**
@@ -162,7 +170,7 @@ The current file mixes 7 concerns. Split into:
 ### 4.1 Standardize Home Manager Module Format
 
 - [ ] **Standardize import parameters** to `{ config, pkgs, ... }:`
-  - Files using `{ pkgs, ... }:`: kitty, libreoffice, mpv, signal, wayland, starship
+  - Files using `{ pkgs, ... }:`: kitty, signal, wayland
 
 - [ ] **Standardize blank line after opening brace**
   - Decide on convention and apply consistently
@@ -197,10 +205,10 @@ These should remain in `system-packages.nix`:
 |----------|-------|-----------|-----------|
 | 1 - Quick Wins | 7 | 7 | 0 |
 | 2 - Medium | 11 | 11 | 0 |
-| 3 - High (Refactor) | 10 | 10 | 0 |
+| 3 - High (Refactor) | 11 | 11 | 0 |
 | 4 - Formatting | 3 | 0 | 3 |
 
-**Total: 31 tasks, 28 completed, 3 remaining**
+**Total: 32 tasks, 29 completed, 3 remaining**
 
 ---
 

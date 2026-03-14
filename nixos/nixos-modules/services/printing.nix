@@ -1,14 +1,14 @@
 { config, pkgs, ... }:
 
 {
-  # Enable CUPS to print documents
+  # Printing
   services.printing.enable = true;
 
-  # Avahi for chromecast / network discovery
+  # Network discovery (Chromecast, AirPlay, etc.)
   services.avahi.enable = true;
 
-  # USB mount support in Thunar
+  # Thunar USB mount support
   services.gvfs.enable = true;
   services.udisks2.enable = true;
-  services.tumbler.enable = true;
+  services.tumbler.enable = true;  # Thumbnails
 }

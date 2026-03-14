@@ -4,22 +4,31 @@ let
   # Define the individual build packages
 in {
   imports = [
+    # Hardware configuration (auto-generated)
     ./hardware-configuration.nix
-    ./nixos-modules/boot.nix
-    ./nixos-modules/networking.nix
-    ./nixos-modules/localization.nix
-    ./nixos-modules/display.nix
-    ./nixos-modules/power.nix
-    ./nixos-modules/audio.nix
-    ./nixos-modules/bluetooth.nix
-    ./nixos-modules/fonts.nix
-    ./nixos-modules/graphics.nix
-    ./nixos-modules/flatpak.nix
-    ./nixos-modules/virtualization.nix
-    ./nixos-modules/desktop-services.nix
-    ./nixos-modules/desktop-programs.nix
-    ./nixos-modules/users.nix
-    ./nixos-modules/system-packages.nix
-    ./nixos-modules/nix.nix
+
+    # Core system configuration
+    ./nixos-modules/core/boot.nix
+    ./nixos-modules/core/nix.nix
+    ./nixos-modules/core/users.nix
+    ./nixos-modules/core/localization.nix
+
+    # Hardware support
+    ./nixos-modules/hardware/graphics.nix
+    ./nixos-modules/hardware/audio.nix
+    ./nixos-modules/hardware/bluetooth.nix
+    ./nixos-modules/hardware/power.nix
+
+    # Networking
+    ./nixos-modules/networking/networking.nix
+
+    # Desktop environment
+    ./nixos-modules/desktop/display.nix
+    ./nixos-modules/desktop/fonts.nix
+    ./nixos-modules/desktop/integration.nix
+
+    # System services
+    ./nixos-modules/services/printing.nix
+    ./nixos-modules/services/virtualization.nix
   ];
 }

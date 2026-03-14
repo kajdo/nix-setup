@@ -2,20 +2,17 @@
 
 {
   home.packages = with pkgs; [
+    # Image viewer
+    feh
+
     # Markdown reader
     glow
 
     # Game streaming client
     moonlight-qt
 
-    # Note-taking app
-    obsidian
-
-    # Archive manager
-    peazip
-
-    # Finance tracking
-    portfolio
+    # Audio mixer
+    pulsemixer
 
     # Radio player
     pyradio
@@ -27,5 +24,10 @@
   # mpv configuration
   xdg.configFile."mpv/mpv.conf" = {
     source = ./../config/mpv/mpv.conf;
+  };
+
+  # feh configuration
+  programs.feh = {
+    enable = true;
   };
 }

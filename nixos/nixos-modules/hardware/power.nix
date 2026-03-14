@@ -1,10 +1,10 @@
 { config, pkgs, ... }:
 
 {
-  # Battery life - Better scheduling for CPU cycles - thanks System76!!!
+  # Better CPU scheduling (System76)
   services.system76-scheduler.settings.cfsProfiles.enable = true;
 
-  # Enable TLP (better than gnomes internal power manager)
+  # TLP power management (better than GNOME's internal)
   services.tlp = {
     enable = true;
     settings = {
@@ -15,18 +15,20 @@
     };
   };
 
-  # Enable powertop
+  # Power usage diagnostics
   powerManagement.powertop.enable = true;
 
-  # Enable thermald (only necessary if on Intel CPUs)
+  # Thermal management for Intel CPUs
   services.thermald.enable = true;
 
-  # enable backlight settings
-  # brightnessctl set 30%  --> set to 30%
+  # Backlight control
+  # brightnessctl set 30%   --> set to 30%
   # brightnessctl set +30%  --> increase by 30%
   # brightnessctl set 30%-  --> decrease by 30%
   environment.systemPackages = with pkgs; [
     brightnessctl
   ];
-  users.users.kajdo.extraGroups = [ "video" "input" ]; # for brightnessctl to work
+
+  # Permissions for brightnessctl
+  users.users.kajdo.extraGroups = [ "video" "input" ];
 }

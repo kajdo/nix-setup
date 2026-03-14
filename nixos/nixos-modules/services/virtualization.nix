@@ -1,12 +1,12 @@
 { config, pkgs, ... }:
 
 {
-  # Docker setup
+  # Docker
   virtualisation.docker.enable = true;
 
-  # virt-manager setup
+  # virt-manager (KVM/QEMU)
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
   programs.virt-manager.enable = true;
-  users.groups.libvirtd.members = ["kajdo"];
+  users.groups.libvirtd.members = [ "kajdo" ];
 }

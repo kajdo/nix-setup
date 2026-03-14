@@ -1,17 +1,19 @@
 { config, pkgs, ... }:
 
 {
-  # Enable Hyprland and SDDM
+  # Display Manager
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.wayland.enable = true;
+
+  # Window Manager
   programs.hyprland.enable = true;
 
-  # Enable automatic login for the user.
+  # Auto-login
   services.displayManager.autoLogin.enable = true;
   services.displayManager.autoLogin.user = "kajdo";
   services.displayManager.defaultSession = "hyprland";
 
-  # Configure keymap
+  # Keyboard layout
   services.xserver.xkb = {
     layout = "at";
     variant = "";

@@ -2,6 +2,7 @@
 
 {
   time.timeZone = "Europe/Vienna";
+  
   i18n.defaultLocale = "de_AT.UTF-8";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "de_AT.UTF-8";

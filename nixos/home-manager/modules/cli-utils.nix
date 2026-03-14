@@ -10,8 +10,12 @@
     cmatrix
     ncdu
     stow
+    tldr
     tree
     tty-clock
+
+    # Core utilities for mcfly
+    coreutils
   ];
 
   # bat - cat replacement with syntax highlighting
@@ -58,5 +62,23 @@
   programs.zoxide = {
     enable = true;
     enableBashIntegration = true;
+  };
+
+  # mcfly - shell history enhancement
+  programs.mcfly = {
+    enable = true;
+    enableBashIntegration = true;
+  };
+
+  # starship - shell prompt
+  programs.starship = {
+    enable = true;
+    settings = builtins.fromTOML (builtins.readFile ./../config/starship/starship.toml);
+  };
+
+  # tldr - simplified man pages
+  services.tldr-update = {
+    enable = true;
+    period = "weekly";
   };
 }

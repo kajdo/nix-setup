@@ -1,5 +1,27 @@
 { config, pkgs, ... }:
+
 {
+  home.packages = with pkgs; [
+    # Calculator
+    gnome-calculator
+
+    # Office suite
+    libreoffice-qt6-fresh
+
+    # Note-taking
+    obsidian
+
+    # Finance tracking
+    portfolio
+
+    # Messaging
+    signal-desktop
+  ];
+
+  # Web browser
+  programs.firefox.enable = true;
+
+  # Email client
   programs.thunderbird = {
     enable = true;
 
@@ -110,5 +132,10 @@
         '';
       };
     };
+  };
+
+  # Terminal file manager
+  programs.yazi = {
+    enable = true;
   };
 }
