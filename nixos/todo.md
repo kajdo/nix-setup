@@ -1,6 +1,6 @@
 # NixOS Configuration Cleanup Tasks
 
-*Generated: 2026-03-13 • Updated: 2026-03-14*
+*Generated: 2026-03-13 • Updated: 2026-03-14 18:45*
 
 ---
 
@@ -137,12 +137,13 @@ The current file mixes 7 concerns. Split into:
   - Files to merge: grim.nix, slurp.nix, swappy.nix, wl-clipboard.nix, wl-clip-persist.nix, ueberzugpp.nix
   - Result: All Wayland tools in one place
 
-- [ ] **Expand `cli-utils.nix`** (optional - file already exists with unzip)
-  - Could combine: bat, btop, cava, cmatrix, fastfetch, fzf, lsd, ncdu, tree, tty-clock, stow, zoxide
-  - Note: Some use `programs.*` options, so verify compatibility
+- [x] **Expand `cli-utils.nix`**
+  - Combined: bat, btop, cava, cmatrix, fastfetch, fzf, lsd, ncdu, tree, tty-clock, stow, zoxide
+  - Result: All CLI utilities in one module (12 files → 1)
 
-- [ ] **Create `media-apps.nix`** (optional)
-  - Combine: glow, moonlight, mpv, obsidian, peazip, portfolio, pyradio
+- [x] **Create `media-apps.nix`**
+  - Combined: glow, moonlight, mpv, obsidian, peazip, portfolio, pyradio
+  - Result: All media apps in one module (7 files → 1)
 
 ### 3.3 Rename Misleading Files
 
@@ -182,12 +183,11 @@ These should remain in `system-packages.nix`:
 |---------|--------|
 | `evtest` | Requires system access for input testing |
 | `toybox` | Conflicts with gcc-wrapper (readelf) when in home-manager |
-| `gtk3` | System theming library |
-| `gtk-engine-murrine` | System GTK theme engine |
-| `gtk_engines` | System GTK engines |
-| `adwaita-icon-theme` | System icon theme |
-| `libnotify` | System notification library |
-| `mesa` | System GPU drivers |
+
+**Note:** The following were previously listed but have been moved:
+- GTK packages (gtk3, gtk-engine-murrine, gtk_engines, adwaita-icon-theme) → home-manager/modules/theming.nix
+- libnotify → home-manager/modules/wayland.nix
+- mesa → nixos-modules/graphics.nix
 
 ---
 
@@ -197,10 +197,10 @@ These should remain in `system-packages.nix`:
 |----------|-------|-----------|-----------|
 | 1 - Quick Wins | 7 | 7 | 0 |
 | 2 - Medium | 11 | 11 | 0 |
-| 3 - High (Refactor) | 10 | 7 | 3 |
-| 4 - Formatting | 4 | 1 | 3 |
+| 3 - High (Refactor) | 10 | 10 | 0 |
+| 4 - Formatting | 3 | 0 | 3 |
 
-**Total: 32 tasks, 26 completed, 6 remaining**
+**Total: 31 tasks, 28 completed, 3 remaining**
 
 ---
 
