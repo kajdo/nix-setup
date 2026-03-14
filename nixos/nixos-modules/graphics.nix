@@ -6,9 +6,10 @@
     intel-vaapi-driver = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
   };
   
-  hardware.graphics = {  
+  hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
+      mesa # OpenGL implementation
       intel-media-driver # LIBVA_DRIVER_NAME=iHD
       intel-vaapi-driver # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
       libvdpau-va-gl

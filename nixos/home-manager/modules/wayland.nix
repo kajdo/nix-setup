@@ -15,6 +15,7 @@
     hyprlock
     hypridle
     dunst # Notification daemon
+    libnotify # Notification library
     networkmanagerapplet # GUI applet for network management
 
     # Screenshot & clipboard tools
