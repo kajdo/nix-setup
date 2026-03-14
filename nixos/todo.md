@@ -1,6 +1,6 @@
 # NixOS Configuration Cleanup Tasks
 
-*Generated: 2026-03-13*
+*Generated: 2026-03-13 • Updated: 2026-03-14*
 
 ---
 
@@ -37,47 +37,42 @@
 - [x] **Move `lua`** to `home-manager/modules/dev-tools.nix`
   - Added to Lua tooling section
 
-- [ ] **Move `toybox`** to new `home-manager/modules/cli-utils.nix` (or create)
-  - Current: `nixos-modules/system-packages.nix:47`
-  - Reason: CLI utilities, user-specific
+- [x] **Keep `toybox` at system level**
+  - Reason: Conflicts with gcc-wrapper (readelf) when in home-manager
 
-- [ ] **Move `unzip`** to new `home-manager/modules/cli-utils.nix`
-  - Current: `nixos-modules/system-packages.nix:49`
+- [x] **Move `unzip`** to `home-manager/modules/cli-utils.nix`
   - Reason: CLI utility, user-specific
 
 - [x] **Move `curl`** to `home-manager/modules/dev-tools.nix`
   - Added to General utilities section alongside wget2
 
-- [ ] **Move `appimage-run`** to home-manager
-  - Current: `nixos-modules/system-packages.nix:70`
+- [x] **Move `appimage-run`** to home-manager
+  - Moved to: `home-manager/modules/cli-utils.nix`
   - Reason: User utility for running appimages
 
-- [ ] **Move `dunst`** to new `home-manager/modules/notifications.nix`
-  - Current: `nixos-modules/system-packages.nix:62`
-  - Reason: User-level notification daemon
+- [x] **Move `dunst`** to `home-manager/modules/wayland.nix`
+  - Reason: User-level notification daemon for Wayland
 
-- [ ] **Move `networkmanagerapplet`** to home-manager
-  - Current: `nixos-modules/system-packages.nix:50`
-  - Reason: GUI applet, user-specific
+- [x] **Move `networkmanagerapplet`** to home-manager
+  - Moved to: `home-manager/modules/wayland.nix`
+  - Reason: GUI applet, user-specific, Hyprland-related
 
-- [ ] **Move `papirus-icon-theme`** to new `home-manager/modules/theming.nix`
-  - Current: `nixos-modules/system-packages.nix:58`
+- [x] **Move `papirus-icon-theme`** to `home-manager/modules/theming.nix`
   - Reason: User theming preference
 
-- [ ] **Move `gnome-themes-extra`** to `home-manager/modules/theming.nix`
-  - Current: `nixos-modules/system-packages.nix:59`
+- [x] **Move `gnome-themes-extra`** to `home-manager/modules/theming.nix`
   - Reason: User theming preference
 
 ### 2.2 Move GTK Environment Variables to Home Manager
 
 - [x] **Move GTK_THEME and GTK_ICON_THEME** from system to home-manager
-  - Created `home-manager/modules/gtk.nix` with `home.sessionVariables`
+  - Created `home-manager/modules/theming.nix` with `home.sessionVariables`
 
 ### 2.3 Move LIBVA_DRIVER_NAME to Home Manager
 
-- [ ] **Move session variable** from `graphics.nix:18` to home-manager
-  - Current: `environment.sessionVariables.LIBVA_DRIVER_NAME = "i965";`
-  - Add to `home-manager/modules/wayland.nix` or create graphics module
+- [x] **Move session variable** from `graphics.nix:18` to home-manager
+  - Moved to: `home-manager/modules/wayland.nix`
+  - Value: `LIBVA_DRIVER_NAME = "iHD"`
 
 ---
 
@@ -142,8 +137,8 @@ The current file mixes 7 concerns. Split into:
   - Files to merge: grim.nix, slurp.nix, swappy.nix, wl-clipboard.nix, wl-clip-persist.nix, ueberzugpp.nix
   - Result: All Wayland tools in one place
 
-- [ ] **Create `cli-utils.nix`** (optional alternative to individual files)
-  - Combine: bat, btop, cava, cmatrix, fastfetch, fzf, lsd, ncdu, tree, tty-clock, stow, zoxide
+- [ ] **Expand `cli-utils.nix`** (optional - file already exists with unzip)
+  - Could combine: bat, btop, cava, cmatrix, fastfetch, fzf, lsd, ncdu, tree, tty-clock, stow, zoxide
   - Note: Some use `programs.*` options, so verify compatibility
 
 - [ ] **Create `media-apps.nix`** (optional)
@@ -186,6 +181,7 @@ These should remain in `system-packages.nix`:
 | Package | Reason |
 |---------|--------|
 | `evtest` | Requires system access for input testing |
+| `toybox` | Conflicts with gcc-wrapper (readelf) when in home-manager |
 | `gtk3` | System theming library |
 | `gtk-engine-murrine` | System GTK theme engine |
 | `gtk_engines` | System GTK engines |
@@ -200,11 +196,11 @@ These should remain in `system-packages.nix`:
 | Priority | Tasks | Completed | Remaining |
 |----------|-------|-----------|-----------|
 | 1 - Quick Wins | 7 | 7 | 0 |
-| 2 - Medium | 12 | 3 | 9 |
+| 2 - Medium | 11 | 11 | 0 |
 | 3 - High (Refactor) | 10 | 0 | 10 |
-| 4 - Formatting | 4 | 0 | 4 |
+| 4 - Formatting | 4 | 1 | 3 |
 
-**Total: 33 tasks, 10 completed, 23 remaining**
+**Total: 32 tasks, 19 completed, 13 remaining**
 
 ---
 

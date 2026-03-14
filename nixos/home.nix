@@ -20,6 +20,7 @@
     ./home-manager/modules/ncdu.nix
     ./home-manager/modules/cmatrix.nix
     ./home-manager/modules/cava.nix
+    ./home-manager/modules/cli-utils.nix
     ./home-manager/modules/tree.nix
     ./home-manager/modules/glow.nix
     ./home-manager/modules/lazydocker.nix

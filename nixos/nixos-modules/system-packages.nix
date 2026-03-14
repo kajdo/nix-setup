@@ -41,9 +41,7 @@
   # List packages installed in system profile. To search, run:
   environment.systemPackages = with pkgs; [
     evtest # test input like keyboard for key codes
-    toybox # pgrep and other fun stuff
-    unzip
-    networkmanagerapplet
+    toybox # pgrep and other CLI utilities (must stay system-level due to conflicts)
     # GTK Themes
     gtk3
     gtk-engine-murrine # For GTK theme engines
@@ -51,13 +49,9 @@
     adwaita-icon-theme
     # Notifications
     libnotify
-    dunst # Works on Wayland
     # Also ensure OpenGL/Mesa drivers are correctly configured for your Intel GPU
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
-
-    # appimage execution
-    appimage-run
   ];
 
   environment.sessionVariables = {
