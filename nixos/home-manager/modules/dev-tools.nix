@@ -12,6 +12,7 @@
     cargo
 
     # Lua tooling
+    lua
     luajitPackages.luarocks_bootstrap
 
     # User utilities
@@ -23,5 +24,6 @@
     jq
     xdg-utils
     wget2
+    curl
   ];
 }

@@ -22,7 +22,11 @@
   services.thermald.enable = true;
 
   # enable backlight settings
-  # light -U 30 --> darker
-  # light -A 30 --> brighter
-  programs.light.enable = true;
+  # brightnessctl set 30%  --> set to 30%
+  # brightnessctl set +30%  --> increase by 30%
+  # brightnessctl set 30%-  --> decrease by 30%
+  environment.systemPackages = with pkgs; [
+    brightnessctl
+  ];
+  users.users.kajdo.extraGroups = [ "video" "input" ]; # for brightnessctl to work
 }

@@ -24,21 +24,9 @@
 
 ### 1.3 Move User Session Variables to Home Manager
 
-- [ ] **Move PATH configuration** from `system-packages.nix:80-83` to home-manager
-  ```nix
-  # Current (system-packages.nix):
-  PATH = [
-    "/home/kajdo/.local/bin"
-    "/home/kajdo/.npm-global/bin"
-  ];
-  ```
-  - Create or update a shell module in home-manager with:
-  ```nix
-  home.sessionPath = [
-    "$HOME/.local/bin"
-    "$HOME/.npm-global/bin"
-  ];
-  ```
+- [~] **Keep PATH at system level** (needed before Hyprland starts)
+  - Reason: Hyprland exec-once scripts need PATH available at startup
+  - `home.sessionPath` loads too late (after display manager)
 
 ---
 
@@ -46,9 +34,8 @@
 
 ### 2.1 Move Packages from System to Home Manager
 
-- [ ] **Move `lua`** to `home-manager/modules/dev-tools.nix`
-  - Current: `nixos-modules/system-packages.nix:48`
-  - Reason: Development tool, user-specific
+- [x] **Move `lua`** to `home-manager/modules/dev-tools.nix`
+  - Added to Lua tooling section
 
 - [ ] **Move `toybox`** to new `home-manager/modules/cli-utils.nix` (or create)
   - Current: `nixos-modules/system-packages.nix:47`
@@ -58,9 +45,8 @@
   - Current: `nixos-modules/system-packages.nix:49`
   - Reason: CLI utility, user-specific
 
-- [ ] **Move `curl`** to `home-manager/modules/dev-tools.nix`
-  - Current: `nixos-modules/system-packages.nix:67`
-  - Reason: Already have wget2 in dev-tools
+- [x] **Move `curl`** to `home-manager/modules/dev-tools.nix`
+  - Added to General utilities section alongside wget2
 
 - [ ] **Move `appimage-run`** to home-manager
   - Current: `nixos-modules/system-packages.nix:70`
@@ -84,18 +70,8 @@
 
 ### 2.2 Move GTK Environment Variables to Home Manager
 
-- [ ] **Move GTK_THEME and GTK_ICON_THEME** from system to home-manager
-  - Current: `system-packages.nix:74-77`
-  - Create `home-manager/modules/gtk.nix`:
-  ```nix
-  { config, pkgs, ... }:
-  {
-    home.sessionVariables = {
-      GTK_THEME = "Adwaita";
-      GTK_ICON_THEME = "Adwaita";
-    };
-  }
-  ```
+- [x] **Move GTK_THEME and GTK_ICON_THEME** from system to home-manager
+  - Created `home-manager/modules/gtk.nix` with `home.sessionVariables`
 
 ### 2.3 Move LIBVA_DRIVER_NAME to Home Manager
 
@@ -223,12 +199,12 @@ These should remain in `system-packages.nix`:
 
 | Priority | Tasks | Completed | Remaining |
 |----------|-------|-----------|-----------|
-| 1 - Quick Wins | 7 | 5 | 2 |
-| 2 - Medium | 12 | 0 | 12 |
+| 1 - Quick Wins | 7 | 7 | 0 |
+| 2 - Medium | 12 | 3 | 9 |
 | 3 - High (Refactor) | 10 | 0 | 10 |
 | 4 - Formatting | 4 | 0 | 4 |
 
-**Total: 33 tasks, 5 completed, 28 remaining**
+**Total: 33 tasks, 10 completed, 23 remaining**
 
 ---
 

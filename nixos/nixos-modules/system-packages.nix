@@ -42,7 +42,6 @@
   environment.systemPackages = with pkgs; [
     evtest # test input like keyboard for key codes
     toybox # pgrep and other fun stuff
-    lua
     unzip
     networkmanagerapplet
     # GTK Themes
@@ -59,23 +58,11 @@
     # You have some of this, but double check they are pulling in all needed parts
     mesa # This ensures all standard Mesa drivers are available
 
-    curl      # Likely needed for network communication/authentication
-
     # appimage execution
     appimage-run
   ];
 
-  # Set GTK environment variables
-  environment.variables = {
-    GTK_THEME = "Adwaita"; # Replace with your desired GTK theme
-    GTK_ICON_THEME = "Adwaita"; # Replace with your desired icon theme
-  };
-
   environment.sessionVariables = {
-    PATH = [
-      "/home/kajdo/.local/bin"
-      "/home/kajdo/.npm-global/bin"
-    ];
     XDG_DATA_DIRS = [ "/var/lib/flatpak/exports/share" "/home/$USER/.local/share/flatpak/exports/share" ];
   };
 }

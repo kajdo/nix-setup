@@ -2,6 +2,6 @@
 
 {
   home.packages = with pkgs; [
-    signal-desktop-bin
+    signal-desktop
   ];
 }
