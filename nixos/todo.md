@@ -24,6 +24,8 @@
 
 ### 1.3 Move User Session Variables to Home Manager
 
+the path issue was a different one - hyprland for some reason does not get the context of the bash set path
+rofi issue was fixed by calling it via "bash -c ...."
 - [~] **Keep PATH at system level** (needed before Hyprland starts)
   - Reason: Hyprland exec-once scripts need PATH available at startup
   - `home.sessionPath` loads too late (after display manager)
