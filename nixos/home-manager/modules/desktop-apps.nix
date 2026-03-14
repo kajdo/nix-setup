@@ -169,7 +169,7 @@
       preview = {
         wrap = "no";
         tab_size = 2;
-        max_width = 600;
+        max_width = 920;
         max_height = 900;
         cache_dir = "";
         image_delay = 30;

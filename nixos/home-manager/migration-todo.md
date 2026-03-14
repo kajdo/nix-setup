@@ -24,15 +24,29 @@ config/
 These are low-risk, straightforward migrations that just need config files copied and referenced.
 
 ### [ ] 1.1 yazi (file manager)
-**Status:** Already enabled in `desktop-apps.nix`, but config not migrated
+**Status:** ✅ Done — using native home-manager module
 
-**Step 1 — Copy config files:**
-```bash
-mkdir -p /home/kajdo/git/nix-setup/nixos/home-manager/config/yazi
-cp ~/.config/yazi/yazi.toml /home/kajdo/git/nix-setup/nixos/home-manager/config/yazi/
-cp ~/.config/yazi/theme.toml /home/kajdo/git/nix-setup/nixos/home-manager/config/yazi/
-cp ~/.config/yazi/keymap.toml /home/kajdo/git/nix-setup/nixos/home-manager/config/yazi/
-```
+**Step 1 — Update `desktop-apps.nix`:**
+```nix
+programs.yazi = {
+  enable = true;
+  enableBashIntegration = true;
+    theme = {
+      flavor = {
+        dark = "catppuccin-mocha";
+      };
+    };
+    flavors = {
+      catppuccin-mocha = ./../config/yazi/flavors/catppuccin-mocha.yazi;
+    };
+  };
+
+  # Yazi config files
+  xdg.configFile."yazi" = {
+    source = ./../config/yazi;
+    recursive = true;
+  };
+}
 
 **Files to copy:**
 - `yazi.toml`
@@ -43,14 +57,23 @@ cp ~/.config/yazi/keymap.toml /home/kajdo/git/nix-setup/nixos/home-manager/confi
 ```nix
 programs.yazi = {
   enable = true;
-  enableBashIntegration = true;  # add this
-};
+  enableBashIntegration = true;
+    theme = {
+      flavor = {
+        dark = "catppuccin-mocha";
+      };
+    };
+    flavors = {
+      catppuccin-mocha = ./../config/yazi/flavors/catppuccin-mocha.yazi;
+    };
+  };
 
-xdg.configFile."yazi" = {
-  source = ./../config/yazi;
-  recursive = true;
-};
-```
+  # Yazi config files (yazi.toml, keymap.toml, theme.toml)
+  xdg.configFile."yazi" = {
+    source = ./../config/yazi;
+    recursive = true;
+  };
+}
 
 **Verification:** 
 - `yazi` opens with custom theme and keybindings
