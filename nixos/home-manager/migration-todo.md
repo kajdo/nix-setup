@@ -90,8 +90,8 @@ rm -rf ~/.config/yazi
 
 ---
 
-### [ ] 1.2 pyradio (radio player)
-**Status:** Package installed in `media-apps.nix`, no config
+### [x] 1.2 pyradio (radio player)
+**Status:** ✅ Done — config files migrated to home-manager
 
 **Step 1 — Copy config files:**
 ```bash
@@ -164,8 +164,8 @@ rm -rf ~/.config/makima
 
 ## Phase 2: GTK Theme Configuration
 
-### [ ] 2.1 GTK2/GTK3 unified theming
-**Status:** Currently stowed via `gtk-config` package, also `~/.gtkrc-2.0` exists in home directory
+### [x] 2.1 GTK2/GTK3 unified theming
+**Status:** ✅ Done — using native home-manager gtk module
 
 **Current files:**
 - `~/.gtkrc-2.0` — GTK2 settings (managed by LXAppearance, has "DO NOT EDIT" warning)
@@ -606,10 +606,10 @@ sudo nixos-rebuild switch --flake .#hostname
 
 | Phase | Task | Status | Date |
 |-------|------|--------|------|
-| 1.1 | yazi | ⬜ Not started | |
-| 1.2 | pyradio | ⬜ Not started | |
+| 1.1 | yazi | ✅ Done | |
+| 1.2 | pyradio | ✅ Done | 2026-03-15 |
 | 1.3 | makima | ⬜ Not started | |
-| 2.1 | GTK theming | ⬜ Not started | |
+| 2.1 | GTK theming | ✅ Done | 2026-03-15 |
 | 3.1 | rofi | ⬜ Not started | |
 | 3.2 | waybar | ⬜ Not started | |
 | 3.3 | dunst | ⬜ Not started | |
@@ -634,7 +634,7 @@ nixos/home-manager/
 │   ├── yazi/           ← NEW
 │   ├── pyradio/        ← NEW
 │   ├── makima/         ← NEW
-│   ├── gtk/            ← NEW (reference)
+│   ├── gtk/            ← NEW (reference - not needed, using native module)
 │   ├── rofi/           ← NEW
 │   ├── waybar/         ← NEW
 │   ├── dunst/          ← NEW
@@ -645,7 +645,7 @@ nixos/home-manager/
 │   ├── dev-tools.nix
 │   ├── hyprland.nix
 │   ├── media-apps.nix
-│   ├── gtk-theming.nix ← NEW
+│   ├── gtk-theming.nix ← NEW (done)
 │   └── shell.nix       ← NEW
 └── home.nix
 ```

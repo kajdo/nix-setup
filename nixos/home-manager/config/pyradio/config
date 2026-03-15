@@ -1,0 +1,7 @@
+# PyRadio User Configuration File
+# To get a full list of options execute: pyradio -pc
+# or examine the file: /home/kajdo/.local/pipx/venvs/pyradio/lib/python3.11/site-packages/pyradio/config
+#
+player = mpv
+theme = catppuccin-frappe
+use_transparency = True

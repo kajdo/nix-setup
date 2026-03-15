@@ -30,4 +30,8 @@
   programs.feh = {
     enable = true;
   };
+
+  # pyradio configuration
+  xdg.configFile."pyradio/config".source = ./../config/pyradio/config;
+  xdg.configFile."pyradio/stations.csv".source = ./../config/pyradio/stations.csv;
 }
