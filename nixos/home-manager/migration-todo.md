@@ -16,6 +16,7 @@ config/
 ├── starship/   ✅ already migrated
 ├── tmux/       ✅ already migrated
 ├── pyradio/    ✅ migrated 2026-03-15
+├── makima/     ✅ migrated 2026-03-15
 ```
 
 ---
@@ -25,7 +26,7 @@ config/
 1. **Copy** config files to `config/<app>/`
 2. **Update** Nix modules to reference copied files
 3. **Cleanup** — unstow + delete existing config files
-4. **Verify** — rebuild with `nixos-rebuild switch` and test
+4. **Verify** — rebuild with `nixos-rebuild switch` and test **(MANUAL - USER MUST DO THIS)**
 
 ---
 
@@ -41,8 +42,8 @@ These are low-risk, straightforward migrations that just need config files copie
 
 ---
 
-### [ ] 1.3 makima (input remapping)
-**Status:** Not managed at all (skipped for now)
+### [x] 1.3 makima (input remapping)
+**Status:** ✅ Done — config migrated to home-manager (2026-03-15)
 
 **Step 1 — Copy config files:**
 ```bash
@@ -70,7 +71,7 @@ stow -D -d ~/git/dotfiles makima
 rm -rf ~/.config/makima
 ```
 
-**Step 4 — Verify:** Rebuild, then check Makima loads configs (device-specific keybindings work)
+**Step 4 — Verify:** (MANUAL) Rebuild, then check Makima loads configs (device-specific keybindings work)
 
 ---
 
@@ -257,7 +258,7 @@ rm ~/.bashrc ~/.bash_aliases ~/.bash_profile
 - Running cleanup in a fresh terminal after rebuild
 - Or keeping backup copies and removing manually after verifying new config works
 
-**Step 4 — Verify:** Rebuild, shell has correct aliases, PATH, functions
+**Step 4 — Verify:** (MANUAL) Rebuild, shell has correct aliases, PATH, functions
 
 ---
 
@@ -294,7 +295,7 @@ stow -D -d ~/git/dotfiles git_scripts
 rm ~/.local/bin/show_git_url ~/.local/bin/merge_feature ~/.local/bin/rollback_git ~/.local/bin/create_feature ~/.local/bin/git_list_orphants
 ```
 
-**Step 4 — Verify:** Rebuild, scripts work from `~/.local/bin/`
+**Step 4 — Verify:** (MANUAL) Rebuild, scripts work from `~/.local/bin/`
 
 **Priority:** Low — these work fine stowed
 
@@ -351,7 +352,7 @@ sudo nixos-rebuild switch --flake .#hostname
 |-------|-----|--------|--------|
 | 1 | **yazi** | Low | ✅ Done |
 | 2 | **pyradio** | Low | ✅ Done |
-| 3 | **makima** | Low | ⬜ Skipped |
+| 3 | **makima** | Low | ✅ Done |
 | 4 | **GTK** | Medium | ✅ Done |
 | 5 | **rofi** | Medium | ✅ Done |
 | 6 | **waybar** | Medium | ✅ Done |
@@ -365,6 +366,7 @@ sudo nixos-rebuild switch --flake .#hostname
 
 - **Copy first, then modify:** Always copy files to `config/` before updating Nix modules
 - **Cleanup BEFORE rebuild:** Unstow and delete existing configs before verifying with rebuild
+- **Verification is MANUAL:** The verification step in each migration task MUST be performed manually by you — rebuild, test, and confirm the application works correctly
 - **Git commit per app:** One commit per migration for easy rollback
 - **Backups:** Dotfiles repo is the backup — don't delete until verified
 - **Rollback:** `sudo nixos-rebuild switch --rollback` if something breaks
@@ -378,7 +380,7 @@ sudo nixos-rebuild switch --flake .#hostname
 |-------|------|--------|------|
 | 1.1 | yazi | ✅ Done | |
 | 1.2 | pyradio | ✅ Done | 2026-03-15 |
-| 1.3 | makima | ⬜ Skipped | |
+| 1.3 | makima | ✅ Done | 2026-03-15 |
 | 2.1 | GTK theming | ✅ Done | 2026-03-15 |
 | 3.1 | rofi | ✅ Done | 2026-03-15 |
 | 3.2 | waybar | ✅ Done | 2026-03-15 |
@@ -402,7 +404,7 @@ nixos/home-manager/
 │   ├── starship/       ✅ existing
 │   ├── tmux/           ✅ existing
 │   ├── pyradio/        ✅ done
-│   ├── makima/         ⬜ pending
+│   ├── makima/         ✅ done
 │   ├── rofi/           ✅ done
 │   ├── waybar/         ✅ done
 │   ├── dunst/          ✅ done

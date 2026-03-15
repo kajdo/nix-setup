@@ -87,4 +87,10 @@
     source = ./../config/waybar;
     recursive = true;
   };
+
+  # Makima input remapping configs
+  xdg.configFile."makima" = {
+    source = ./../config/makima;
+    recursive = true;
+  };
 }
