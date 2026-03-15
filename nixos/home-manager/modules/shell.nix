@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   programs.bash = {
@@ -7,6 +7,9 @@
     shellAliases = {
       # update
       UU = "cd /etc/nixos && sudo nix flake update && sudo nixos-rebuild switch";
+      
+      # override lsd's ll to include hidden files
+      ll = lib.mkForce "lsd -lA";
       
       # fun stuff
       ss = "/home/kajdo/git/stream-sports/get";
@@ -30,7 +33,6 @@
       governors = "cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors";
       
       # development
-      gg = "lazygit";
       py = "python -c \"import sys; print(eval(sys.argv[1]))\"";
       
       # misc
@@ -133,9 +135,8 @@
       fi
 
       # Fuzzy search with ripgrep and open in editor
-      # Usage: gg_search <search_term>
-      # Note: 'gg' alias points to lazygit, use gg_search for fuzzy search
-      gg_search() {
+      # Usage: gg <search_term>
+      gg() {
           if [ -z "$1" ]; then
               echo "Usage: gg_search <search_term>"
               return 1
