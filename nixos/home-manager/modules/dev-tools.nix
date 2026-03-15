@@ -84,9 +84,7 @@
       init = {
         defaultBranch = "main";
       };
-      credential = {
-        helper = "store";
-      };
+
 
       pull = {
         rebase = false;
@@ -114,6 +112,12 @@
         prune = true;
       };
     };
+  };
+
+  # GitHub CLI
+  programs.gh = {
+    enable = true;
+    gitCredentialHelper.enable = true;
   };
 
   # Docker TUI

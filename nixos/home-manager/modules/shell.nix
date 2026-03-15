@@ -9,7 +9,7 @@
       UU = "cd /etc/nixos && sudo nix flake update && sudo nixos-rebuild switch";
       
       # override lsd's ll to include hidden files
-      ll = lib.mkForce "lsd -lA";
+      # ll = lib.mkForce "lsd -lA";
       
       # fun stuff
       ss = "/home/kajdo/git/stream-sports/get";
