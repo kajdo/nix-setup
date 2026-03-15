@@ -56,4 +56,28 @@
     enable = true;
   };
   xdg.configFile."dunst/dunstrc".source = ./../config/dunst/dunstrc;
+
+  # Rofi app launcher
+  programs.rofi = {
+    enable = true;
+    theme = ./../config/rofi/themes/kajdo-mix.rasi;
+    extraConfig = {
+      show-icons = true;
+      icon-theme = "Papirus";
+      display-drun = "  ";
+      display-window = "﩯 ";
+      display-combi = "  ";
+    };
+  };
+
+  # Additional rofi themes, scripts, and powermenu
+  xdg.configFile."rofi/themes" = {
+    source = ./../config/rofi/themes;
+    recursive = true;
+  };
+  xdg.configFile."rofi/scripts" = {
+    source = ./../config/rofi/scripts;
+    recursive = true;
+  };
+  xdg.configFile."rofi/powermenu.sh".source = ./../config/rofi/powermenu.sh;
 }
