@@ -266,8 +266,8 @@ rm ~/.bashrc ~/.bash_aliases ~/.bash_profile
 
 These are utility scripts that could be migrated but may be lower priority.
 
-### [ ] 4.1 git_scripts → home.file
-**Status:** Currently stowed
+### [x] 4.1 git_scripts → home.file
+**Status:** ✅ Done — config migrated to home-manager (2026-03-15)
 
 **Step 1 — Copy scripts:**
 ```bash
@@ -301,8 +301,8 @@ rm ~/.local/bin/show_git_url ~/.local/bin/merge_feature ~/.local/bin/rollback_gi
 
 ---
 
-### [ ] 4.2 nix-scripts → home.file
-**Status:** Currently stowed
+### [x] 4.2 nix-scripts → home.file
+**Status:** ✅ Done — config migrated to home-manager (2026-03-15)
 
 **Files:**
 - `nix-deepclean`
@@ -315,8 +315,8 @@ rm ~/.local/bin/show_git_url ~/.local/bin/merge_feature ~/.local/bin/rollback_gi
 
 ---
 
-### [ ] 4.3 x-desktop-scripts → home.file
-**Status:** Currently stowed
+### [x] 4.3 x-desktop-scripts → home.file
+**Status:** ✅ Done — config migrated to home-manager (2026-03-15)
 
 **Files:**
 - `brightness_down`, `volume_down`
@@ -358,7 +358,7 @@ sudo nixos-rebuild switch --flake .#hostname
 | 6 | **waybar** | Medium | ✅ Done |
 | 7 | **dunst** | Low | ✅ Done |
 | 8 | **bash** | High | ⬜ Pending |
-| — | **scripts** | Optional | ⬜ Low priority |
+| — | **scripts** | Optional | ✅ Done (2026-03-15) |
 
 ---
 
@@ -386,7 +386,7 @@ sudo nixos-rebuild switch --flake .#hostname
 | 3.2 | waybar | ✅ Done | 2026-03-15 |
 | 3.3 | dunst | ✅ Done | 2026-03-15 |
 | 3.4 | bash | ⬜ Pending | |
-| 4.x | scripts (optional) | ⬜ Pending | |
+| 4.x | scripts (optional) | ✅ Done | 2026-03-15 |
 | 5.x | final cleanup | ⬜ Pending | |
 
 Status legend: ⬜ Not started | ✅ Done | ❌ Blocked
@@ -409,6 +409,7 @@ nixos/home-manager/
 │   ├── waybar/         ✅ done
 │   ├── dunst/          ✅ done
 │   └── bash/           ⬜ pending
+├── scripts/            ✅ done (all utility scripts)
 ├── modules/
 │   ├── cli-utils.nix
 │   ├── desktop-apps.nix
@@ -416,6 +417,7 @@ nixos/home-manager/
 │   ├── hyprland.nix
 │   ├── media-apps.nix
 │   ├── gtk-theming.nix ✅ done
+│   ├── scripts.nix     ✅ done (2026-03-15)
 │   └── shell.nix       ⬜ pending
 └── home.nix
 ```

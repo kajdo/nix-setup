@@ -1,0 +1,371 @@
+#!/usr/bin/env bash
+
+# Enable verbose debugging for shell execution. Disable with `set +x` if not needed.
+# set -x
+
+# Configuration and Dependencies:
+# Requires: yt-dlp, mpv (and rofi for Twitch URLs if --select-format is used)
+
+# --- Configuration Variables ---
+# Minimum video resolution to prefer (e.g., 720 for 720p). Set to 0 to disable this feature.
+# The script will now select the *lowest* resolution that meets or exceeds MIN_RESOLUTION.
+MIN_RESOLUTION=1080 # Set to 0 to disable minimum resolution preference
+
+# Define common yt-dlp options, including cookies
+YTDLP_COMMON_OPTIONS="--cookies-from-browser helium"
+# Uncomment the line below if you prefer to use .netrc for all yt-dlp calls
+# YTDLP_COMMON_OPTIONS+=" --netrc"
+
+# --- Argument Parsing ---
+# Initialize variables for flags
+SELECT_FORMAT=false
+DOWNLOAD_MODE=false
+STREAM_URL=""
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+    --select-format)
+        SELECT_FORMAT=true
+        ;;
+    --download)
+        DOWNLOAD_MODE=true
+        ;;
+    *)
+        # Assume the first non-flag argument is the URL
+        if [ -z "$STREAM_URL" ]; then
+            STREAM_URL="$1"
+        else
+            echo "Warning: Ignoring extra argument '$1'"
+        fi
+        ;;
+    esac
+    shift # Move to the next argument
+done
+
+# Check if a URL is provided as an argument
+if [ -z "$STREAM_URL" ]; then
+    echo "Usage: $0 [--select-format] [--download] <stream_url>"
+    exit 1
+fi
+
+# --- Function to play via yt-dlp pipe ---
+# This function now simply plays the stream using the provided format_string.
+play_via_ytdlp_pipe() {
+    local format_string="$1" # This is the final -f argument value, e.g., "136+bestaudio"
+
+    local mpv_format_arg=""
+    if [ -n "$format_string" ]; then
+        mpv_format_arg="-f \"${format_string}\""
+    fi
+
+    # Extract a simple title for mpv (using the URL basename for simplicity)
+    MPV_TITLE=$(basename "$STREAM_URL")
+
+    # Construct and execute the mpv command
+    mpv_command="yt-dlp ${YTDLP_COMMON_OPTIONS} ${mpv_format_arg} -o - \"$STREAM_URL\" | mpv --force-media-title=\"$MPV_TITLE\" -"
+
+    echo "Executing: $mpv_command"
+    eval "$mpv_command"
+    echo "Stream playback initiated."
+}
+
+# --- Function to download the file ---
+# This function now simply downloads the file using the provided format_string.
+download_file() {
+    local format_string="$1" # This is the final -f argument value, e.g., "136+bestaudio"
+    local download_dir="$HOME/tmp"
+
+    mkdir -p "$download_dir" # Ensure the download directory exists
+
+    local ytdlp_format_option=""
+
+    # If a specific format_string was determined (e.g., from --select-format or MIN_RESOLUTION finding a direct ID)
+    if [ -n "$format_string" ]; then
+        ytdlp_format_option="-f \"${format_string}\""
+    # If MIN_RESOLUTION is active but no specific format ID was found by awk (meaning MIN_RESOLUTION logic defaulted to "best"),
+    # apply the height filter to get the best format within the resolution limit.
+    elif [ "$MIN_RESOLUTION" -gt 0 ]; then
+        ytdlp_format_option="-f \"bv[height<=$MIN_RESOLUTION]+bestaudio\""
+        echo "Applying resolution constraint for download: -f \"bv[height<=$MIN_RESOLUTION]+bestaudio\""
+    fi
+
+    echo "Determining optimal filename for download in $download_dir..."
+    local output_template="$download_dir/%(title)s.%(ext)s"
+
+    # Command to get the resolved path without downloading
+    local get_filename_command="yt-dlp ${YTDLP_COMMON_OPTIONS} \
+        ${ytdlp_format_option} \
+        --get-filename \
+        --output \"$output_template\" \
+        --restrict-filenames \
+        --no-playlist \
+        \"$STREAM_URL\""
+
+    echo "--- DEBUG: yt-dlp --get-filename command about to be executed ---"
+    echo "$get_filename_command"
+    echo "--- END DEBUG ---"
+
+    local target_filepath=$(eval "$get_filename_command")
+
+    if [ -z "$target_filepath" ]; then
+        echo "Error: Could not determine download filename. Exiting."
+        return 1
+    fi
+
+    echo "Downloading video to: $target_filepath"
+    local download_command="yt-dlp ${YTDLP_COMMON_OPTIONS} ${ytdlp_format_option} -o \"$target_filepath\" \"$STREAM_URL\""
+
+    echo "Executing download: $download_command"
+    echo "--- DEBUG: Final download command about to be executed ---"
+    echo "$download_command"
+    echo "--- END DEBUG ---"
+    eval "$download_command"
+
+    if [ $? -eq 0 ]; then
+        echo "Download complete. File saved to: $target_filepath"
+    else
+        echo "Download failed."
+        return 1
+    fi
+}
+
+# --- Main Logic ---
+
+# --- Pre-fetch yt-dlp -F output once to avoid repeated calls ---
+echo "Fetching available formats information (this may take a moment)..."
+# Make sure to include common options for fetching formats
+YTDLP_FORMATS_OUTPUT=$(yt-dlp -F ${YTDLP_COMMON_OPTIONS} "$STREAM_URL")
+if [ $? -ne 0 ]; then
+    echo "Error: yt-dlp failed to fetch format information. Stream might be unavailable, URL incorrect, or cookie extraction failed."
+    exit 1
+fi
+echo "Format information fetched."
+
+# --- Debugging output for YTDLP_FORMATS_OUTPUT ---
+echo "--- DEBUG: Raw yt-dlp -F output captured by script ---"
+echo "$YTDLP_FORMATS_OUTPUT"
+echo "--- END DEBUG ---"
+# --- End Debugging output ---
+
+# Create temporary files for awk scripts (for --select-format and MIN_RESOLUTION logic)
+# Ensure these are cleaned up on exit.
+TWITCH_AWK_SCRIPT_FILE=$(mktemp)
+cat >"$TWITCH_AWK_SCRIPT_FILE" <<'TWITCH_AWK_SCRIPT_EOF'
+{
+    id=$1; ext=$2; res=$3; fps=$4; tbr=$5; proto=$6; vcodec=$7; acodec=$8; abr=$9;
+    display_res = (res == "--" || res == "" ? "N/A" : res);
+    display_fps = (fps == "--" || fps == "" ? "N/A" : fps);
+    display_codec = (vcodec == "--" || vcodec == "" ? acodec : vcodec);
+    printf "%-25s %-15s %-10s %-10s %s\n", id, display_res, display_fps, tbr, display_codec;
+}
+TWITCH_AWK_SCRIPT_EOF
+
+# FIX: Changed mptemp to mktemp
+GENERIC_AWK_SCRIPT_FILE=$(mktemp)
+cat >"$GENERIC_AWK_SCRIPT_FILE" <<'GENERIC_AWK_SCRIPT_EOF'
+/^[[:space:]]*id[[:space:]]+ext/ {next}
+/^[[:space:]]*\[info\]/ {next}
+NF < 2 {next}
+{
+    id=$1;
+    description = "";
+    for (i=2; i<=NF; i++) {
+        description = (description == "" ? $i : description " " $i);
+    }
+    printf "%-10s %s\n", id, description;
+}
+GENERIC_AWK_SCRIPT_EOF
+
+MIN_RES_AWK_SCRIPT_FILE=$(mktemp)
+cat >"$MIN_RES_AWK_SCRIPT_FILE" <<'AWK_MIN_RES_SCRIPT_EOF'
+BEGIN {
+    best_found_id = "";
+    best_found_res = 999999;
+    best_found_is_combined = 0;
+    min_res_threshold = min_res;
+}
+/^[[:space:]]*id[[:space:]]+ext/ {next}
+/^[[:space:]]*\[info\]/ {next}
+NF < 2 {next}
+
+{
+    id=$1;
+    resolution_str = "";
+    is_video = 0;
+    is_audio_only = 0;
+
+    for (i=2; i<=NF; i++) {
+        if ($i ~ /[0-9]+x[0-9]+/ || $i ~ /[0-9]+p/) {
+            resolution_str = $i;
+            is_video = 1;
+        }
+        if ($i == "(audio" && $(i+1) == "only)") {
+            is_audio_only = 1;
+        }
+        if (($i ~ /^(avc1|vp9|h264|h265|av1|mp4v)$/) && resolution_str == "") {
+            is_video = 1;
+        }
+    }
+
+    if (resolution_str == "" && is_audio_only == 0 && is_video == 0) {
+        if ($0 ~ /(video|mp4|webm)/ && $0 !~ /(audio only)/) {
+            is_video = 1;
+        }
+    }
+
+    numeric_res = 0;
+    if (match(resolution_str, /([0-9]+)x([0-9]+)/, arr)) {
+        numeric_res = arr[2];
+    } else if (match(resolution_str, /([0-9]+)p/, arr)) {
+        numeric_res = arr[1];
+    }
+
+    current_is_combined = (is_video == 1 && is_audio_only == 0 && $0 !~ /video only/);
+
+    if (is_video == 1 && numeric_res >= min_res_threshold) {
+        if (numeric_res < best_found_res) {
+            best_found_res = numeric_res;
+            best_found_id = id;
+            best_found_is_combined = current_is_combined;
+        } else if (numeric_res == best_found_res) {
+            if (current_is_combined == 1 && best_found_is_combined == 0) {
+                best_found_id = id;
+                best_found_is_combined = current_is_combined;
+            }
+        }
+    }
+}
+END {
+    if (best_found_id != "") {
+        print best_found_id;
+    }
+}
+AWK_MIN_RES_SCRIPT_EOF
+
+# Clean up all temporary files on exit
+trap "rm -f \"$TWITCH_AWK_SCRIPT_FILE\" \"$GENERIC_AWK_SCRIPT_FILE\" \"$MIN_RES_AWK_SCRIPT_FILE\"" EXIT
+
+# Variable to hold the determined format ID, to be used by either play_via_ytdlp_pipe or download_file
+DETERMINED_FORMAT_ID=""
+
+# --- Format Determination Logic ---
+if $SELECT_FORMAT; then # User explicitly requested format selection via Rofi
+    if [[ "$STREAM_URL" =~ ^https?://(www\.)?twitch\.tv/ ]]; then
+        echo "Detected Twitch URL and --select-format flag. Displaying formats..."
+
+        FORMATS=$(echo "$YTDLP_FORMATS_OUTPUT" |
+            grep -E '^(audio_only|live_alt|chunked|[0-9]+p[0-9]*|.*__source_)\s+mp4' |
+            awk -f "$TWITCH_AWK_SCRIPT_FILE" |
+            sort -rV)
+
+        if [ -z "$(echo "$FORMATS" | head -n 1)" ]; then
+            echo "No suitable Twitch formats found. Falling back to default."
+        else
+            ROFI_OPTIONS="--------------- OPTIONS ---------------\n"
+            ROFI_OPTIONS+="Auto (let yt-dlp decide)\n"
+            ROFI_OPTIONS+="Source (highest quality)\n"
+            ROFI_OPTIONS+="--------------------------------------\n"
+            ROFI_OPTIONS+="$FORMATS"
+
+            SELECTED_LINE=$(echo -e "$ROFI_OPTIONS" | rofi -dmenu -p "Select Stream Quality:" -i -lines 15)
+
+            if [ -z "$SELECTED_LINE" ] || [[ "$SELECTED_LINE" =~ ^--- ]]; then
+                echo "No format selected or selection cancelled. Exiting."
+                exit 0
+            elif [ "$SELECTED_LINE" = "Auto (let yt-dlp decide)" ]; then
+                echo "Auto mode selected. Using default format selection."
+            elif [ "$SELECTED_LINE" = "Source (highest quality)" ]; then
+                DETERMINED_FORMAT_ID="bestvideo+bestaudio/best"
+                echo "Source quality selected (bestvideo+bestaudio/best)."
+            else
+                DETERMINED_FORMAT_ID=$(echo "$SELECTED_LINE" | awk '{print $1}')
+                echo "Selected format ID via Rofi: $DETERMINED_FORMAT_ID"
+
+                # --- AUTO-APPEND +bestaudio if YouTube/Vimeo and format is numeric ---
+                if [[ "$STREAM_URL" =~ ^https?://(www\.)?(youtube\.com|youtu\.be|vimeo\.com)/ ]] && [[ "$DETERMINED_FORMAT_ID" =~ ^[0-9]+$ ]]; then
+                    # Let's check if this numeric ID is "video only" in the format list
+                    if echo "$YTDLP_FORMATS_OUTPUT" | grep -E "^$DETERMINED_FORMAT_ID\s" | grep -iq 'video only'; then
+                        echo "Numeric video-only format selected ($DETERMINED_FORMAT_ID) for YouTube. Appending +bestaudio so you'll get video and audio."
+                        DETERMINED_FORMAT_ID="${DETERMINED_FORMAT_ID}+bestaudio"
+                    fi
+                fi
+
+            fi
+        fi
+
+    else # Non-Twitch URL with --select-format
+        echo "Non-Twitch URL detected and --select-format flag. Displaying formats..."
+
+        FORMATS=$(echo "$YTDLP_FORMATS_OUTPUT" |
+            awk -f "$GENERIC_AWK_SCRIPT_FILE" | sed '/^\s*$/d')
+
+        if [ -z "$(echo "$FORMATS" | head -n 1)" ]; then
+            echo "No suitable formats found. Falling back to default."
+        else
+            ROFI_OPTIONS="--------------- OPTIONS ---------------\n"
+            ROFI_OPTIONS+="Auto (let yt-dlp decide)\n"
+            ROFI_OPTIONS+="Best (yt-dlp's best combined quality)\n"
+            ROFI_OPTIONS+="--------------------------------------\n"
+            ROFI_OPTIONS+="$FORMATS"
+
+            SELECTED_LINE=$(echo -e "$ROFI_OPTIONS" | rofi -dmenu -p "Select Stream Quality:" -i -lines 15)
+
+            if [ -z "$SELECTED_LINE" ] || [[ "$SELECTED_LINE" =~ ^--- ]]; then
+                echo "No format selected or selection cancelled. Exiting."
+                exit 0
+            elif [ "$SELECTED_LINE" = "Auto (let yt-dlp decide)" ]; then
+                echo "Auto mode selected. Using default format selection."
+            elif [ "$SELECTED_LINE" = "Best (yt-dlp's best combined quality)" ]; then
+                DETERMINED_FORMAT_ID="bestvideo+bestaudio/best"
+                echo "Best combined quality selected (bestvideo+bestaudio/best)."
+            else
+                DETERMINED_FORMAT_ID=$(echo "$SELECTED_LINE" | awk '{print $1}')
+                echo "Selected format ID via Rofi: $DETERMINED_FORMAT_ID"
+
+                # --- AUTO-APPEND +bestaudio if YouTube/Vimeo and format is numeric ---
+                if [[ "$STREAM_URL" =~ ^https?://(www\.)?(youtube\.com|youtu\.be|vimeo\.com)/ ]] && [[ "$DETERMINED_FORMAT_ID" =~ ^[0-9]+$ ]]; then
+                    # Let's check if this numeric ID is "video only" in the format list
+                    if echo "$YTDLP_FORMATS_OUTPUT" | grep -E "^$DETERMINED_FORMAT_ID\s" | grep -iq 'video only'; then
+                        echo "Numeric video-only format selected ($DETERMINED_FORMAT_ID) for YouTube. Appending +bestaudio so you'll get video and audio."
+                        DETERMINED_FORMAT_ID="${DETERMINED_FORMAT_ID}+bestaudio"
+                    fi
+                fi
+            fi
+        fi
+    fi
+
+elif [ "$MIN_RESOLUTION" -gt 0 ]; then # No --select-format, but MIN_RESOLUTION is set
+    echo "No explicit format selection. Applying minimum resolution preference (${MIN_RESOLUTION}p)."
+
+    # Removed 'local' keyword here
+    candidate_format_id=$(echo "$YTDLP_FORMATS_OUTPUT" |
+        awk -v min_res="$MIN_RESOLUTION" -f "$MIN_RES_AWK_SCRIPT_FILE")
+
+    if [ -n "$candidate_format_id" ]; then
+        DETERMINED_FORMAT_ID="$candidate_format_id"
+        # Apply +bestaudio heuristic if it's a YouTube/Vimeo URL and numeric ID
+        if [[ "$STREAM_URL" =~ ^https?://(www\.)?(youtube\.com|youtu\.be|vimeo\.com)/ ]] && [[ "$DETERMINED_FORMAT_ID" =~ ^[0-9]+$ ]]; then
+            echo "Found format ${DETERMINED_FORMAT_ID} meeting minimum resolution. Appending +bestaudio."
+            DETERMINED_FORMAT_ID="${DETERMINED_FORMAT_ID}+bestaudio"
+        else
+            echo "Found format ${DETERMINED_FORMAT_ID} meeting minimum resolution."
+        fi
+    else
+        echo "No format found meeting minimum resolution (${MIN_RESOLUTION}p). Falling back to yt-dlp's default 'best'."
+        # DETERMINED_FORMAT_ID remains empty here, which will trigger the bv[height<=MIN_RESOLUTION] logic in download_file.
+    fi
+
+else # No --select-format and MIN_RESOLUTION is 0 or inactive
+    echo "No explicit format selection or minimum resolution preference. Using yt-dlp's default 'best'."
+    # DETERMINED_FORMAT_ID remains empty, which signals yt-dlp to pick its default best.
+fi
+
+# --- Execute Action (Download or Play) ---
+if $DOWNLOAD_MODE; then
+    echo "Download mode activated."
+    download_file "$DETERMINED_FORMAT_ID"
+else
+    echo "Streaming mode activated."
+    play_via_ytdlp_pipe "$DETERMINED_FORMAT_ID"
+fi

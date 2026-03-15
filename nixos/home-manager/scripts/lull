@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+cd || exit 1
+sudo cp -r /home/kajdo/git/nix-setup/nixos /etc
+
+# rebuild switch - because you just pulled in local changes ;)
+sudo nixos-rebuild switch
+
+# send a notification that it's done
+notify-send NixOS "Rebuild & Switch done!" --icon /run/current-system/sw/share/icons/hicolor/128x128/apps/nix-snowflake.png

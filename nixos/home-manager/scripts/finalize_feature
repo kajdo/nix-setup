@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# push the changes
+git push
+
+# change back to the main branch
+git checkout main
+
+# open browser with the url of the git
+xdg-open "$(show_git_url)"

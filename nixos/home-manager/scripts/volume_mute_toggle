@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Get current mute status
+mute_status=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -o "MUTED")
+
+# Toggle mute/unmute
+if [ "$mute_status" == "MUTED" ]; then
+    wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+    dunstify -a "volume" -r 9993 -u low "               Unmuted" -h string:x-dunst-stack-tag:volume
+else
+    wpctl set-mute @DEFAULT_AUDIO_SINK@ 1
+    dunstify -a "volume" -r 9993 -u low "                Muted" -h string:x-dunst-stack-tag:volume
+fi

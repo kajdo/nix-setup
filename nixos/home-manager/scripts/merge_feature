@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 <feature-branch-name>"
+    echo "If no branch name is provided, you will be prompted to select one."
+    exit 1
+}
+
+# Check if a branch name is provided as an argument
+if [ -z "$1" ]; then
+    # Use fzf to select a feature branch from the list of branches
+    FEATURE_BRANCH=$(git branch --list 'feature/*' | sed 's/^[ *]*//' | fzf --height 40% --reverse --ansi --preview "git log --color=always --oneline --abbrev-commit {} | head -n 20")
+
+    # Check if a branch was selected
+    if [ -z "$FEATURE_BRANCH" ]; then
+        echo "No feature branch selected. Exiting."
+        exit 1
+    fi
+else
+    FEATURE_BRANCH=$1
+fi
+
+# Set the main branch name
+MAIN_BRANCH="main"  # Change this to "master" if your main branch is named "master"
+
+# Fetch the latest changes from the remote repository
+git fetch origin
+
+# Switch to the main branch and pull the latest changes
+git checkout $MAIN_BRANCH
+if ! git pull origin $MAIN_BRANCH; then
+    echo "Failed to pull the latest changes from $MAIN_BRANCH."
+    exit 1
+fi
+
+# Merge the feature branch into the main branch
+if git merge --no-ff "$FEATURE_BRANCH"; then
+    echo "Successfully merged '$FEATURE_BRANCH' into '$MAIN_BRANCH'."
+    
+    # Delete the feature branch locally
+    git branch -d "$FEATURE_BRANCH"
+    
+    # Delete the feature branch remotely (uncomment if you want to delete it from remote)
+    # git push origin --delete "$FEATURE_BRANCH"
+
+    echo "Deleted feature branch '$FEATURE_BRANCH'."
+else
+    echo "Merge failed. Please resolve conflicts and try again."
+    exit 1
+fi
+

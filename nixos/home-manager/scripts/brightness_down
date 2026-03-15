@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Decrease brightness
+/run/current-system/sw/bin/light -U 10
+
+# Get the current brightness level
+brightness=$(/run/current-system/sw/bin/light | awk '{print int($1)}')
+
+# Send a notification with dunstify
+dunstify -a "brightness" -r 9994 -u low "            Brightness: $brightness%" -h int:value:"$brightness" -h string:x-dunst-stack-tag:brightness

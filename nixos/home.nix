@@ -8,6 +8,7 @@
     ./home-manager/modules/hyprland.nix
     ./home-manager/modules/media-apps.nix
     ./home-manager/modules/desktop-apps.nix
+    ./home-manager/modules/scripts.nix
   ];
 
   home.username = "kajdo";

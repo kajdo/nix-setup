@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# 1. Save the result of `which codium` in a variable
+codium_path=$(which codium)
+
+# 2. Check if it's a symbolic link
+if [[ ! -L "$codium_path" ]]; then
+  echo "Error: $(which codium) is not a symbolic link."
+  exit 1
+fi
+
+# 3. Read the target of the symbolic link
+target=$(readlink "$codium_path")
+
+# 4. Extract the directory (stop before /bin)
+extracted_directory=$(dirname "$(dirname "$target")")
+
+# 5. Concatenate the directory with the desired path
+final_path="${extracted_directory}/lib/vscode/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html"
+
+# 6. Check if the file exists before opening it
+if [[ ! -f "$final_path" ]]; then
+  echo "Error: File not found: $final_path"
+  exit 1
+fi
+
+echo "$final_path"
+
+# 7. Open the file in nvim
+nvim "$final_path"

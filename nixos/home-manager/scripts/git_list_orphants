@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# This script lists local Git branches that no longer exist on the remote.
+
+# --- Configuration ---
+# Set the remote name, usually 'origin'.
+REMOTE_NAME="origin"
+
+# --- Main Script ---
+
+echo "Fetching remote branches and pruning stale ones..."
+# Fetch all remote branches and prune any remote-tracking branches
+# that no longer exist on the remote. This ensures our local view of
+# remote branches is up-to-date.
+git fetch --prune "$REMOTE_NAME"
+
+echo -e "\nFinding local branches that don't exist on '$REMOTE_NAME' anymore:\n"
+
+# Get a list of all local branches, excluding the currently checked out branch
+# and filtering out common non-branch refs.
+# The 'for-each-ref' command is more robust than 'git branch'.
+git for-each-ref --format='%(refname:short)' refs/heads/ | while read -r local_branch; do
+    # Skip the currently checked out branch (optional, but generally good practice
+    # as you can't delete it directly anyway).
+    if [ "$(git rev-parse --abbrev-ref HEAD)" = "$local_branch" ]; then
+        continue
+    fi
+
+    # Check if a remote-tracking branch for the current local branch exists.
+    # 'git branch -r --list' will list remote-tracking branches.
+    # We check if the combination of REMOTE_NAME/local_branch exists.
+    if ! git branch -r --list "$REMOTE_NAME/$local_branch" > /dev/null; then
+        echo "$local_branch"
+    fi
+done
+
+echo -e "\nScript finished. The branches listed above likely need to be deleted locally."
+echo "You can delete them with 'git branch -d <branch-name>' (for merged branches)"
+echo "or 'git branch -D <branch-name>' (for unmerged branches)."

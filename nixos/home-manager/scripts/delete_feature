@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 <feature-branch-name>"
+    echo "If no branch name is provided, you will be prompted to select one."
+    exit 1
+}
+
+# Check if a branch name is provided as an argument
+if [ -z "$1" ]; then
+    # Use fzf to select a feature branch from the list of branches
+    FEATURE_BRANCH=$(git branch --list 'feature/*' | sed 's/^[ *]*//' | fzf --height 40% --reverse --ansi --preview "git log --color=always --oneline --abbrev-commit {} | head -n 20")
+
+    # Check if a branch was selected
+    if [ -z "$FEATURE_BRANCH" ]; then
+        echo "No feature branch selected. Exiting."
+        exit 1
+    fi
+else
+    FEATURE_BRANCH=$1
+fi
+
+# Check if the branch is fully merged into the main branch
+MAIN_BRANCH="main"  # Change this to "master" if your main branch is named "master"
+if git branch --merged | grep -q "$FEATURE_BRANCH"; then
+    echo "The branch '$FEATURE_BRANCH' is fully merged into '$MAIN_BRANCH'."
+else
+    echo "Warning: The branch '$FEATURE_BRANCH' is not fully merged into '$MAIN_BRANCH'."
+    read -p "Are you sure you want to delete it? (y/n) " confirm
+    if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+        echo "Branch deletion canceled."
+        exit 0
+    fi
+fi
+
+# Delete the branch locally
+git branch -d "$FEATURE_BRANCH"
+if [ $? -eq 0 ]; then
+    echo "Deleted local feature branch '$FEATURE_BRANCH'."
+    
+    # Uncomment the following line to delete the branch remotely
+    git push origin --delete "$FEATURE_BRANCH"
+    echo "Deleted remote feature branch '$FEATURE_BRANCH'."
+else
+    echo "Failed to delete branch '$FEATURE_BRANCH'. It may not exist."
+    exit 1
+fi
+

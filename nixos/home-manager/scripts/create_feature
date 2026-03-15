@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Check if a branch name is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <branch-name>"
+    exit 1
+fi
+
+# Set variables
+BRANCH_NAME=$1
+MAIN_BRANCH="main" # Change this to "master" if your main branch is named "master"
+
+# Navigate to the repository (optional: you can specify your repo path here)
+# cd /path/to/your/repo
+
+# Fetch the latest changes from the remote repository
+git fetch origin
+
+# Switch to the main branch and pull the latest changes
+git checkout $MAIN_BRANCH
+git pull origin $MAIN_BRANCH
+
+# Create a new feature branch from the updated main branch
+git checkout -b "$BRANCH_NAME"
+git push --set-upstream origin "$BRANCH_NAME"
+
+echo "Feature branch '$BRANCH_NAME' created based on the latest '$MAIN_BRANCH' branch."
