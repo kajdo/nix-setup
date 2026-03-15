@@ -138,6 +138,7 @@
   programs.yazi = {
     enable = true;
     enableBashIntegration = true;
+    shellWrapperName = "y";
 
     # Theme: use catppuccin-mocha flavor
     theme = {

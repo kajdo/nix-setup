@@ -41,13 +41,7 @@
   # Terminal emulator
   programs.kitty = {
     enable = true;
-    settings = {
-      font_family = "JetBrainsMono NFM";
-      font_size = 11.0;
-      background_opacity = "0.9";
-      window_padding_width = 8;
-      confirm_os_window_close = 0;
-    };
+    shellIntegration.enableBashIntegration = false;
   };
   xdg.configFile."kitty/kitty.conf".source = ./../config/kitty/kitty.conf;
 
