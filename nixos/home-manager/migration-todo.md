@@ -142,8 +142,8 @@ rm -rf ~/.config/rofi
 
 ---
 
-### [ ] 3.2 waybar (status bar)
-**Status:** Package installed in `hyprland.nix`, no config
+### [x] 3.2 waybar (status bar)
+**Status:** ✅ Done — config migrated to home-manager (2026-03-15)
 
 **Step 1 — Copy config files:**
 ```bash
@@ -174,7 +174,7 @@ stow -D -d ~/git/dotfiles waybar
 rm -rf ~/.config/waybar
 ```
 
-**Step 4 — Verify:** Rebuild, waybar displays with correct modules and styling
+**Step 4 — Verify:** ✅ Rebuild successful, waybar displays with correct modules and styling
 
 ---
 
@@ -354,7 +354,7 @@ sudo nixos-rebuild switch --flake .#hostname
 | 3 | **makima** | Low | ⬜ Skipped |
 | 4 | **GTK** | Medium | ✅ Done |
 | 5 | **rofi** | Medium | ✅ Done |
-| 6 | **waybar** | Medium | ⬜ Next |
+| 6 | **waybar** | Medium | ✅ Done |
 | 7 | **dunst** | Low | ✅ Done |
 | 8 | **bash** | High | ⬜ Pending |
 | — | **scripts** | Optional | ⬜ Low priority |
@@ -381,7 +381,7 @@ sudo nixos-rebuild switch --flake .#hostname
 | 1.3 | makima | ⬜ Skipped | |
 | 2.1 | GTK theming | ✅ Done | 2026-03-15 |
 | 3.1 | rofi | ✅ Done | 2026-03-15 |
-| 3.2 | waybar | ⬜ Next | |
+| 3.2 | waybar | ✅ Done | 2026-03-15 |
 | 3.3 | dunst | ✅ Done | 2026-03-15 |
 | 3.4 | bash | ⬜ Pending | |
 | 4.x | scripts (optional) | ⬜ Pending | |
@@ -404,7 +404,7 @@ nixos/home-manager/
 │   ├── pyradio/        ✅ done
 │   ├── makima/         ⬜ pending
 │   ├── rofi/           ✅ done
-│   ├── waybar/         ⬜ next
+│   ├── waybar/         ✅ done
 │   ├── dunst/          ✅ done
 │   └── bash/           ⬜ pending
 ├── modules/

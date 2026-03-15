@@ -64,9 +64,9 @@
     extraConfig = {
       show-icons = true;
       icon-theme = "Papirus";
-      display-drun = "  ";
-      display-window = "﩯 ";
-      display-combi = "  ";
+      display-drun = "  ";
+      display-window = " ";
+      display-combi = "  ";
     };
   };
 
@@ -80,4 +80,11 @@
     recursive = true;
   };
   xdg.configFile."rofi/powermenu.sh".source = ./../config/rofi/powermenu.sh;
+
+  # Waybar status bar
+  # Using xdg.configFile instead of programs.waybar because config.jsonc has JSON with comments
+  xdg.configFile."waybar" = {
+    source = ./../config/waybar;
+    recursive = true;
+  };
 }
