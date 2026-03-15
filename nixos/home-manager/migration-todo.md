@@ -85,8 +85,8 @@ rm -rf ~/.config/makima
 
 These use dedicated `programs.*` or `services.*` modules.
 
-### [ ] 3.1 rofi (app launcher)
-**Status:** Package installed in `hyprland.nix`, no config
+### [x] 3.1 rofi (app launcher)
+**Status:** ✅ Done — using native home-manager module with extraConfig (2026-03-15)
 
 **Step 1 — Copy config files:**
 ```bash
@@ -94,23 +94,31 @@ mkdir -p /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/themes
 mkdir -p /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/scripts
 cp ~/git/dotfiles/rofi/.config/rofi/themes/*.rasi /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/themes/
 cp ~/git/dotfiles/rofi/.config/rofi/scripts/*.sh /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/scripts/
+cp ~/git/dotfiles/rofi/.config/rofi/config.rasi /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/
+cp ~/git/dotfiles/rofi/.config/rofi/powermenu.sh /home/kajdo/git/nix-setup/nixos/home-manager/config/rofi/
 ```
 
 **Files to copy:**
-- `themes/spotlight.rasi`
-- `themes/spotlight-dark.rasi`
-- `themes/squared-everforest.rasi`
-- `themes/rounded-pink-dark.rasi`
+- `config.rasi` (converted to Nix extraConfig)
+- `powermenu.sh`
+- `themes/kajdo-mix.rasi` (active theme) + 31 other themes
 - `scripts/local-bin-list.sh`
 
 **Step 2 — Update `hyprland.nix`:**
 ```nix
 programs.rofi = {
   enable = true;
-  theme = ./../config/rofi/themes/spotlight-dark.rasi;
+  theme = ./../config/rofi/themes/kajdo-mix.rasi;
+  extraConfig = {
+    show-icons = true;
+    icon-theme = "Papirus";
+    display-drun = "  ";
+    display-window = "﩯 ";
+    display-combi = "  ";
+  };
 };
 
-# Additional themes and scripts
+# Additional rofi themes, scripts, and powermenu
 xdg.configFile."rofi/themes" = {
   source = ./../config/rofi/themes;
   recursive = true;
@@ -119,7 +127,10 @@ xdg.configFile."rofi/scripts" = {
   source = ./../config/rofi/scripts;
   recursive = true;
 };
+xdg.configFile."rofi/powermenu.sh".source = ./../config/rofi/powermenu.sh;
 ```
+
+**Note:** Cannot use `xdg.configFile."rofi/config.rasi"` when `programs.rofi.enable = true` (causes conflict). Must use `programs.rofi.theme` and `extraConfig` options instead.
 
 **Step 3 — Cleanup:**
 ```bash
@@ -127,7 +138,7 @@ stow -D -d ~/git/dotfiles rofi
 rm -rf ~/.config/rofi
 ```
 
-**Step 4 — Verify:** Rebuild, then `rofi -show drun` uses theme, `rofi -theme spotlight` works
+**Step 4 — Verify:** ✅ Rebuild successful, rofi uses kajdo-mix.rasi theme with original settings
 
 ---
 
@@ -342,10 +353,10 @@ sudo nixos-rebuild switch --flake .#hostname
 | 2 | **pyradio** | Low | ✅ Done |
 | 3 | **makima** | Low | ⬜ Skipped |
 | 4 | **GTK** | Medium | ✅ Done |
-| 5 | **rofi** | Medium | ⬜ Next |
-| 6 | **waybar** | Medium | ⬜ Pending |
+| 5 | **rofi** | Medium | ✅ Done |
+| 6 | **waybar** | Medium | ⬜ Next |
 | 7 | **dunst** | Low | ✅ Done |
-| 8 | **bash** | High | ⬜ Next |
+| 8 | **bash** | High | ⬜ Pending |
 | — | **scripts** | Optional | ⬜ Low priority |
 
 ---
@@ -369,10 +380,10 @@ sudo nixos-rebuild switch --flake .#hostname
 | 1.2 | pyradio | ✅ Done | 2026-03-15 |
 | 1.3 | makima | ⬜ Skipped | |
 | 2.1 | GTK theming | ✅ Done | 2026-03-15 |
-| 3.1 | rofi | ⬜ Next | |
-| 3.2 | waybar | ⬜ Pending | |
+| 3.1 | rofi | ✅ Done | 2026-03-15 |
+| 3.2 | waybar | ⬜ Next | |
 | 3.3 | dunst | ✅ Done | 2026-03-15 |
-| 3.4 | bash | ⬜ Next | |
+| 3.4 | bash | ⬜ Pending | |
 | 4.x | scripts (optional) | ⬜ Pending | |
 | 5.x | final cleanup | ⬜ Pending | |
 
@@ -392,8 +403,8 @@ nixos/home-manager/
 │   ├── tmux/           ✅ existing
 │   ├── pyradio/        ✅ done
 │   ├── makima/         ⬜ pending
-│   ├── rofi/           ⬜ pending
-│   ├── waybar/         ⬜ pending
+│   ├── rofi/           ✅ done
+│   ├── waybar/         ⬜ next
 │   ├── dunst/          ✅ done
 │   └── bash/           ⬜ pending
 ├── modules/
