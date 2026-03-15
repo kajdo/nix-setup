@@ -50,4 +50,10 @@
     };
   };
   xdg.configFile."kitty/kitty.conf".source = ./../config/kitty/kitty.conf;
+
+  # Notification daemon
+  services.dunst = {
+    enable = true;
+  };
+  xdg.configFile."dunst/dunstrc".source = ./../config/dunst/dunstrc;
 }
