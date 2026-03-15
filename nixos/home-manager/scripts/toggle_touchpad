@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# script to toggle touchpad on laptop - will be called via sxhkd
+# disables input when enabled, enables it when disabled
+
+TOUCHPAD_ID=$(xinput list | grep -i "Synaptics" | grep -o 'id=[0-9]*' | cut -d= -f2)
+if [ -z "$TOUCHPAD_ID" ]; then
+  echo "Touchpad not found!"
+  exit 1
+fi
+
+TOUCHPAD_ENABLED=$(xinput list-props "$TOUCHPAD_ID" | grep "Device Enabled" | awk '{print $4}')
+
+if [ "$TOUCHPAD_ENABLED" -eq 1 ]; then
+  xinput disable "$TOUCHPAD_ID"
+  echo "Touchpad disabled"
+else
+  xinput enable "$TOUCHPAD_ID"
+  echo "Touchpad enabled"
+fi

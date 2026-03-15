@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# --- Configuration ---
+# Common locations for code.desktop
+declare -a DESKTOP_FILE_PATHS=(
+  "/run/current-system/sw/share/applications/codium.desktop"
+  # Add other potential paths if needed
+)
+
+# Relative path to workbench.html within the installed VS Code package
+# This might need adjustment based on the exact package structure
+WORKBENCH_HTML_RELATIVE_PATH="lib/vscode/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html"
+
+# --- Find code.desktop and its target ---
+VSCODE_STORE_PATH=""
+
+for desktop_path in "${DESKTOP_FILE_PATHS[@]}"; do
+  if [ -L "$desktop_path" ]; then # Check if it's a symbolic link
+    echo "Found code.desktop symlink at: $desktop_path"
+    # Read the target of the symlink
+    SYMLINK_TARGET=$(readlink -f "$desktop_path")
+    echo "SYMLINK_TARGET points to: $SYMLINK_TARGET"
+
+    # Extract the base store path (up to the package name)
+    # This assumes the target looks like /nix/store/...-package-version/...
+    if [[ "$SYMLINK_TARGET" =~ (^\/nix\/store\/[a-z0-9]+-[a-zA-Z0-9_.-]+-[0-9.]+\/?) ]] \
+      ; then
+      VSCODE_STORE_PATH="${BASH_REMATCH[1]}"
+      # Remove trailing slash if present
+      VSCODE_STORE_PATH="${VSCODE_STORE_PATH%/}"
+      echo "Extracted VS Code store path: $VSCODE_STORE_PATH"
+      break # Found the path, exit loop
+    else
+      echo "Could not extract VS Code store path from symlink target: $SYMLINK_TARGET"
+    fi
+  fi
+done
+
+# --- Locate workbench.html ---
+if [ -n "$VSCODE_STORE_PATH" ]; then
+  WORKBENCH_HTML_FULL_PATH="$VSCODE_STORE_PATH/$WORKBENCH_HTML_RELATIVE_PATH"
+
+  if [ -f "$WORKBENCH_HTML_FULL_PATH" ]; then
+    echo "Found workbench.html at: $WORKBENCH_HTML_FULL_PATH"
+    # You can now use this path to manually modify the file (e.g., using sudo nano or sed)
+    # Example (requires root to modify files in /nix/store):
+    # echo "You might need sudo to modify:"
+    # echo "sudo nano \"$WORKBENCH_HTML_FULL_PATH\""
+    # echo "Or use sed:"
+    # echo "sudo sed -i 's/original/replacement/' \"$WORKBENCH_HTML_FULL_PATH\""
+
+    # IMPORTANT: Manually modifying files in the Nix store is generally discouraged
+    # as it breaks the integrity guarantees of Nix. This is a temporary workaround!
+
+  else
+    echo "Could not find workbench.html at the expected path: $WORKBENCH_HTML_FULL_PATH"
+    echo "Please verify the WORKBENCH_HTML_RELATIVE_PATH in the script."
+  fi
+else
+  echo "Could not find the code.desktop symlink in the specified paths."
+  echo "Please ensure VS Code is installed and check the DESKTOP_FILE_PATHS."
+fi

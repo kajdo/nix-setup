@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+cp -r /etc/nixos /home/kajdo/git/nix-setup/
+rm /home/kajdo/git/nix-setup/nixos/hardware-configuration.nix

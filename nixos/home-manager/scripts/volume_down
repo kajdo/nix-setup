@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Decrease volume
+wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+
+# Get the current volume level
+vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}')
+
+# Send a notification with dunstify
+# dunstify -a "volume" -r 9993 -u low "Volume" -h int:value:"$vol" -h string:volume:"$vol%"
+dunstify -a "volume" -r 9993 -u low "              Volume: $vol%" -h int:value:"$vol" -h string:x-dunst-stack-tag:volume

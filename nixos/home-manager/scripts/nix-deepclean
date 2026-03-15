@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+sudo nix-collect-garbage --delete-old # Remove old generations and unused store paths
+sudo nix-store --gc # Explicitly run garbage collection
+nix-store --verify --check-contents # Check integrity of the Nix store (can take a while)
+rm -rf ~/.cache/nix # Clear user-specific Nix cache

@@ -4,9 +4,12 @@
   imports = [
     ./home-manager/modules/cli-utils.nix
     ./home-manager/modules/dev-tools.nix
+    ./home-manager/modules/gtk-theming.nix
     ./home-manager/modules/hyprland.nix
     ./home-manager/modules/media-apps.nix
     ./home-manager/modules/desktop-apps.nix
+    ./home-manager/modules/scripts.nix
+    ./home-manager/modules/shell.nix
   ];
 
   home.username = "kajdo";

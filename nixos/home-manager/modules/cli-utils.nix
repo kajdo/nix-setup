@@ -56,6 +56,11 @@
   programs.lsd = {
     enable = true;
     enableBashIntegration = true;
+    settings = {
+      sorting = {
+        dir-grouping = "first";
+      };
+    };
   };
 
   # zoxide - smarter cd command

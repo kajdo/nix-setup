@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+
+# --- Configuration ---
+# Set to 'true' to automatically remove untracked files and directories after reset,
+# or 'false' to ask for confirmation.
+AUTO_CLEAN_AFTER_RESET=false
+# --- End Configuration ---
+
+# Function to check for fzf installation
+check_fzf() {
+    if ! command -v fzf &>/dev/null; then
+        echo "Error: fzf is not installed."
+        echo "Please install fzf to use this script. For example:"
+        echo "  macOS: brew install fzf && $(brew --prefix)/opt/fzf/install"
+        echo "  Debian/Ubuntu: sudo apt install fzf"
+        echo "  Arch: sudo pacman -S fzf"
+        echo "For other systems, visit: https://github.com/junegunn/fzf#installation"
+        exit 1
+    fi
+}
+
+# Function to check if the current directory is a Git repository
+check_git_repo() {
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo "Error: Not inside a Git repository."
+        exit 1
+    fi
+}
+
+# --- Main Script Logic ---
+check_fzf
+check_git_repo
+
+echo "Fetching commit history for interactive selection..."
+echo "-----------------------------------------------------"
+echo "  Use Ctrl+N/P or Up/Down arrows to navigate."
+echo "  Press Enter to select the desired commit."
+echo "  Press Ctrl+C to cancel the operation."
+echo "-----------------------------------------------------"
+
+# Get the git log output and pipe it to fzf for interactive selection.
+# --no-sort: keep the git log order (most recent first)
+# --reverse: display from oldest to newest if you prefer, but --no-sort is usually fine
+# --ansi: ensure fzf correctly interprets ANSI color codes from git log
+# --height=40%: make fzf window 40% of terminal height for better viewing
+selected_line=$(git log --oneline --graph --all --decorate --color=always |
+    fzf --ansi --no-sort --height=40% --preview "git show --color=always {1}" --preview-window=right:50%)
+
+# Check if nothing was selected (fzf returns empty if cancelled)
+if [ -z "$selected_line" ]; then
+    echo ""
+    echo "No commit selected. Aborting rollback."
+    exit 0
+fi
+
+# Extract the commit hash from the selected line.
+# The hash is always the first word in the `git log --oneline` output.
+# We use grep with a regex to robustly extract it.
+commit_hash=$(echo "$selected_line" | grep -oP '^[0-9a-f]{7,40}' | head -n 1)
+
+if [ -z "$commit_hash" ]; then
+    echo "Error: Could not extract a valid commit hash from your selection."
+    echo "Selected: '$selected_line'"
+    echo "Aborting rollback."
+    exit 1
+fi
+
+echo ""
+echo "-----------------------------------------------------"
+echo "You have selected the following commit:"
+echo "$selected_line"
+echo ""
+echo "WARNING: This is a DESTRUCTIVE operation!"
+echo "         'git reset --hard' will PERMANENTLY discard ALL local commits"
+echo "         and uncommitted changes that occurred AFTER the selected commit ($commit_hash)."
+echo "         Ensure you have backed up any necessary work or understand the consequences."
+echo "-----------------------------------------------------"
+
+read -p "Are you absolutely sure you want to proceed with 'git reset --hard $commit_hash'? (yes/no): " confirmation
+
+if [[ "$confirmation" != "yes" ]]; then
+    echo "Rollback aborted by user."
+    exit 0
+fi
+
+echo ""
+echo "Performing git reset --hard $commit_hash..."
+git reset --hard "$commit_hash"
+
+if [ $? -eq 0 ]; then
+    echo "Rollback successful. Your repository is now at commit $commit_hash."
+    echo "-----------------------------------------------------"
+
+    if [ "$AUTO_CLEAN_AFTER_RESET" = true ]; then
+        echo "Automatically performing 'git clean -fd'..."
+        git clean -fd
+        if [ $? -eq 0 ]; then
+            echo "Untracked files and directories removed successfully."
+        else
+            echo "Error: 'git clean -fd' failed. Please check for issues."
+        fi
+    else
+        read -p "Do you also want to remove all untracked files and directories ('git clean -fd')? (yes/no): " clean_confirmation
+        if [[ "$clean_confirmation" == "yes" ]]; then
+            echo "Performing 'git clean -fd'..."
+            git clean -fd
+            if [ $? -eq 0 ]; then
+                echo "Untracked files and directories removed successfully."
+            else
+                echo "Error: 'git clean -fd' failed. Please check for issues."
+            fi
+        else
+            echo "Skipping 'git clean -fd'."
+        fi
+    fi
+else
+    echo "Error: 'git reset --hard' failed. Please check the output above."
+fi
+
+echo "Script finished."

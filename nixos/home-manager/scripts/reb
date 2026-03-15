@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+notify-send reboot
+
+# turn off bluetooth - think it causes the stop job waiting
+bluetoothctl power off
+
+systemctl reboot
