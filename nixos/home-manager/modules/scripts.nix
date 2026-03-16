@@ -36,6 +36,7 @@
   home.file.".local/bin/rofi_bluetooth.sh".source = ./../scripts/rofi_bluetooth.sh;
   home.file.".local/bin/rofi_bluetooth_info.sh".source = ./../scripts/rofi_bluetooth_info.sh;
   home.file.".local/bin/rofi_launch.sh".source = ./../scripts/rofi_launch.sh;
+  home.file.".local/bin/rofi-wifi-menu.sh".source = ./../scripts/rofi-wifi-menu.sh;
 
   # Media/utility scripts
   home.file.".local/bin/vid".source = ./../scripts/vid;
