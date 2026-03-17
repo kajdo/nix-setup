@@ -5,6 +5,7 @@
     # Python tooling
     python313
     python313Packages.flake8
+    python313Packages.typer
     pipx
 
     # Build tools
@@ -20,6 +21,7 @@
     yt-dlp
     scrcpy
     opencode
+    bitwarden-cli
 
     # General utilities
     jq
@@ -44,6 +46,7 @@
     nodePackages.vim-language-server
     nodePackages.eslint
     nodePackages.prettier
+    shellcheck
 
     # Formatters
     black
