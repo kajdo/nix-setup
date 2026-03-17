@@ -1,2 +1,4 @@
+AGENTS.md
 # ignore hardwareinfo
 ./nixos/hardware-configuration.nix
+

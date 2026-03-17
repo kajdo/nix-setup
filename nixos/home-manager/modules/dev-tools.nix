@@ -3,9 +3,10 @@
 {
   home.packages = with pkgs; [
     # Python tooling
-    python313
-    python313Packages.flake8
-    python313Packages.typer
+    (python313.withPackages (p: with p; [
+      flake8
+      typer
+    ]))
     pipx
 
     # Build tools
