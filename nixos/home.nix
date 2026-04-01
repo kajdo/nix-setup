@@ -10,6 +10,7 @@
     ./home-manager/modules/desktop-apps.nix
     ./home-manager/modules/scripts.nix
     ./home-manager/modules/shell.nix
+    ./home-manager/modules/llm-agents.nix
   ];
 
   home.username = "kajdo";
