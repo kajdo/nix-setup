@@ -153,6 +153,26 @@
                   --bind 'ctrl-d:preview-half-page-down'
       }
 
+      # open opencode with oh-my-opencode as plugins
+      omo() {
+          local config_file="$HOME/.config/opencode/config.json"
+          local updated_json
+
+          updated_json=$(jq '
+            .plugin = (
+              (.plugin // [])
+              | if any(.[]; test("^oh-my-opencode(@.*)?$")) then
+                  .
+                else
+                  . + ["oh-my-opencode@latest"]
+                end
+            )
+          ' "$config_file")
+
+          OPENCODE_CONFIG_CONTENT="$updated_json" opencode "$@"
+        }
+
+
       # add individual paths
       export PATH="/usr/local/bin:$PATH"
       export PATH="$PATH:/home/kajdo/git/custom_scripts/remote_computing/.local/bin"

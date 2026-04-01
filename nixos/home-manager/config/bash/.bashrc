@@ -146,4 +146,23 @@ eval "$(zoxide init bash)"
 eval "$(mcfly init bash)"
 eval "$(starship init bash)"
 
+## function to open oh-my-opencode
+omo() {
+	local config_file="$HOME/.config/opencode/config.json"
+	local updated_json
+
+	updated_json=$(jq '
+    .plugin = (
+      (.plugin // [])
+      | if any(.[]; test("^oh-my-opencode(@.*)?$")) then
+          .
+        else
+          . + ["oh-my-opencode@latest"]
+        end
+    )
+  ' "$config_file")
+
+	OPENCODE_CONFIG_CONTENT="$updated_json" opencode "$@"
+}
+
 export PATH=$PATH:$HOME/.local/bin
