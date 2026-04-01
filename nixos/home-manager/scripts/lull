@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 cd || exit 1
+[ -f /home/kajdo/git/nix-setup/nixos/flake.lock ] && rm /home/kajdo/git/nix-setup/nixos/flake.lock
 sudo cp -r /home/kajdo/git/nix-setup/nixos /etc
 
 # rebuild switch - because you just pulled in local changes ;)
