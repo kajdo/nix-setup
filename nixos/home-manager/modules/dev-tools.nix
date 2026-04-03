@@ -69,6 +69,9 @@
     vimPlugins.nvim-treesitter-parsers.html
     vimPlugins.nvim-treesitter-parsers.css
 
+    # Windsurf.nvim language server (auto-patched via flake)
+    codeium-lsp
+
     # Development tools
     ripgrep
     fd
