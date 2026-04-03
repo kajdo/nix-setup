@@ -1,5 +1,6 @@
 return {
-  "pablopunk/pi.nvim",
+  -- "pablopunk/pi.nvim",
+  dir = "/home/kajdo/git/pi.nvim",
   config = function()
     require("pi").setup()
 

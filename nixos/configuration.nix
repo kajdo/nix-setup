@@ -1,3 +1,7 @@
+# Main NixOS system configuration.
+# Imports all system-level modules organized by category:
+# core, hardware, networking, desktop, and services.
+
 { config, pkgs, inputs, ... }:
 
 let
