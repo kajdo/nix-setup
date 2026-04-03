@@ -1,0 +1,30 @@
+-- ~/.config/nvim/lua/custom/plugins/windsurf.lua
+return {
+  "Exafunction/windsurf.nvim",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+    "hrsh7th/nvim-cmp",
+  },
+  event = "BufEnter",
+  config = function()
+    require("codeium").setup({
+      enable_cmp_source = false,
+      tools = { language_server = vim.fn.exepath("codeium-lsp") },
+      virtual_text = {
+        enabled = true,
+        manual = false,
+        idle_delay = 75,
+        virtual_text_priority = 65535,
+        map_keys = true,
+        key_bindings = {
+          accept = "<Tab>",
+          accept_word = false,
+          accept_line = false,
+          clear = false,
+          next = "<M-]>",
+          prev = "<M-[>",
+        },
+      },
+    })
+  end,
+}

@@ -8,6 +8,8 @@
         inputs.nixpkgs.follows = "nixpkgs";
       };
       llm-agents.url = "github:numtide/llm-agents.nix";
+      windsurf.url = "github:Exafunction/windsurf.nvim";
+      windsurf.inputs.nixpkgs.follows = "nixpkgs";
     };
 
    outputs = { self, nixpkgs, home-manager, ... } @inputs : {
@@ -16,9 +18,15 @@
        nixos = nixpkgs.lib.nixosSystem {
          system = "x86_64-linux";
 
-         modules = [
-           ./configuration.nix
-           home-manager.nixosModules.home-manager
+          modules = [
+            { nixpkgs.overlays = [
+                (final: prev: {
+                  codeium-lsp = inputs.windsurf.packages.${prev.system}.codeium-lsp;
+                })
+              ];
+            }
+            ./configuration.nix
+            home-manager.nixosModules.home-manager
             {
               home-manager = {
                 useGlobalPkgs = true;
@@ -32,8 +40,8 @@
             }
          ];
 
-         specialArgs = { inherit inputs; };
-       };
+           specialArgs = { inherit inputs; };
+        };
      };
    };
  }
