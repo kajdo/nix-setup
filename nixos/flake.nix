@@ -15,16 +15,16 @@
    outputs = { self, nixpkgs, home-manager, ... } @inputs : {
 
      nixosConfigurations = {
-       nixos = nixpkgs.lib.nixosSystem {
-         system = "x86_64-linux";
+        nixos = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
 
-          modules = [
-            { nixpkgs.overlays = [
-                (final: prev: {
-                  codeium-lsp = inputs.windsurf.packages.${prev.system}.codeium-lsp;
-                })
-              ];
-            }
+           modules = [
+             { nixpkgs.overlays = [
+                 (final: prev: {
+                   codeium-lsp = inputs.windsurf.packages.${prev.stdenv.hostPlatform.system}.codeium-lsp;
+                 })
+               ];
+             }
             ./configuration.nix
             home-manager.nixosModules.home-manager
             {
