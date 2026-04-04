@@ -183,6 +183,9 @@
       # pipx thingy
       export _ZO_DOCTOR=0
 
+      # keybindings
+      bind -x '"\C-p": pi'
+
       # zoxide, mcfly, starship inits handled by home-manager enableBashIntegration
     '';
   };
