@@ -2,7 +2,7 @@
 
 return {
 	"chrisgrieser/nvim-origami",
-	enabled = true,
+	enabled = false,
 	event = "VeryLazy",
 	opts = {}, -- needed even when using default config
 

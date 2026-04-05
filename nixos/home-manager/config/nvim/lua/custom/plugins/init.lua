@@ -40,15 +40,21 @@ vim.o.tabstop = 4 -- Number of spaces that a <Tab> counts for
 vim.o.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent
 vim.o.foldenable = false
 
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = {
+		"bash", "sh", "diff", "html", "json", "yaml", "css",
+		"python", "javascript", "typescript", "markdown", "query",
+	},
+	callback = function(ev)
+		vim.treesitter.start(ev.buf)
+	end,
+})
+
 -- adaptions to handle big json files
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = "json",
 	callback = function()
-		require("nvim-treesitter.configs").setup({
-			highlight = {
-				enable = false, -- Disable Tree-sitter highlighting
-			},
-		})
+		vim.treesitter.stop()
 	end,
 })
 

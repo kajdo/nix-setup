@@ -37,16 +37,16 @@
     neovim
 
     # LSPs
-    nodePackages.typescript-language-server
-    nodePackages.vscode-langservers-extracted
+    typescript-language-server
+    vscode-langservers-extracted
     pyright
     nixd
-    nodePackages.bash-language-server
+    bash-language-server
     dockerfile-language-server
-    nodePackages.yaml-language-server
-    nodePackages.vim-language-server
-    nodePackages.eslint
-    nodePackages.prettier
+    yaml-language-server
+    vim-language-server
+    eslint
+    prettier
     shellcheck
 
     # Formatters
@@ -57,17 +57,7 @@
     prettierd
     biome
 
-    # Tree-sitter parsers
     tree-sitter
-    vimPlugins.nvim-treesitter-parsers.python
-    vimPlugins.nvim-treesitter-parsers.lua
-    vimPlugins.nvim-treesitter-parsers.javascript
-    vimPlugins.nvim-treesitter-parsers.typescript
-    vimPlugins.nvim-treesitter-parsers.bash
-    vimPlugins.nvim-treesitter-parsers.json
-    vimPlugins.nvim-treesitter-parsers.yaml
-    vimPlugins.nvim-treesitter-parsers.html
-    vimPlugins.nvim-treesitter-parsers.css
 
     # Windsurf.nvim language server (auto-patched via flake)
     codeium-lsp
@@ -137,6 +127,18 @@
     enable = true;
     extraConfig = builtins.readFile ./../config/tmux/tmux.conf;
   };
+
+  # Tree-sitter parsers and queries (non-bundled in nvim 0.12)
+  home.file."nvim-treesitter-parsers".source =
+    let
+      parsers = with pkgs.vimPlugins.nvim-treesitter-parsers; [
+        bash diff html json yaml css python javascript typescript markdown_inline query
+      ];
+    in
+    pkgs.symlinkJoin {
+      name = "nvim-treesitter-parsers";
+      paths = parsers ++ [ pkgs.vimPlugins.nvim-treesitter ];
+    };
 
   # Neovim configuration
   xdg.configFile."nvim" = {
