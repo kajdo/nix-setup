@@ -118,3 +118,25 @@ If a parser does not exist there, it cannot be added with the current setup.
 - Some parsers are bundled by Neovim 0.12 already, but this setup explicitly manages additional parsers through Nix.
 - Python worked without a mapping because the filetype and parser name are both `python`.
 - Shell files needed a mapping because the filetype is `sh` while the parser package is `bash`.
+
+
+## Missing in the doc
+`home-manager/config/nvim/lua/custom/plugins/init.lua`
+```
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = {
+		"bash",
+		"sh",
+		"diff",
+		"html",
+		"json",
+		"yaml",
+		"css",
+		"python",
+		"javascript",
+		"typescript",
+		"markdown",
+		"query",
+		"nix",
+	},
+```
