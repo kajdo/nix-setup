@@ -14,7 +14,7 @@
     hyprprop
     waybar
     wdisplays
-    swww
+    awww
     hyprlock
     hypridle
     dunst # Notification daemon
