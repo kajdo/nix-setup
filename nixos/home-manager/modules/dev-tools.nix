@@ -33,6 +33,9 @@
     # Git diff viewer
     delta
 
+    # Git GUI client
+    gitnuro
+
     # Neovim
     neovim
 
