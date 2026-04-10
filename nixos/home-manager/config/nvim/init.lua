@@ -736,6 +736,8 @@ if vim.fn.isdirectory(ts_path) == 1 then
 			vim.treesitter.language.add(lang, { path = ts_path .. "/parser/" .. name })
 		end
 	end
+	-- Shell buffers use the "sh" filetype, but the parser package is named "bash".
+	vim.treesitter.language.register("bash", { "sh", "zsh" })
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`

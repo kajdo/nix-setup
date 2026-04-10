@@ -33,6 +33,9 @@
     # Git diff viewer
     delta
 
+    # Git GUI client
+    gitnuro
+
     # Neovim
     neovim
 
@@ -132,7 +135,7 @@
   home.file."nvim-treesitter-parsers".source =
     let
       parsers = with pkgs.vimPlugins.nvim-treesitter-parsers; [
-        bash diff html json yaml css python javascript typescript markdown_inline query
+        bash diff html json yaml css python javascript typescript markdown_inline query nix
       ];
     in
     pkgs.symlinkJoin {

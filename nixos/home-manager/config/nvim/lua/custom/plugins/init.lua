@@ -42,8 +42,19 @@ vim.o.foldenable = false
 
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = {
-		"bash", "sh", "diff", "html", "json", "yaml", "css",
-		"python", "javascript", "typescript", "markdown", "query",
+		"bash",
+		"sh",
+		"diff",
+		"html",
+		"json",
+		"yaml",
+		"css",
+		"python",
+		"javascript",
+		"typescript",
+		"markdown",
+		"query",
+		"nix",
 	},
 	callback = function(ev)
 		vim.treesitter.start(ev.buf)
