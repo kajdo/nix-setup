@@ -49,6 +49,7 @@ vim.api.nvim_create_autocmd("FileType", {
 		"json",
 		"yaml",
 		"css",
+		"dart",
 		"python",
 		"javascript",
 		"typescript",
