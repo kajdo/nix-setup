@@ -4,8 +4,8 @@
   # Graphics driver & GTK theme
   home.sessionVariables = {
     LIBVA_DRIVER_NAME = "iHD";
-    GTK_THEME = "Adwaita";
-    GTK_ICON_THEME = "Adwaita";
+    GTK_THEME = "Adwaita-dark";
+    GTK_ICON_THEME = "Papirus-Dark";
   };
 
   home.packages = with pkgs; [
