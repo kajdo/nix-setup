@@ -337,10 +337,16 @@ require("lazy").setup({
 			})
 			vim.lsp.enable('eslint')
 
+
 			vim.lsp.config('dartls', {
 				cmd = { "dart", "language-server", "--protocol=lsp" },
 			})
 			vim.lsp.enable('dartls')
+
+			vim.lsp.config('nixd', {
+				cmd = { "nixd" },
+			})
+			vim.lsp.enable('nixd')
 
 			-- kajdo - virtual text will be done via plugin (https://github.com/rachartier/tiny-inline-diagnostic.nvim)
 			vim.diagnostic.config({ virtual_text = false })
