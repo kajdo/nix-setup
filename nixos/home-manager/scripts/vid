@@ -9,10 +9,13 @@
 # --- Configuration Variables ---
 # Minimum video resolution to prefer (e.g., 720 for 720p). Set to 0 to disable this feature.
 # The script will now select the *lowest* resolution that meets or exceeds MIN_RESOLUTION.
-MIN_RESOLUTION=1080 # Set to 0 to disable minimum resolution preference
+MIN_RESOLUTION=720 # Set to 0 to disable minimum resolution preference
 
 # Define common yt-dlp options, including cookies
-YTDLP_COMMON_OPTIONS="--cookies-from-browser helium"
+# Use Helium (Chromium-based) profile directly
+YTDLP_COMMON_OPTIONS="--cookies-from-browser chrome:/home/kajdo/.config/net.imput.helium"
+# Standard Chrome cookies:
+# YTDLP_COMMON_OPTIONS="--cookies-from-browser chrome"
 # Uncomment the line below if you prefer to use .netrc for all yt-dlp calls
 # YTDLP_COMMON_OPTIONS+=" --netrc"
 
@@ -183,6 +186,7 @@ BEGIN {
     best_found_id = "";
     best_found_res = 999999;
     best_found_is_combined = 0;
+    best_found_is_original = 0;
     min_res_threshold = min_res;
 }
 /^[[:space:]]*id[[:space:]]+ext/ {next}
@@ -194,6 +198,12 @@ NF < 2 {next}
     resolution_str = "";
     is_video = 0;
     is_audio_only = 0;
+    is_original = 0;
+
+    # Check if this format is the original language track
+    if ($0 ~ /\(original\)/) {
+        is_original = 1;
+    }
 
     for (i=2; i<=NF; i++) {
         if ($i ~ /[0-9]+x[0-9]+/ || $i ~ /[0-9]+p/) {
@@ -228,10 +238,19 @@ NF < 2 {next}
             best_found_res = numeric_res;
             best_found_id = id;
             best_found_is_combined = current_is_combined;
+            best_found_is_original = is_original;
         } else if (numeric_res == best_found_res) {
-            if (current_is_combined == 1 && best_found_is_combined == 0) {
+            # Prefer original language track over translated
+            if (is_original && !best_found_is_original) {
                 best_found_id = id;
                 best_found_is_combined = current_is_combined;
+                best_found_is_original = is_original;
+            } else if (is_original == best_found_is_original) {
+                # Same original status - prefer combined over video-only
+                if (current_is_combined == 1 && best_found_is_combined == 0) {
+                    best_found_id = id;
+                    best_found_is_combined = current_is_combined;
+                }
             }
         }
     }
@@ -346,8 +365,12 @@ elif [ "$MIN_RESOLUTION" -gt 0 ]; then # No --select-format, but MIN_RESOLUTION 
         DETERMINED_FORMAT_ID="$candidate_format_id"
         # Apply +bestaudio heuristic if it's a YouTube/Vimeo URL and numeric ID
         if [[ "$STREAM_URL" =~ ^https?://(www\.)?(youtube\.com|youtu\.be|vimeo\.com)/ ]] && [[ "$DETERMINED_FORMAT_ID" =~ ^[0-9]+$ ]]; then
-            echo "Found format ${DETERMINED_FORMAT_ID} meeting minimum resolution. Appending +bestaudio."
-            DETERMINED_FORMAT_ID="${DETERMINED_FORMAT_ID}+bestaudio"
+            if echo "$YTDLP_FORMATS_OUTPUT" | grep -E "^$DETERMINED_FORMAT_ID\s" | grep -iq 'video only'; then
+                echo "Found video-only format ${DETERMINED_FORMAT_ID} meeting minimum resolution. Appending +bestaudio."
+                DETERMINED_FORMAT_ID="${DETERMINED_FORMAT_ID}+bestaudio"
+            else
+                echo "Found format ${DETERMINED_FORMAT_ID} meeting minimum resolution (already includes audio)."
+            fi
         else
             echo "Found format ${DETERMINED_FORMAT_ID} meeting minimum resolution."
         fi
