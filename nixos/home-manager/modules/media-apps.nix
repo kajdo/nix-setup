@@ -19,6 +19,12 @@
 
     # Video player
     mpv
+
+    # Android screen/camera streaming (used with v4l2loopback as virtual webcam)
+    scrcpy
+
+    # Video4Linux utilities (v4l2-ctl for verifying virtual webcam)
+    v4l-utils
   ];
 
   # mpv configuration

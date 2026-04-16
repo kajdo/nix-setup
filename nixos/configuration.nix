@@ -22,6 +22,7 @@ in {
     ./nixos-modules/hardware/audio.nix
     ./nixos-modules/hardware/bluetooth.nix
     ./nixos-modules/hardware/power.nix
+    ./nixos-modules/hardware/video.nix
 
     # Networking
     ./nixos-modules/networking/networking.nix
