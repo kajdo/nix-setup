@@ -41,6 +41,10 @@
       # tmux
       cmux = "tmux new -As";
       dmux = "tmux kill-session -t";
+
+      # android webcam
+      webcam = "scrcpy --video-source camera --camera-size 1920x1080 --v4l2-sink /dev/video2 --no-playback --capture-orientation=90 --crop=920:1080:500:0";
+      webcam-preview = "mpv av://v4l2:/dev/video2 --profile=low-latency --untimed";
     };
     
     bashrcExtra = ''
