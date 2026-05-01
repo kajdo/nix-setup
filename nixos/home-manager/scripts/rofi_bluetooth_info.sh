@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Get connected Bluetooth devices with battery levels
-connected_devices=$(bluetoothctl devices Connected | while read -r _ mac name; do
-    battery_level=$(bluetoothctl info "$mac" | grep "Battery Percentage" | awk -F '[()]' '{print $2}')
+connected_devices=$(echo "devices Connected" | bluetoothctl --timeout 2 | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | while read -r _ mac name; do
+    battery_level=$(echo "info $mac" | bluetoothctl --timeout 2 | sed 's/\x1b\[[0-9;]*m//g' | grep "Battery Percentage" | awk -F '[()]' '{print $2}')
     if [[ -n "$battery_level" ]]; then
         echo "$name $battery_level%"
     else
@@ -26,7 +26,7 @@ device_name=$(echo "$selected" | sed 's/ [0-9]\+%$//')
 echo "Device name: $device_name"
 
 # Extract MAC address using grep and awk
-mac=$(bluetoothctl devices Connected | grep "$device_name" | awk '{print $2}')
+mac=$(echo "devices Connected" | bluetoothctl --timeout 2 | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | grep "$device_name" | awk '{print $2}')
 echo "mac selected: $mac"
 
 # If a device was selected, handle profile selection and battery level
