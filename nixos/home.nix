@@ -11,6 +11,7 @@
     ./home-manager/modules/scripts.nix
     ./home-manager/modules/shell.nix
     ./home-manager/modules/llm-agents.nix
+    ./home-manager/modules/messaging.nix
   ];
 
   home.username = "kajdo";
