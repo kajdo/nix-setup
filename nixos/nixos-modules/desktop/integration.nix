@@ -29,6 +29,9 @@
   programs.localsend.enable = true;
   programs.localsend.openFirewall = true;
 
+  # GNOME Keyring (secret storage for apps)
+  services.gnome.gnome-keyring.enable = true;
+
   # Thunar file manager
   programs.thunar.enable = true;
   programs.thunar.plugins = with pkgs; [
