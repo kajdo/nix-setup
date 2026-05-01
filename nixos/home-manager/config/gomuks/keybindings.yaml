@@ -1,0 +1,12 @@
+# Gomuks custom keybindings (merged with defaults)
+# Docs: https://docs.mau.fi/gomuks/keybindings.html
+
+room:
+  'Ctrl+d': scroll_down
+  'Ctrl+u': scroll_up
+  'Ctrl+p': unbind
+  'Ctrl+n': unbind
+
+modal:
+  'Ctrl+n': select_next
+  'Ctrl+p': select_prev
