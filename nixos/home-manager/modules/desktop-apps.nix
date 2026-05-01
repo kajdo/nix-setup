@@ -19,7 +19,10 @@
   ];
 
   # Web browser
-  programs.firefox.enable = true;
+  programs.firefox = {
+    enable = true;
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
+  };
 
   # Email client
   programs.thunderbird = {

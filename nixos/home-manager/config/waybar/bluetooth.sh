@@ -18,7 +18,7 @@ declare -A device_mappings=(
 get_battery_percentage() {
 	local mac="$1"
 	# local battery_percent=$(bluetoothctl info "$mac" 2>/dev/null | grep "Battery Percentage" | awk -F '[()]' '{print $2}' | tr -d '%')
-	local battery_percent=$(bluetoothctl info "$mac" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "Battery Percentage" | awk -F '[()]' '{print $2}' | tr -d '%')
+	local battery_percent=$(echo "info $mac" | bluetoothctl --timeout 2 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "Battery Percentage" | awk -F '[()]' '{print $2}' | tr -d '%')
 	echo "$battery_percent"
 }
 
@@ -86,15 +86,15 @@ fi
 view_mode=$(get_view_mode)
 
 # Check if bluetooth is powered on
-bluetooth_status=$(bluetoothctl show 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "Powered:" | awk '{print $2}')
+bluetooth_status=$(echo "show" | bluetoothctl --timeout 2 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "Powered:" | awk '{print $2}')
 
 if [ "$bluetooth_status" = "yes" ]; then
 	# Get only actual device lines (they start with "Device" and have MAC + name)
-	connected_devices=$(bluetoothctl devices Connected 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | wc -l)
+	connected_devices=$(echo "devices Connected" | bluetoothctl --timeout 2 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | wc -l)
 
 	if [ "$connected_devices" -gt 0 ]; then
 		# Get the first connected device info
-		first_device_info=$(bluetoothctl devices Connected 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | head -n1)
+		first_device_info=$(echo "devices Connected" | bluetoothctl --timeout 2 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | grep "^Device" | head -n1)
 		first_device_name=$(echo "$first_device_info" | cut -d' ' -f3-)
 		first_device_mac=$(echo "$first_device_info" | awk '{print $2}')
 
