@@ -18,6 +18,11 @@
   # Fix USB devices sleeping after 2-3 seconds
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
+  # Swap file (8GB) to prevent OOM freezes
+  swapDevices = [
+    { device = "/var/lib/swapfile"; size = 8192; }
+  ];
+
   # Reduce default timeout from 90s to 10s
   systemd.settings = {
     Manager = {
