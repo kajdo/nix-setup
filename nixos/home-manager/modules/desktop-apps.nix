@@ -37,7 +37,16 @@
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
         };
 
-        # Your existing userChrome.css content
+        # Fix: reply compose window shows light body (TB 150 bug, fixed in 151)
+        userContent = ''
+          @-moz-document url(about:blank?compose) {
+            body {
+              background-color: #1e1e2e !important;
+              color: #cdd6f4 !important;
+            }
+          }
+        '';
+
         userChrome = ''
           @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
