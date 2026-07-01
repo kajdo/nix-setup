@@ -2,7 +2,6 @@
  {
     inputs = {
       nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-      nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
       home-manager = {
         # url = "github:nix-community/home-manager/release-25.05";
         url = "github:nix-community/home-manager/master";
@@ -13,10 +12,9 @@
       windsurf.inputs.nixpkgs.follows = "nixpkgs";
     };
 
-   outputs = { self, nixpkgs, nixpkgs-stable, home-manager, ... } @inputs :
+   outputs = { self, nixpkgs, home-manager, ... } @inputs :
    let
      system = "x86_64-linux";
-     stable-pkgs = nixpkgs-stable.legacyPackages.${system};
    in {
 
      nixosConfigurations = {
@@ -25,11 +23,6 @@
 
            modules = [
              { nixpkgs.overlays = [
-                 # Use stable deno (prebuilt rusty-v8) to avoid building V8 from source
-                 (final: prev: {
-                   yt-dlp = prev.yt-dlp.override { deno = stable-pkgs.deno; };
-                   mpv = prev.mpv.override { yt-dlp = final.yt-dlp; };
-                 })
                  (final: prev: {
                    codeium-lsp = inputs.windsurf.packages.${prev.stdenv.hostPlatform.system}.codeium-lsp;
                  })
