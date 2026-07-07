@@ -14,7 +14,7 @@
     tree
     tty-clock
 
-    # Core utilities for mcfly
+    # GNU coreutils (system uses toybox; this provides the full GNU set)
     coreutils
   ];
 
@@ -65,12 +65,6 @@
 
   # zoxide - smarter cd command
   programs.zoxide = {
-    enable = true;
-    enableBashIntegration = true;
-  };
-
-  # mcfly - shell history enhancement
-  programs.mcfly = {
     enable = true;
     enableBashIntegration = true;
   };
