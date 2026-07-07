@@ -226,10 +226,13 @@
     },
     "custom/bluetooth": {
         "format": "{}",
-        "interval": 5,
         "exec": "$HOME/.config/waybar/bluetooth.sh",
         "return-type": "json",
-        "on-click": "$HOME/.config/waybar/bluetooth.sh toggle && $HOME/.config/waybar/bluetooth.sh",
+        // No "interval" => waybar treats exec as a long-lived process and reads
+        // each stdout line as an update. bluetooth.sh prints a line only when
+        // state changes, so this costs ~0% CPU while idle (no more 5s polling).
+        "restart-interval": 3,
+        "on-click": "$HOME/.config/waybar/bluetooth.sh toggle",
         "on-click-right": "blueman-manager",
         "tooltip": true
     }
