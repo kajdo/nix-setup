@@ -13,51 +13,61 @@ vim.lsp.config('*', {
 
 vim.lsp.config('ts_ls', {
 	cmd = { "typescript-language-server", "--stdio" },
+	filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
 })
 vim.lsp.enable('ts_ls')
 
 vim.lsp.config('pyright', {
 	cmd = { "pyright-langserver", "--stdio" },
+	filetypes = { "python" },
 })
 vim.lsp.enable('pyright')
 
 vim.lsp.config('bashls', {
 	cmd = { "bash-language-server", "start" },
+	filetypes = { "sh", "bash", "zsh" },
 })
 vim.lsp.enable('bashls')
 
 vim.lsp.config('dockerls', {
 	cmd = { "docker-langserver", "--stdio" },
+	filetypes = { "dockerfile" },
 })
 vim.lsp.enable('dockerls')
 
 vim.lsp.config('yamlls', {
 	cmd = { "yaml-language-server", "--stdio" },
+	filetypes = { "yaml", "yml" },
 })
 vim.lsp.enable('yamlls')
 
 vim.lsp.config('vimls', {
 	cmd = { "vim-language-server", "--stdio" },
+	filetypes = { "vim" },
 })
 vim.lsp.enable('vimls')
 
 vim.lsp.config('eslint', {
 	cmd = { "vscode-eslint-language-server", "--stdio" },
+	filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
 })
 vim.lsp.enable('eslint')
 
 vim.lsp.config('dartls', {
 	cmd = { "dart", "language-server", "--protocol=lsp" },
+	filetypes = { "dart" },
 })
 vim.lsp.enable('dartls')
 
 vim.lsp.config('nixd', {
 	cmd = { "nixd" },
+	filetypes = { "nix" },
 })
 vim.lsp.enable('nixd')
 
 vim.lsp.config('lua_ls', {
 	cmd = { "lua-language-server" },
+	filetypes = { "lua" },
 	settings = {
 		Lua = {
 			completion = {
@@ -105,17 +115,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
 
 		-- Document highlights (CursorHold)
-		-- Wrapped in pcall because some servers (notably ts_ls) advertise
-		-- documentHighlight support but can fail on certain projects.
 		local client = vim.lsp.get_client_by_id(event.data.client_id)
 		if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
 			local highlight_augroup = vim.api.nvim_create_augroup("kickstart-lsp-highlight", { clear = false })
 			vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
 				buffer = event.buf,
 				group = highlight_augroup,
-				callback = function()
-					pcall(vim.lsp.buf.document_highlight)
-				end,
+				callback = vim.lsp.buf.document_highlight,
 			})
 			vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
 				buffer = event.buf,
