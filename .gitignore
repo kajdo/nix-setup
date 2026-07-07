@@ -2,3 +2,7 @@ AGENTS.md
 # ignore hardwareinfo
 ./nixos/hardware-configuration.nix
 ./nixos/pi
+
+# ignore pi-generated artifacts
+.pi-subagents/
+.plans/
