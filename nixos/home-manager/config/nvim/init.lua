@@ -176,9 +176,9 @@ require("lazy").setup({
 		"hrsh7th/nvim-cmp",
 		event = "InsertEnter",
 		dependencies = {
-			-- ... your dependencies ...
 			"hrsh7th/cmp-nvim-lsp",
 			"hrsh7th/cmp-path",
+			"hrsh7th/cmp-buffer",
 		},
 		-- vvvvvvvv THIS IS THE CONFIG FUNCTION FOR NVIM-CMP vvvvvvvvvv
 		config = function()
