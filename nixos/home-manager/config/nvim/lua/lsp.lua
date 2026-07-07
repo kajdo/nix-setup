@@ -91,6 +91,9 @@ vim.lsp.enable('lua_ls')
 -- Virtual text diagnostics are handled by tiny-inline-diagnostic.nvim
 vim.diagnostic.config({ virtual_text = false })
 
+-- Suppress LSP progress notifications (spammy "pyright (100%)" etc.)
+vim.lsp.handlers['$/progress'] = function() end
+
 -- LspAttach: configure keymaps and highlights per buffer
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
