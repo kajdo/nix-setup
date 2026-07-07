@@ -186,11 +186,14 @@
     },
     "custom/network": {
         "format": "{}",
-        "interval": 5,
+        // No "interval" => waybar treats exec as a long-lived process and reads each
+        // stdout line as an update. network.sh prints a line only on NM state change
+        // (or every ~15s for signal), so this is ~0% idle CPU.
+        "restart-interval": 3,
         "exec": "$HOME/.config/waybar/network.sh",
         "return-type": "json",
-        "on-click": "$HOME/.config/waybar/network.sh toggle && $HOME/.config/waybar/network.sh",
-        "on-click-right": "$HOME/.local/bin/rofi-wifi-menu.sh && $HOME/.config/waybar/network.sh",
+        "on-click": "$HOME/.config/waybar/network.sh toggle",
+        "on-click-right": "$HOME/.local/bin/rofi-wifi-menu.sh",
         "tooltip": true
     },
     "pulseaudio": {
