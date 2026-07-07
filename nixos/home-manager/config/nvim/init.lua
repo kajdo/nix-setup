@@ -32,43 +32,7 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
-	-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 	"tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
-
-	-- NOTE: Plugins can also be added by using a table,
-	-- with the first argument being the link and the following
-	-- keys can be used to configure plugin behavior/loading/etc.
-	--
-	-- Use `opts = {}` to force a plugin to be loaded.
-	--
-
-	-- Here is a more advanced example where we pass configuration
-	-- options to `gitsigns.nvim`. This is equivalent to the following Lua:
-	--    require('gitsigns').setup({ ... })
-	--
-	-- See `:help gitsigns` to understand what the configuration keys do
-
-	-- NOTE: Plugins can also be configured to run Lua code when they are loaded.
-	--
-	-- This is often very useful to both group configuration, as well as handle
-	-- lazy loading plugins that don't need to be loaded immediately at startup.
-	--
-	-- For example, in the following configuration, we use:
-	--  event = 'VimEnter'
-	--
-	-- which loads which-key before all the UI elements are loaded. Events can be
-	-- normal autocommands events (`:help autocmd-events`).
-	--
-	-- Then, because we use the `config` key, the configuration only runs
-	-- after the plugin has been loaded:
-	--  config = function() ... end
-
-	-- NOTE: Plugins can specify dependencies.
-	--
-	-- The dependencies are proper plugin specifications as well - anything
-	-- you do for a plugin at the top level, you can do for a dependency.
-	--
-	-- Use the `dependencies` key to specify the dependencies of a particular plugin
 
 	{ -- Fuzzy Finder (files, lsp, etc) — fzf-lua replaces telescope.nvim
 		"ibhagwan/fzf-lua",
@@ -232,29 +196,12 @@ require("lazy").setup({
 					-- ... your mappings ...
 				}),
 				sources = cmp.config.sources({
-					-- Give Supermaven high priority
-					-- { name = "supermaven", group_index = 1, priority = 100 },
-
 					{ name = "nvim_lsp", group_index = 1 },
 					{ name = "path", group_index = 3 },
 					{ name = "buffer", group_index = 3 },
-					{ name = "lazydev", group_index = 0 },
 				}),
 			}) -- <-------------------------------------------- END of main cmp.setup call
 
-			-- *** Filetype specific setup ***
-			-- This call modifies the setup for specific filetypes
-			-- It MUST come AFTER the main cmp.setup call above
-			-- >>>>>>>>>>>>>> PUT IT RIGHT HERE <<<<<<<<<<<<<<<<<<<<<<
-			cmp.setup.filetype({ "sql", "mysql", "psql" }, {
-				sources = cmp.config.sources({
-					-- Order sources specifically for SQL files
-					{ name = "vim-dadbod-completion" },
-					{ name = "buffer" },
-					{ name = "path" },
-				}),
-			})
-			-- >>>>>>>>>>>>>> END OF FILETYPE SETUP <<<<<<<<<<<<<<<<<<<
 		end, -- <----------- END OF THE CONFIG FUNCTION FOR NVIM-CMP
 		-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	}, -- <------------- END OF NVIM-CMP PLUGIN DEFINITION
@@ -270,40 +217,26 @@ require("lazy").setup({
 
 	{ -- Collection of various small independent plugins/modules
 		"echasnovski/mini.nvim",
+		version = false,
 		config = function()
-			-- Better Around/Inside textobjects
-			--
-			-- Examples:
-			--  - va)  - [V]isually select [A]round [)]paren
-			--  - yinq - [Y]ank [I]nside [N]ext [Q]uote
-			--  - ci'  - [C]hange [I]nside [']quote
+			-- Textobjects: better around/inside (va), yinq, ci', etc.
 			require("mini.ai").setup({ n_lines = 500 })
 
-			-- Add/delete/replace surroundings (brackets, quotes, etc.)
-			--
-			-- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
-			-- - sd'   - [S]urround [D]elete [']quotes
-			-- - sr)'  - [S]urround [R]eplace [)] [']
+			-- Surround: add/delete/replace brackets, quotes, etc.
 			require("mini.surround").setup()
 
-			-- Simple and easy statusline.
-			--  You could remove this setup call if you don't like it,
-			--  and try some other statusline plugin
-			-- kajdo disable
-			-- local statusline = require 'mini.statusline'
-			-- set use_icons to true if you have a Nerd Font
-			-- statusline.setup { use_icons = vim.g.have_nerd_font }
+			-- Statusline (replaces lualine)
+			require("mini.statusline").setup()
 
-			-- You can configure sections in the statusline by overriding their
-			-- default behavior. For example, here we set the section for
-			-- cursor location to LINE:COLUMN
-			---@diagnostic disable-next-line: duplicate-set-field
-			-- statusline.section_location = function()
-			--   return '%2l:%-2v'
-			-- end
+			-- Indent scope (replaces indent-blankline)
+			require("mini.indentscope").setup()
 
-			-- ... and there is more!
-			--  Check out: https://github.com/echasnovski/mini.nvim
+			-- Auto-pairs (replaces nvim-autopairs)
+			require("mini.pairs").setup()
+
+			-- Notifications (replaces nvim-notify + noice)
+			require("mini.notify").setup()
+			vim.notify = require("mini.notify").make_notify()
 		end,
 	},
 	{ import = "custom.plugins" },
