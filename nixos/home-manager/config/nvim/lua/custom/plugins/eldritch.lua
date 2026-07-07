@@ -26,11 +26,10 @@ return {
     vim.cmd 'syntax enable' -- Enable syntax highlighting priority = 1000,
     -- Set the colorscheme
     vim.cmd.colorscheme 'eldritch'
-    -- add transparency to telescope
+    -- add transparency to fzf-lua (replaces previous telescope highlights)
     vim.cmd [[
-      highlight TelescopeNormal ctermbg=NONE guibg=NONE
-      highlight TelescopePromptNormal ctermbg=NONE guibg=NONE
-      highlight TelescopeResultsNormal ctermbg=NONE guibg=NONE
+      highlight FzfLuaNormal ctermbg=NONE guibg=NONE
+      highlight FzfLuaPreviewNormal ctermbg=NONE guibg=NONE
     ]]
   end,
 }
