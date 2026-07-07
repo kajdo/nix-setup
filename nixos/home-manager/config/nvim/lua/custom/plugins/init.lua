@@ -111,9 +111,6 @@ vim.keymap.set(
 )
 vim.keymap.set("n", "<leader>bb", ":BufferLineCyclePrev<CR>", { noremap = true, silent = true, desc = "buffer before" })
 
--- -- openGPT
--- vim.keymap.set("n", "<leader>g", ":ChatGPT<CR>", { noremap = true, silent = true, desc = "openGPT" })
---
 -- Code handling
 -- leader + l + s = foldinmethod syntax and unfold
 vim.keymap.set("n", "<leader>ls", setfold_and_toggle, { noremap = true, silent = true, desc = "fold in method syntax" })
