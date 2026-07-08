@@ -234,13 +234,7 @@ require("lazy").setup({
 			-- Auto-pairs (replaces nvim-autopairs)
 			require("mini.pairs").setup()
 
-			-- Notifications (replaces nvim-notify + noice)
-			require("mini.notify").setup({
-				lsp_progress = {
-					enable = false,
-				},
-			})
-			vim.notify = require("mini.notify").make_notify()
+
 		end,
 	},
 	{ import = "plugins" },
