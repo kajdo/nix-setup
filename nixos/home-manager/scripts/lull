@@ -3,11 +3,19 @@
 set -e
 cd /home/kajdo/git/nix-setup || exit 1
 
+# Backup machine-specific files before cleaning
+[ -f /etc/nixos/hardware-configuration.nix ] \
+  && cp /etc/nixos/hardware-configuration.nix /tmp/hardware-configuration.nix
+
 # Clean stale build source (cp -r is additive, doesn't delete removed files)
 sudo rm -rf /etc/nixos
 
 [ -f nixos/flake.lock ] && rm nixos/flake.lock
 sudo cp -r nixos /etc
+
+# Restore machine-specific files (after cp re-creates /etc/nixos/)
+[ -f /tmp/hardware-configuration.nix ] \
+  && mv /tmp/hardware-configuration.nix /etc/nixos/hardware-configuration.nix
 
 # Clean stale deployed nvim files (xdg.configFile is additive)
 rm -rf ~/.config/nvim/lua/custom ~/.config/nvim/lua/kickstart
