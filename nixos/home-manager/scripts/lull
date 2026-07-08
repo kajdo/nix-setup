@@ -15,9 +15,7 @@ rm -rf ~/.config/nvim/lua/custom ~/.config/nvim/lua/kickstart
 # rebuild switch - because you just pulled in local changes ;)
 sudo nixos-rebuild switch
 
-# also clean lazy.nvim plugin cache for removed plugins
-# (run :LazyClean inside nvim after this)
-rm -f ~/.local/share/nvim/lazy/lazy-lock.json
+# Note: still need to run :LazyClean inside nvim to purge cached plugins
 
 # send a notification that it's done
 notify-send NixOS "Rebuild & Switch done!" --icon /run/current-system/sw/share/icons/hicolor/128x128/apps/nix-snowflake.png
