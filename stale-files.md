@@ -44,14 +44,30 @@ Even after files are correctly deployed, lazy.nvim has its own cache of installe
 
 ## The Fix
 
-Add a clean-up step before copying in the `lull` script:
+> ⚠️ **NEVER use `sudo rm -rf /etc/nixos`.** It deletes the machine-specific
+> `hardware-configuration.nix` (block-device UUIDs, mount points, initrd
+> modules) which is **not** stored in the repo. Recovering it means booting
+> another generation and re-running `nixos-generate-config` — and if that is
+> done while Docker is running, ephemeral `overlay2/.../merged` mounts get
+> baked in (this happened in the Jul 2026 incident). An earlier version of
+> this document and of the `lull` script recommended `rm -rf /etc/nixos`, and
+> it is what wiped `/etc/nixos` + `hardware-configuration.nix`.
+
+Sync the repo to `/etc/nixos/` with `rsync --delete`, **excluding** the
+machine-specific files so they are preserved. This is one atomic step: it
+mirrors the repo, removes stale files that are no longer tracked, and keeps
+`hardware-configuration.nix` and the regenerated `flake.lock` intact.
 
 ```bash
-sudo rm -rf /etc/nixos
-sudo cp -r nixos /etc
+sudo rsync -a --delete \
+  --exclude 'hardware-configuration.nix' \
+  --exclude 'flake.lock' \
+  /home/kajdo/git/nix-setup/nixos/ /etc/nixos/
 ```
 
-This is safe because the running system is defined by the activated Nix store path (`/run/current-system`), not by the files in `/etc/nixos/`. The directory is only the **source input** for the next rebuild.
+The running system is defined by the activated Nix store path
+(`/run/current-system`), not by the files in `/etc/nixos/` — the directory is
+only the **source input** for the next rebuild.
 
 For `~/.config/nvim/` — any files there that aren't symlinked to the Nix store are stale and can be removed.
 
