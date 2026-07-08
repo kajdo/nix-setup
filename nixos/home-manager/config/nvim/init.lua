@@ -243,7 +243,7 @@ require("lazy").setup({
 			vim.notify = require("mini.notify").make_notify()
 		end,
 	},
-	{ import = "custom.plugins" },
+	{ import = "plugins" },
 }, {
 	lockfile = vim.fn.stdpath("data") .. "/lazy/lazy-lock.json",
 	ui = {
