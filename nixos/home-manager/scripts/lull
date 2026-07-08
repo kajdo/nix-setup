@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 
-cd || exit 1
-[ -f /home/kajdo/git/nix-setup/nixos/flake.lock ] && rm /home/kajdo/git/nix-setup/nixos/flake.lock
-sudo cp -r /home/kajdo/git/nix-setup/nixos /etc
+set -e
+cd /home/kajdo/git/nix-setup || exit 1
+
+# Clean stale build source (cp -r is additive, doesn't delete removed files)
+sudo rm -rf /etc/nixos
+
+[ -f nixos/flake.lock ] && rm nixos/flake.lock
+sudo cp -r nixos /etc
+
+# Clean stale deployed nvim files (xdg.configFile is additive)
+rm -rf ~/.config/nvim/lua/custom ~/.config/nvim/lua/kickstart
 
 # rebuild switch - because you just pulled in local changes ;)
 sudo nixos-rebuild switch
+
+# also clean lazy.nvim plugin cache for removed plugins
+# (run :LazyClean inside nvim after this)
+rm -f ~/.local/share/nvim/lazy/lazy-lock.json
 
 # send a notification that it's done
 notify-send NixOS "Rebuild & Switch done!" --icon /run/current-system/sw/share/icons/hicolor/128x128/apps/nix-snowflake.png
