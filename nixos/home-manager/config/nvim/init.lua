@@ -172,41 +172,6 @@ require("lazy").setup({
 		},
 	},
 
-	{ -- Autocompletion Plugin Definition (using lazy.nvim)
-		"hrsh7th/nvim-cmp",
-		event = "InsertEnter",
-		dependencies = {
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-path",
-			"hrsh7th/cmp-buffer",
-		},
-		-- vvvvvvvv THIS IS THE CONFIG FUNCTION FOR NVIM-CMP vvvvvvvvvv
-		config = function()
-			-- See `:help cmp`
-			local cmp = require("cmp")
-
-			-- *** Main cmp setup ***
-			-- Define your GLOBAL cmp settings here
-			cmp.setup({ -- <----------------------------------- START of main cmp.setup call
-				snippet = {
-					-- ... snippet config ...
-				},
-				completion = { completeopt = "menu,menuone,noinsert" },
-				mapping = cmp.mapping.preset.insert({
-					-- ... your mappings ...
-				}),
-				sources = cmp.config.sources({
-					{ name = "nvim_lsp", group_index = 1 },
-					{ name = "path", group_index = 3 },
-					{ name = "buffer", group_index = 3 },
-				}),
-			}) -- <-------------------------------------------- END of main cmp.setup call
-
-		end, -- <----------- END OF THE CONFIG FUNCTION FOR NVIM-CMP
-		-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	}, -- <------------- END OF NVIM-CMP PLUGIN DEFINITION
-
-
 	-- Highlight todo, notes, etc in comments
 	{
 		"folke/todo-comments.nvim",

@@ -82,4 +82,7 @@ vim.keymap.set("v", ">", ">gv", { noremap = true, silent = true, desc = "keep hi
 -- Info echo: show filetype
 vim.keymap.set("n", "<leader>if", ':echo "Filetype: "&ft<CR>', { noremap = true, silent = true, desc = "echo filetype" })
 
+-- Manual completion trigger (native vim.lsp.completion, Neovim 0.11+)
+vim.keymap.set("i", "<C-Space>", vim.lsp.completion.get, { desc = "Trigger completion" })
+
 -- vim: ts=2 sts=2 sw=2 et

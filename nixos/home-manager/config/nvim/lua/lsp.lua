@@ -1,13 +1,11 @@
 -- LSP Configuration using Neovim 0.11+ native vim.lsp.config API
 -- All LSP servers are provided via Home Manager (dev-tools.nix).
 
--- Global default capabilities for nvim-cmp integration
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
-
-vim.lsp.config('*', {
-	capabilities = capabilities,
-})
+-- Capabilities: Neovim merges whatever we provide with the full defaults
+-- (vim.tbl_deep_extend('force', make_client_capabilities(), ...) in client.lua),
+-- so formatting (textDocument/formatting, used by conform's lsp_fallback) and all
+-- other standard capabilities are always present. No explicit wiring is needed.
+-- Completion uses the built-in vim.lsp.completion (enabled per-buffer in LspAttach).
 
 -- Individual server configurations
 
@@ -115,8 +113,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
 		map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
 
-		-- Document highlights (CursorHold)
 		local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+		-- Native LSP completion (Neovim 0.11+ vim.lsp.completion), replaces nvim-cmp.
+		-- Autotriggered on the server's trigger characters; <C-Space> triggers it
+		-- manually (mapped in keymaps.lua).
+		if client and client:supports_method("textDocument/completion") then
+			vim.lsp.completion.enable(true, client.id, event.buf, { autotrigger = true })
+		end
+
+		-- Document highlights (CursorHold)
 		if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
 			local highlight_augroup = vim.api.nvim_create_augroup("kickstart-lsp-highlight", { clear = false })
 			vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
