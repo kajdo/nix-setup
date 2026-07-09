@@ -190,8 +190,8 @@ require("lazy").setup({
 			-- Surround: add/delete/replace brackets, quotes, etc.
 			require("mini.surround").setup()
 
-			-- Statusline (replaces lualine)
-			require("mini.statusline").setup()
+			-- Statusline (replaces lualine) — custom clean layout, see `lua/statusline.lua`
+			require("statusline").setup()
 
 			-- Indent scope (replaces indent-blankline)
 			require("mini.indentscope").setup()
