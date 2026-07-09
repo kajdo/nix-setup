@@ -29,6 +29,8 @@ vim.api.nvim_create_autocmd("FileType", {
 		"markdown",
 		"query",
 		"nix",
+		"lua",
+		"vim",
 	},
 	callback = function(ev)
 		vim.treesitter.start(ev.buf)

@@ -22,8 +22,7 @@ return {
       --   -- You can customize highlights here if needed
       -- end,
     }
-    vim.opt.termguicolors = true
-    vim.cmd 'syntax enable' -- Enable syntax highlighting priority = 1000,
+    vim.cmd 'syntax enable' -- fallback regex highlighter for filetypes without treesitter (e.g. lua, vim)
     -- Set the colorscheme
     vim.cmd.colorscheme 'eldritch'
     -- add transparency to fzf-lua (replaces previous telescope highlights)

@@ -54,6 +54,9 @@ vim.opt.inccommand = "split"
 -- Show which line your cursor is on
 vim.opt.cursorline = true
 
+-- Enable 24-bit RGB color in the terminal (required for colorschemes)
+vim.opt.termguicolors = true
+
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
