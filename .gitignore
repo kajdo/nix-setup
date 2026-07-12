@@ -4,6 +4,9 @@ AGENTS.md
 ./nixos/pi
 
 # ignore pi-generated scratch artifacts (live plans/progress/sessions,
-# subagent outputs) at any depth — finished plans are archived in nixos/docs/plans/
+# subagent outputs) at any depth
 **/.pi/
 .pi-subagents/
+
+# local-only plan documents (kept locally, not version-controlled)
+nixos/docs/plans/
