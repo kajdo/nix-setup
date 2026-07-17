@@ -364,6 +364,14 @@ label:focus {
     color: #ffffff;
 }
 
+/* Call mode: a BT headset is in HSP/HFP profile ("on air"). Bright studio-red
+ * with black text for contrast. Reverts to the blue above on any switch back to
+ * A2DP — including WirePlumber's automatic mic-drop revert. */
+#custom-bluetooth.onair {
+    background-color: #f53c3c;
+    color: @black;
+}
+
 #custom-network {
     background-color: @darkgray;
     padding: 0 10px;

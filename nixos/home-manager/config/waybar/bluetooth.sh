@@ -63,6 +63,26 @@ battery_icon() {
 
 get_view_mode() { [ -f "$VIEWFILE" ] && cat "$VIEWFILE" 2>/dev/null || echo "compact"; }
 
+# Is the connected BT audio device in a call (HSP/HFP) profile? The audio profile
+# is a PipeWire/WirePlumber concept — bluetoothctl only knows connection, name
+# and battery, never the profile — so we ask PipeWire via pactl. Returns "1" or
+# "0". Single `pactl list cards` call; locale forced to C for stable labels.
+bt_call_active() {
+	LC_ALL=C pactl list cards 2>/dev/null | awk '
+		$1 == "Name:" { inbtz = ($2 ~ /^bluez_card/) }
+		inbtz && $1 == "Active" && $2 == "Profile:" {
+			print ($3 ~ /^headset-head-unit/) ? 1 : 0
+			exit
+		}
+	'
+}
+
+# Refresh the ONAIR global from the live BT audio profile.
+refresh_onair() {
+	ONAIR="$(bt_call_active)"
+	[ "$ONAIR" = 1 ] || ONAIR=0
+}
+
 # ---- toggle: flip view, then nudge the leader to re-render ----------------
 if [ "${1:-}" = toggle ]; then
 	if [ "$(get_view_mode)" = full ]; then
@@ -110,8 +130,10 @@ fi
 # Reaching here means we hold the lock. Write our PID and run the ONE
 # bluetoothctl this whole machine will use.
 
-# Globals shared between refresh_state() and render().
+# Globals shared between refresh_state() and render(). ONAIR mirrors the live
+# BT audio profile (1 = HSP/HFP call mode) and drives the "on air" CSS class.
 POWERED="" DEV_NAME="" DEV_MAC="" DEV_COUNT=0 MON_BATT=0 BATT_PCT="" BATT_ICON=""
+ONAIR=0
 TRIGGER=0   # set by USR1 (view toggle); the loop re-emits at the next safe point
 
 printf '%s\n' "$$" >"$PIDFILE"
@@ -193,16 +215,23 @@ refresh_state() {
 
 # ---- render: build JSON from globals+view, emit to stdout AND cache --------
 render() {
-	local mode bt off_nd on_no batt_text batt_info tooltip text json
+	local mode bt off_nd on_no batt_text batt_info tooltip text json cls
 	bt=$'\uf293'     # bluetooth glyph next to the device
 	off_nd=$'\uf294' # powered on, nothing connected
 	on_no=$'\uf297'  # powered off
 	mode="$(get_view_mode)"
 
+	# The "on air" (HSP/HFP) flag drives the CSS class. Refreshed on every paint
+	# so the widget always reflects the live PipeWire profile: it flips red on our
+	# F9 call-prep toggle and back to blue on WirePlumber's automatic A2DP revert.
+	refresh_onair
+	cls=""
+	[ "$ONAIR" = 1 ] && [ "$POWERED" = yes ] && [ "$DEV_COUNT" -gt 0 ] && cls="onair"
+
 	if [ "$POWERED" != yes ]; then
-		json=$(printf '{"text":"%s","tooltip":"Bluetooth disabled"}' "$on_no")
+		json=$(printf '{"text":"%s","tooltip":"Bluetooth disabled","class":"%s"}' "$on_no" "$cls")
 	elif [ "$DEV_COUNT" -eq 0 ]; then
-		json=$(printf '{"text":"%s","tooltip":"No devices connected"}' "$off_nd")
+		json=$(printf '{"text":"%s","tooltip":"No devices connected","class":"%s"}' "$off_nd" "$cls")
 	else
 		batt_text="" batt_info=""
 		if [ -n "$BATT_PCT" ]; then
@@ -221,7 +250,7 @@ render() {
 		fi
 		text="${text//\\/\\\\}"; text="${text//\"/\\\"}"
 		tooltip="${tooltip//\\/\\\\}"; tooltip="${tooltip//\"/\\\"}"
-		json=$(printf '{"text":"%s","tooltip":"%s"}' "$text" "$tooltip")
+		json=$(printf '{"text":"%s","tooltip":"%s","class":"%s"}' "$text" "$tooltip" "$cls")
 	fi
 
 	# Leader's own bar:
@@ -258,6 +287,15 @@ while coproc_alive; do
 				render
 				;;
 		esac
+	fi
+	# Poll the BT audio profile for A2DP<->HSP/HFP flips. These are PipeWire-level
+	# changes (our F9 call-prep toggle, or WirePlumber's automatic mic-drop -> A2DP
+	# revert) and emit NO bluetoothctl event, so the event handler above can't see
+	# them. Only poll while a device is connected (keeps idle cost ~0 otherwise).
+	if [ "$POWERED" = yes ] && [ "$DEV_COUNT" -gt 0 ]; then
+		oa_prev="$ONAIR"
+		refresh_onair
+		[ "$ONAIR" != "$oa_prev" ] && render
 	fi
 	# View toggled (USR1) or view file changed out-of-band -> re-render.
 	v="$(get_view_mode)"
