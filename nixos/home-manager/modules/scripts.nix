@@ -38,6 +38,9 @@
   home.file.".local/bin/rofi_launch.sh".source = ./../scripts/rofi_launch.sh;
   home.file.".local/bin/rofi-wifi-menu.sh".source = ./../scripts/rofi-wifi-menu.sh;
 
+  # Bluetooth headset prep + mid-call recovery for browser calls (Teams)
+  home.file.".local/bin/rofi_call_prep.sh".source = ./../scripts/rofi_call_prep.sh;
+
   # Media/utility scripts
   home.file.".local/bin/vid".source = ./../scripts/vid;
 }
