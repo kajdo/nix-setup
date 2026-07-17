@@ -30,7 +30,13 @@ set -u
 LOG="${XDG_STATE_HOME:-$HOME/.local/state}/call-prep.log"
 mkdir -p "$(dirname "$LOG")"
 
-notify() { notify-send -u normal -t 5000 "🎧 Call Prep" "$1"; }
+# QUIET=1 suppresses success notifications — used by the F9 toggle hotkey, where
+# the waybar widget already gives visual feedback (red/blue). Failures still
+# surface via notify_force(), which ignores QUIET so you always learn if a
+# switch actually failed.
+QUIET=0
+notify()       { [ "$QUIET" = 1 ] && return 0; notify-send -u normal -t 5000 "🎧 Call Prep" "$1"; }
+notify_force() { notify-send -u normal -t 5000 "🎧 Call Prep" "$1"; }
 
 # ---- runtime detection (no hardcoded device) -------------------------------
 
@@ -190,7 +196,7 @@ do_toggle() {
 	local card pre post
 	card="$(bt_card)"
 	if [ -z "$card" ]; then
-		notify "⚠️ No Bluetooth headset connected."
+		notify_force "⚠️ No Bluetooth headset connected."
 		log toggle none none
 		return 1
 	fi
@@ -204,7 +210,7 @@ do_toggle() {
 			notify "🎵 Music mode: $post"
 				log toggle "$pre" "$post"
 			else
-				notify "⚠️ Could not switch to A2DP."
+				notify_force "⚠️ Could not switch to A2DP."
 				log toggle "$pre" "$(active_profile "$card")"
 			fi
 			;;
@@ -217,7 +223,7 @@ do_toggle() {
 				notify "$(printf '📞 Call mode: %s — join now.' "$post")"
 				log toggle "$pre" "$post"
 			else
-				notify "⚠️ Could not switch to headset profile."
+				notify_force "⚠️ Could not switch to headset profile."
 				log toggle "$pre" "$(active_profile "$card")"
 			fi
 			;;
@@ -334,7 +340,7 @@ do_status() {
 case "${1:-}" in
 	prep) do_prep; exit ;;
 	music) do_music; exit ;;
-	toggle) do_toggle; exit ;;
+	toggle) QUIET=1; do_toggle; exit ;;
 	r1) do_r1; exit ;;
 	r2) do_r2; exit ;;
 	r3) do_r3; exit ;;
