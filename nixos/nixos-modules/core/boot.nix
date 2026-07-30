@@ -27,15 +27,29 @@
     #
     # To re-enable GPU-lockup capture (auto-reboot on a frozen GPU), set these
     # three back to 1:
-    "kernel.nmi_watchdog"     = 1;   # ARM the NMI hardlockup detector (logs, no panic)
-    "kernel.hardlockup_panic" = 0;   # disabled — hard lockup logs only, no panic
-    "kernel.softlockup_panic" = 0;   # disabled — soft lockup logs only, no panic
-    "kernel.panic_on_oops"    = 0;   # disabled — oops kills process, system limps on
-    "kernel.panic"            = 10;  # reboot 10s after a REAL panic (safety net)
+    "kernel.nmi_watchdog" = 1; # ARM the NMI hardlockup detector (logs, no panic)
+    "kernel.hardlockup_panic" = 0; # disabled — hard lockup logs only, no panic
+    "kernel.softlockup_panic" = 0; # disabled — soft lockup logs only, no panic
+    "kernel.panic_on_oops" = 0; # disabled — oops kills process, system limps on
+    "kernel.panic" = 10; # reboot 10s after a REAL panic (safety net)
   };
 
   # Fix USB devices sleeping after 2-3 seconds
-  boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+  boot.kernelParams = [
+    "usbcore.autosuspend=-1"
+
+    # Work around the silent hard lockups on this Broadwell i915 (HD 5500).
+    # Panel Self Refresh (PSR) hangs are a common cause of total silent
+    # freezes on Broadwell; disabling it is the standard mitigation.
+    #
+    # Safe-category param: disables a feature, does NOT change panic behavior
+    # (so it cannot cause the boot loop that the panic amplifiers did in
+    # commits 3ee1ec9/2c360e2). Applied via `switch` is fine.
+    #
+    # Single-variable test (2026-07-20): if freezes persist, PSR wasn't the
+    # cause — next candidates are i915.enable_dc=0 then intel_idle.max_cstate=2.
+    "i915.enable_psr=0"
+  ];
 
   # Swap file (8GB) to prevent OOM freezes
   swapDevices = [

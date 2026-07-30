@@ -16,6 +16,7 @@ in {
     ./nixos-modules/core/nix.nix
     ./nixos-modules/core/users.nix
     ./nixos-modules/core/localization.nix
+    ./nixos-modules/core/journald.nix
 
     # Hardware support
     ./nixos-modules/hardware/graphics.nix
@@ -35,5 +36,6 @@ in {
     # System services
     ./nixos-modules/services/printing.nix
     ./nixos-modules/services/virtualization.nix
+    ./nixos-modules/services/netconsole.nix
   ];
 }
