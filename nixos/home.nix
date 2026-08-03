@@ -2,6 +2,9 @@
 
 {
   imports = [
+    # Backup (restic -> nvmeberry over sftp)
+    ./home-manager/modules/backup.nix
+
     ./home-manager/modules/cli-utils.nix
     ./home-manager/modules/dev-tools.nix
     ./home-manager/modules/tmux-popups.nix
