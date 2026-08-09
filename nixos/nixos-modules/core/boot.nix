@@ -6,13 +6,14 @@
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
 
-  # IPv6 disable - ISP issue workaround
-  # `ip -6 a` should not have any result after that
+  # IPv6 disable - ISP issue workaround (upstream IPv6 path is dead).
+  # `all` + `default` propagate to EVERY interface automatically, so we do NOT
+  # enumerate specific NICs — the old `lo`/`wlp4s0` lines were redundant and
+  # fragile (they missed `enp0s20u1`, silently relying on `all` to cover the
+  # gap). Verify with: `ip -6 addr` shows no global addresses.
   boot.kernel.sysctl = {
     "net.ipv6.conf.all.disable_ipv6" = true;
     "net.ipv6.conf.default.disable_ipv6" = true;
-    "net.ipv6.conf.lo.disable_ipv6" = true;
-    "net.ipv6.conf.wlp4s0.disable_ipv6" = true;
 
     # --- Kernel oops / lockup handling ---
     # NOTE: panic_on_oops / hardlockup_panic / softlockup_panic are set to 0

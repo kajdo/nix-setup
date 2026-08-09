@@ -7,6 +7,10 @@
   # Disable WiFi power save — prevents latency spikes during Moonlight streaming
   networking.networkmanager.wifi.powersave = false;
 
+  # IPv6 is killed at the kernel level in core/boot.nix (upstream IPv6 path is
+  # dead). This is the matching declarative intent marker.
+  networking.enableIPv6 = false;
+
   # Firewall for Chromecast and local services
   networking.firewall = {
     allowedUDPPorts = [ 5353 ];  # Device discovery (mDNS)
