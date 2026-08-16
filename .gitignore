@@ -8,5 +8,9 @@ AGENTS.md
 **/.pi/
 .pi-subagents/
 
+# local-only diagnostics captures (GPU error dumps etc.) — persistent but untracked
+logs/*
+!logs/README.md
+
 # local-only plan documents (kept locally, not version-controlled)
 nixos/docs/plans/

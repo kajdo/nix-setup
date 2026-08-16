@@ -6,7 +6,8 @@
 
 let
   # Define the individual build packages
-in {
+in
+{
   imports = [
     # Hardware configuration (auto-generated)
     ./hardware-configuration.nix
@@ -37,5 +38,6 @@ in {
     ./nixos-modules/services/printing.nix
     ./nixos-modules/services/virtualization.nix
     ./nixos-modules/services/netconsole.nix
+    ./nixos-modules/services/gpu-error-capture.nix
   ];
 }
