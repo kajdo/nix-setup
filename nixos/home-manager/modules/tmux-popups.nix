@@ -52,10 +52,19 @@ let
 
   popHarlequin = pkgs.writeShellApplication {
     name = "tmux-popup-harlequin";
-    runtimeInputs = [ harlequinWrapped ];
+    runtimeInputs = [ harlequinWrapped pkgs.findutils ];
     text = ''
-      # harlequin auto-discovers .harlequin.toml / [tool.harlequin] from cwd.
-      exec harlequin "$@"
+      # Assume sqlite: collect every *.db / *.sqlite / *.sqlite3 file under cwd
+      # and hand them all to harlequin's sqlite adapter at once. Pure
+      # filesystem walk via find -- no git/ignore semantics, so gitignored data
+      # dirs are included. `-path '*/.*' -prune` skips hidden dirs/files (e.g.
+      # .git, .venv, aider's .aider.tags.cache.v4) so tool caches aren't opened.
+      # Fall back to plain harlequin (adapter picker) when none are found.
+      mapfile -t dbs < <(find . -path '*/.*' -prune -o -type f \( -name '*.db' -o -name '*.sqlite' -o -name '*.sqlite3' \) -print)
+      if [ "''${#dbs[@]}" -gt 0 ]; then
+        exec harlequin -a sqlite "''${dbs[@]}"
+      fi
+      exec harlequin
     '';
   };
 
