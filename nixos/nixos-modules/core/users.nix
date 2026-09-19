@@ -9,7 +9,8 @@
     # Keep the user's systemd manager running after logout / at boot so
     # user-scoped services (e.g. the restic backup timer) run unattended.
     linger = true;
-    extraGroups = [ "networkmanager" "wheel" "video" "docker" ];
+    # dialout: serial port access (e.g. flashing firmware via browser/WebSerial)
+    extraGroups = [ "networkmanager" "wheel" "video" "docker" "dialout" ];
     packages = with pkgs; [
       makima
     ];
