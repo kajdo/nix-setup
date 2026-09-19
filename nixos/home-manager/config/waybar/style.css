@@ -372,6 +372,15 @@ label:focus {
     color: @black;
 }
 
+/* BT audio dead: a card is connected but its profile is 'off' (e.g. the
+ * 2026-08-26 autoswitch poisoning after an unguarded R3 cycle) — no sink
+ * exists and playback silently falls back to the internal speakers. Orange
+ * so a dead card can never masquerade as the normal blue "music" state. */
+#custom-bluetooth.btoff {
+    background-color: #e67e22;
+    color: @black;
+}
+
 #custom-network {
     background-color: @darkgray;
     padding: 0 10px;

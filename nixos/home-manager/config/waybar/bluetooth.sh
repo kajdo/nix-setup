@@ -85,20 +85,25 @@ bz_prop() {
 # is a PipeWire/WirePlumber concept — BlueZ only knows connection, never the
 # profile — so we ask PipeWire via pactl. Returns "1" or "0". Single
 # `pactl list cards` call; locale forced to C for stable labels.
-bt_call_active() {
+bt_active_profile() {
+	# Active profile of the first BT audio card ("" if none). LC_ALL=C keeps
+	# the pactl labels parseable regardless of locale.
 	LC_ALL=C pactl list cards 2>/dev/null | awk '
 		$1 == "Name:" { inbtz = ($2 ~ /^bluez_card/) }
-		inbtz && $1 == "Active" && $2 == "Profile:" {
-			print ($3 ~ /^headset-head-unit/) ? 1 : 0
-			exit
-		}
+		inbtz && $1 == "Active" && $2 == "Profile:" { print $3; exit }
 	'
 }
 
-# Refresh the ONAIR global from the live BT audio profile.
+# Refresh ONAIR (HFP = "on air") and OFFAIR (card connected but profile 'off')
+# from the live BT audio profile. OFFAIR marks the 2026-08-26 autoswitch-poison
+# state: no sink exists, playback silently falls back to the internal speakers
+# — and it must NOT render as the normal blue "music" state.
 refresh_onair() {
-	ONAIR="$(bt_call_active)"
-	[ "$ONAIR" = 1 ] || ONAIR=0
+	case "$(bt_active_profile)" in
+		headset-head-unit*) ONAIR=1; OFFAIR=0 ;;
+		off) ONAIR=0; OFFAIR=1 ;;
+		*) ONAIR=0; OFFAIR=0 ;;
+	esac
 }
 
 # ---- toggle: flip view, then nudge the leader to re-render ----------------
@@ -149,9 +154,10 @@ fi
 # dbus-monitor this whole machine will use.
 
 # Globals shared between refresh_state() and render(). ONAIR mirrors the live
-# BT audio profile (1 = HSP/HFP call mode) and drives the "on air" CSS class.
+# BT audio profile (1 = HSP/HFP call mode) and drives the "on air" CSS class;
+# OFFAIR (profile 'off' while connected) drives the warning "btoff" class.
 POWERED="" DEV_NAME="" DEV_MAC="" DEV_COUNT=0 MON_BATT=0 BATT_PCT="" BATT_ICON=""
-ONAIR=0
+ONAIR=0 OFFAIR=0
 TRIGGER=0   # set by USR1 (view toggle); the loop re-emits at the next safe point
 
 printf '%s\n' "$$" >"$PIDFILE"
@@ -264,7 +270,13 @@ render() {
 	# F9 call-prep toggle and back to blue on WirePlumber's automatic A2DP revert.
 	refresh_onair
 	cls=""
-	[ "$ONAIR" = 1 ] && [ "$POWERED" = yes ] && [ "$DEV_COUNT" -gt 0 ] && cls="onair"
+	if [ "$POWERED" = yes ] && [ "$DEV_COUNT" -gt 0 ]; then
+		if [ "$ONAIR" = 1 ]; then
+			cls="onair"
+		elif [ "$OFFAIR" = 1 ]; then
+			cls="btoff"
+		fi
+	fi
 
 	if [ "$POWERED" != yes ]; then
 		json=$(printf '{"text":"%s","tooltip":"Bluetooth disabled","class":"%s"}' "$on_no" "$cls")
@@ -281,6 +293,8 @@ render() {
 		else
 			tooltip="$DEV_NAME $bt$batt_text$batt_info +$((DEV_COUNT - 1))"
 		fi
+		# Warn when a connected BT audio card sits at profile 'off' (dead).
+		[ "$OFFAIR" = 1 ] && tooltip="$tooltip ⚠ audio off"
 		if [ "$mode" = full ]; then
 			text="$tooltip"
 		else

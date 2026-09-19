@@ -119,10 +119,48 @@ set_profile() {
 	return 1
 }
 
+# Full off → headset cycle (R3 mechanics) with the autoswitch guard, shared by
+# prep / F9-toggle (call direction) / R3. Reason: in-place A2DP→HFP switches
+# leave the loopback capture graph stale — the constant 1-3s mic-delay bug —
+# and only a full off→on cycle recreates transport, sink and loopback source.
+# The guard (2026-08-26 incident): with a live capture stream, WirePlumber's
+# bluetooth autoswitch fires during the 'off' phase and records 'off' as the
+# profile to restore at call end — afterwards the card comes up DEAD (no sink,
+# audio on the laptop speakers, waybar shows normal blue). Disabling autoswitch
+# around the cycle means only OUR explicit switches happen. Returns set_profile's rc.
+cycle_to_headset() {
+	local card="$1" as_prev rc
+	as_prev="$(wpctl settings bluetooth.autoswitch-to-headset-profile 2>/dev/null |
+		awk -F': ' '$1 == "Value" { print $2; exit }')"
+	wpctl settings bluetooth.autoswitch-to-headset-profile false 2>/dev/null || true
+	pactl set-card-profile "$card" off 2>/dev/null || true
+	sleep 1
+	set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"
+	rc=$?
+	wpctl settings bluetooth.autoswitch-to-headset-profile "${as_prev:-true}" 2>/dev/null || true
+	return "$rc"
+}
+
+# Compact tag of the current default sink (bt / alsa / hdmi / other / none) —
+# makes H1 (playback pinned to the wrong sink) visible in the action log.
+def_sink_tag() {
+	local tag
+	tag="$(LC_ALL=C pactl info 2>/dev/null | awk -F': ' '
+		$1 == "Default Sink" {
+			if ($2 ~ /^bluez_output/) print "bt"
+			else if ($2 ~ /hdmi/) print "hdmi"
+			else if ($2 ~ /^alsa_output/) print "alsa"
+			else print "other"
+			exit
+		}')"
+	echo "${tag:-none}"
+}
+
 log() {
 	# Append: timestamp  action  pre=..  post=..  bt_switch=Xs  settle=Ys  streams=N  lat=..
+	#              mode= cycle|cycle-fb|inplace   def_sink= default-sink tag (H1 signal)
 	local action="$1" pre="$2" post="$3"
-	local card sink n id lat bts stl
+	local card sink n id lat bts stl ds
 	card="$(bt_card)"
 	sink="$(bt_sink)"
 	n=0
@@ -134,8 +172,9 @@ log() {
 	fi
 	bts="${BT_SWITCH_SECS:-n/a}"; [ "$bts" != "n/a" ] && bts="${bts}s"
 	stl="${SETTLE_SECS:-n/a}"; [ "$stl" != "n/a" ] && stl="${stl}s"
-	printf '%s  %-10s pre=%-22s post=%-22s bt_switch=%-6s settle=%-6s streams=%s lat=%s\n' \
-		"$(date '+%F %T')" "$action" "${pre:-none}" "${post:-none}" "$bts" "$stl" "$n" "$lat" >> "$LOG"
+	ds="$(def_sink_tag)"
+	printf '%s  %-10s pre=%-22s post=%-22s bt_switch=%-6s settle=%-6s streams=%s lat=%s mode=%s def_sink=%s\n' \
+		"$(date '+%F %T')" "$action" "${pre:-none}" "${post:-none}" "$bts" "$stl" "$n" "$lat" "${ACTION_MODE:-n/a}" "$ds" >> "$LOG"
 }
 
 # ---- actions ---------------------------------------------------------------
@@ -156,22 +195,29 @@ do_prep() {
 			return 0
 			;;
 	esac
-	if set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
-		sleep 0.5 # let the Bluetooth transport settle before the browser opens streams
-		SETTLE_SECS=0.5
-		post="$(active_profile "$card")"
-		if [ -n "$(bt_source)" ]; then
-			msg="$(printf '✅ Call-ready: %s, mic available.\nJoin the call now.' "$post")"
-		else
-			msg="$(printf '⚠️ Profile %s set, but mic source is missing.\nCheck the device.' "$post")"
-		fi
-		notify "$msg"
-		log prep "$pre" "$post"
+	# Standard since 2026-08-26: enter call mode via the full off→HFP cycle —
+	# in-place A2DP→HFP switches are the identified mic-delay trigger. Keep the
+	# in-place switch only as a fallback if the cycle cannot complete.
+	if cycle_to_headset "$card"; then
+		ACTION_MODE="cycle"
+	elif set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
+		ACTION_MODE="cycle-fb"
 	else
+		ACTION_MODE="fail"
 		notify "$(printf '⚠️ Could not switch to a headset profile.\n(card: %s)' "$card")"
 		log prep "$pre" "$(active_profile "$card")"
 		return 1
 	fi
+	sleep 0.5 # let the Bluetooth transport settle before the browser opens streams
+	SETTLE_SECS=0.5
+	post="$(active_profile "$card")"
+	if [ -n "$(bt_source)" ]; then
+		msg="$(printf '✅ Call-ready: %s (via %s), mic available.\nJoin the call now.' "$post" "$ACTION_MODE")"
+	else
+		msg="$(printf '⚠️ Profile %s set, but mic source is missing.\nCheck the device.' "$post")"
+	fi
+	notify "$msg"
+	log prep "$pre" "$post"
 }
 
 do_music() {
@@ -183,6 +229,7 @@ do_music() {
 		return 1
 	fi
 	pre="$(active_profile "$card")"
+	ACTION_MODE=inplace
 	if set_profile "$card" "a2dp-sink" "a2dp-sink" "a2dp-sink-sbc"; then
 		post="$(active_profile "$card")"
 		SETTLE_SECS=0
@@ -208,6 +255,7 @@ do_toggle() {
 	case "$pre" in
 		headset-head-unit*)
 			# currently call mode -> music
+			ACTION_MODE=inplace
 			if set_profile "$card" "a2dp-sink" "a2dp-sink" "a2dp-sink-sbc"; then
 				post="$(active_profile "$card")"
 				SETTLE_SECS=0
@@ -219,17 +267,24 @@ do_toggle() {
 			fi
 			;;
 		*)
-			# currently music / off / unknown -> call mode
-			if set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
-				sleep 0.5 # let the Bluetooth transport settle before joining
-				SETTLE_SECS=0.5
-				post="$(active_profile "$card")"
-				notify "$(printf '📞 Call mode: %s — join now.' "$post")"
-				log toggle "$pre" "$post"
+			# currently music / off / unknown -> call mode.
+			# Full off→HFP cycle since 2026-08-26 (in-place = delay trigger);
+			# in-place only as a fallback.
+			if cycle_to_headset "$card"; then
+				ACTION_MODE="cycle"
+			elif set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
+				ACTION_MODE="cycle-fb"
 			else
+				ACTION_MODE="fail"
 				notify_force "⚠️ Could not switch to headset profile."
 				log toggle "$pre" "$(active_profile "$card")"
+				return 1
 			fi
+			sleep 0.5 # let the Bluetooth transport settle before joining
+			SETTLE_SECS=0.5
+			post="$(active_profile "$card")"
+			notify "$(printf '📞 Call mode: %s (via %s) — join now.' "$post" "$ACTION_MODE")"
+			log toggle "$pre" "$post"
 			;;
 	esac
 }
@@ -300,7 +355,11 @@ do_r2() {
 }
 
 do_r3() {
-	# Aggressive: cycle the profile off → headset (mimics the "2nd call" warm state).
+	# Aggressive mid-call recovery: full off → headset cycle via
+	# cycle_to_headset (includes the autoswitch guard — see its comment for the
+	# 2026-08-26 poisoning incident). Recreates the BT transport, the
+	# bluez_output sink AND the loopback source node; usually the lever that
+	# actually clears the delay.
 	local card pre post
 	card="$(bt_card)"
 	if [ -z "$card" ]; then
@@ -309,9 +368,8 @@ do_r3() {
 		return 1
 	fi
 	pre="$(active_profile "$card")"
-	pactl set-card-profile "$card" off 2>/dev/null || true
-	sleep 1
-	set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" || true
+	cycle_to_headset "$card" || true
+	ACTION_MODE=cycle
 	sleep 1
 	post="$(active_profile "$card")"
 	notify "$(printf '🎧 R3 applied (profile cycle off→HFP).\nIf still lagged, rejoin the call.')"
@@ -383,6 +441,14 @@ do_diag() {
 	bluez_in_id="$(wp_node_id 'bluez_input.')"
 	cap_id="$(wp_node_id 'bluez_capture_internal')"
 	dev_id="$(wp_bluez_device_id)"
+	# Driver node = the REAL HFP capture node behind the loopback source
+	# (node.driver-id of the loopback node) — the one link of the chain the
+	# old snapshots never showed.
+	drv_id=""
+	if [ -n "$bluez_in_id" ]; then
+		drv_id="$(LC_ALL=C wpctl inspect "$bluez_in_id" 2>/dev/null |
+			awk -F' = ' '$1 ~ /driver-id/ { gsub(/"/, "", $2); print $2; exit }')"
+	fi
 
 	{
 		cat <<EOF
@@ -424,6 +490,22 @@ sections give you everything you need with no prior session context.
   mic delay until the stream is torn down. Evidence: in "wpctl inspect
   bluez_input.*" below, session.suspend-timeout-seconds should be 0; note any
   suspended/odd node state. Also inspect the bluez_capture_internal bridge.
+- H3 — Card stuck at profile off after a call (fixed 2026-08-26, kept for
+  history): an unguarded mid-call off->HFP cycle made WirePlumber's autoswitch
+  record 'off' as the profile to restore at call end; afterwards the card had
+  no sink and playback fell back to the laptop speakers. Evidence: "Active
+  Profile: off" while connected. Recover: pactl set-card-profile <card> a2dp-sink,
+  restart wireplumber if it flip-flops.
+- H4 — Bluetooth TRANSPORT collapse (seen 2026-08-31, low/dead headset battery):
+  the Bluetooth link itself dies every ~10-20s — journal shows "spa.bluez5:
+  Failure in Bluetooth audio transport" + bluez nodes "running -> error" with
+  new object serials each cycle (auto-recreated by WirePlumber). NOT a PipeWire
+  routing/suspend problem — R1/R2/R3 operate at the wrong layer. Symptom:
+  default sink flaps BT <-> internal speakers (pulsemixer flickers), call
+  survives on auto-recovery. Check the journal section + headset battery
+  (bluetoothctl info shows "Battery Percentage"). Fix: charge the headset /
+  reconnect the device. If it recurs at high battery, test CVSD
+  (headset-head-unit-cvsd) for an mSBC instability.
 
 ## Background (so this works with NO prior context)
 
@@ -434,6 +516,9 @@ playback) that only clears by rejoining the call.
 
 I have a rofi helper (this script) that:
   - F9 toggle: flips the BT card profile A2DP (music) <-> headset-head-unit/HFP.
+    Entering call mode uses a full off->HFP cycle (R3 mechanics, autoswitch-
+    guarded) since 2026-08-26 — in-place A2DP->HFP switches were identified as
+    the mic-delay trigger.
   - R1: suspend/resume the bluez sink + source (gentle; flush buffers).
   - R2: move the browser PLAYBACK stream to a muted non-BT sink and back. If no
         stream is on the BT sink it prints "no playback stream on the BT sink
@@ -441,6 +526,8 @@ I have a rofi helper (this script) that:
   - R3: set-card-profile off -> headset-head-unit (aggressive; recreates the BT
         transport, the bluez_output sink AND the loopback source node; resets
         both routing and node freshness — usually the one that actually fixes it).
+        The off-phase is autoswitch-guarded: unguarded, WirePlumber's autoswitch
+        recorded 'off' as the end-of-call restore target and left the card dead.
 
 Fixes already applied (services.pipewire.wireplumber in audio.nix):
   - 10-disable-suspend      ALSA nodes:        session.suspend-timeout-seconds = 0
@@ -449,6 +536,9 @@ Fixes already applied (services.pipewire.wireplumber in audio.nix):
   - configPackages patch    bluez.lua:449 adds ["session.suspend-timeout-seconds"] = 0
                             to the CreateDeviceLoopbackSource node (the source call
                             apps capture from; NOT reachable by monitor.bluez.rules).
+  - rofi_call_prep.sh       2026-08-26: cycle_to_headset() (off->HFP with autoswitch
+                            guard) is the standard for prep/toggle/R3; the action log
+                            gained mode= and def_sink= fields.
 
 Relevant files (repo: ~/git/nix-setup):
   - nixos/nixos-modules/hardware/audio.nix
@@ -489,6 +579,16 @@ $([ -n "$bluez_in_id" ] && LC_ALL=C wpctl inspect "$bluez_in_id" 2>/dev/null || 
 
 ### wpctl inspect: bluez_capture_internal bridge node  (id=${cap_id:-not found})
 $([ -n "$cap_id" ] && LC_ALL=C wpctl inspect "$cap_id" 2>/dev/null || echo "(bluez_capture_internal node not present)")
+
+### wpctl inspect: HFP capture DRIVER node  (id=${drv_id:-not found}; resolved from node.driver-id of the loopback source — the REAL BT capture node)
+$([ -n "$drv_id" ] && LC_ALL=C wpctl inspect "$drv_id" 2>/dev/null || echo "(driver node not found — resolve manually from node.driver-id in the loopback inspect above)")
+
+### pw-dump: node runtime state  (id / name / state / latency / driver per node — bluez + stream rows are the interesting ones; a degraded node shows suspended/odd state here)
+$(pw-dump 2>/dev/null | jq -r '.[] | select(.type=="PipeWire:Interface:Node") | [.id, .info.props["node.name"], .info.state, (.info.props["node.latency"] // "-"), (.info.props["node.driver-id"] // "-")] | @tsv' 2>/dev/null || echo "(pw-dump or jq unavailable)")
+
+### journal  (user journal, last 30 min, bluetooth/audio relevant)
+$(journalctl --user -u wireplumber --since '-30 min' --no-pager 2>/dev/null | tail -30 || true)
+$(journalctl --user --since '-30 min' --no-pager 2>/dev/null | grep -iE 'bluez|pipewire|wireplumber|wfica|helium' | tail -25 || echo "(journal empty)")
 
 ### wpctl inspect: bluez device  (id=${dev_id:-not found})
 $([ -n "$dev_id" ] && LC_ALL=C wpctl inspect "$dev_id" 2>/dev/null || echo "(bluez device not found)")
