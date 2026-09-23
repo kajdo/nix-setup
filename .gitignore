@@ -3,6 +3,9 @@ AGENTS.md
 ./nixos/hardware-configuration.nix
 ./nixos/pi
 
+# flake lock is intentionally unpinned (rebuilt from latest inputs on rebuild)
+nixos/flake.lock
+
 # ignore pi-generated scratch artifacts (live plans/progress/sessions,
 # subagent outputs) at any depth
 **/.pi/
