@@ -206,3 +206,81 @@ failures in total, 11:24–11:40, during the first call.
   (`headset-head-unit-cvsd`) as an mSBC-instability probe.
 - No script changes needed; the 08-26 autoswitch guard held up through five
   cycle toggles this day (state files clean, `default-profile` = a2dp-sink).
+
+---
+
+## 2026-09-22: Dead transport, nodes still visible (recovered, no code)
+
+### Incident
+
+Playback visible in pulsemixer / browser, **but no sound**. Unlike 08-31 the
+sink did NOT flap — it sat there looking healthy. Journal:
+
+```
+pw.node: (bluez_output.84_9D_4B_75_74_77.1-63) running -> error
+spa.bluez5: Failure in Bluetooth audio transport .../fd42
+```
+
+Same failure class as 08-31 (`running -> error` on both BT nodes, transport
+death) but a *single* collapse, not a loop — the sink/card stayed up while the
+transport underneath was dead. Classic "connected but silent" presentation.
+
+### Context: this adapter is chronically flaky
+
+- 09-15: `Missing completion reports for packet ... Bluetooth adapter
+  firmware bug?` (repeated)
+- 09-16: transport `fd0` died (`terminated unexpectedly`), never recovered
+  until manual intervention days later
+- 09-19: device connected via **BLE only** (`Q20i_BLE`), no bluez card at all
+  in PipeWire — fixed by `bluetoothctl power off/on`
+- 09-22: this incident (`fd42`)
+
+Pattern points at the adapter/link layer (firmware), not the headset stack
+config. Battery remains the other known trigger (see 08-31, H4).
+
+### Recovery recipe (in escalation order)
+
+```bash
+# 1. Force a fresh transport (works for the "connected but silent" state)
+bluetoothctl power off && sleep 3 && bluetoothctl power on
+bluetoothctl connect 84:9D:4B:75:74:77
+
+# 2. If the card ends up profile 'off' or the cycle drops the device:
+pactl set-card-profile bluez_card.84_9D_4B_75_74_77 a2dp-sink
+#    (reconnect first if it dropped: bluetoothctl connect 84:9D:4B:75:74:77)
+
+# 3. Escalation if the adapter is wedged (le-connection-abort-by-local etc.)
+sudo systemctl restart bluetooth
+```
+
+**Verify** audio actually flows (state must be `RUNNING`, not just nodes
+existing):
+
+```bash
+paplay /tmp/tone.wav &            # any wav; generate: python3 + wave module
+pactl list short sinks | grep bluez   # last field: RUNNING during playback
+journalctl --user -u wireplumber --since "-1 min" | grep -iE "error|fail"
+```
+
+Also check the boring causes before blaming the transport: `pactl
+get-sink-mute` / `get-sink-volume` on the bluez sink, and the headset's own
+hardware volume buttons (independent of system volume).
+
+### Gotchas hit during recovery
+
+- `pactl set-card-profile <card> off` can **drop the connection entirely**
+  when the transport is already dead — don't be surprised if the device
+  disappears and needs a reconnect + adapter power cycle afterwards.
+- `bluetoothctl connect` right after a disconnect often fails with
+  `br-connection-busy` (auto-reconnect already in progress) or
+  `le-connection-abort-by-local` (adapter half-state) — power cycle the
+  adapter, wait, retry.
+
+### If it keeps recurring
+
+- `sudo systemctl restart bluetooth` as the heavier reset
+- Longer term: newer Bluetooth adapter firmware (`/lib/firmware/intel`
+  firmware files) — the repeated "completion reports" warnings indict the
+  adapter itself
+- Check headset battery first anyway (08-31): transport collapses at low
+  battery are the known alternative explanation
