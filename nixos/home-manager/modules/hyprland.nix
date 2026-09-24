@@ -31,8 +31,6 @@
 
     # GTK themes
     gtk3
-    gtk-engine-murrine
-    gtk_engines
     adwaita-icon-theme
     papirus-icon-theme
     gnome-themes-extra
@@ -51,11 +49,20 @@
   };
   xdg.configFile."dunst/dunstrc".source = ./../config/dunst/dunstrc;
 
+  # Hyprland compositor config (Lua format, Hyprland >= 0.55;
+  # hyprlang hyprland.conf is ignored when hyprland.lua exists and was
+  # removed upstream in 0.57)
+  xdg.configFile."hypr/hyprland.lua".source = ./../config/hypr/hyprland.lua;
+
+  # hyprlock / hypridle still use the hyprlang .conf format
+  xdg.configFile."hypr/hyprlock.conf".source = ./../config/hypr/hyprlock.conf;
+  xdg.configFile."hypr/hypridle.conf".source = ./../config/hypr/hypridle.conf;
+
   # Rofi app launcher
   programs.rofi = {
     enable = true;
     theme = ./../config/rofi/themes/kajdo-mix.rasi;
-    extraConfig = {
+    settings = {
       show-icons = true;
       icon-theme = "Papirus";
       display-drun = "  ";
