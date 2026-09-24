@@ -6,7 +6,8 @@
     gnome-calculator
 
     # Office suite
-    libreoffice-qt6-fresh
+    # (upstream dropped the fresh/still split in 2026; -qt is the successor of -qt6-fresh)
+    libreoffice-qt
 
     # Note-taking
     obsidian
