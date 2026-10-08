@@ -284,3 +284,54 @@ hardware volume buttons (independent of system volume).
   adapter itself
 - Check headset battery first anyway (08-31): transport collapses at low
   battery are the known alternative explanation
+
+## 2026-09-28: Collapse at FULL battery + R3 backfired → AUTO & R4 ladder added
+
+### Incident (reboot required)
+
+11:00:02 the A2DP transport failed **while still in music mode, before any
+user action**. F9 toggle into call mode at 11:00:04, then a full collapse
+loop 11:01:48–11:03:45 (HFP `fd0` AND A2DP `fd52` transports dying every
+10–30 s). R3 at 11:01:51 completed its off→HFP cycle but **`settle=n/a` — the
+sink never stabilized → total silence**. Reboot at 11:03:47. A fresh single
+transport failure followed at 11:17:02 in the new boot — **at 100 % battery**.
+
+### Verdicts
+
+- **Battery exonerated for this one**: headset fully charged that morning;
+  the 11:17 failure happened at 100 %.
+- **Kernel-update regression ruled out**: transport failures span three
+  system generations (pre-Sep-10, gen 566 = 6.18.38, gen 569 = 6.18.53).
+- Remaining suspects: the **chronically flaky internal adapter** (see
+  2026-09-22 section for the 09-15…09-22 history) and mSBC (CVSD probe
+  still pending — indicated now that battery is ruled out).
+- **R3 mid-collapse is actively harmful**: the `off` phase removes the last
+  working sink; on a dying link the fresh transport never stabilizes →
+  silence instead of flapping audio. R1–R3 are PipeWire-layer tools; this
+  failure lives in the link layer (H4).
+
+### Code: AUTO triage + R4 ladder (rofi_call_prep.sh)
+
+The R1–R3 menu had no lever for link-layer failures and gave no visibility
+into WHICH failure mode was live. Added:
+
+- **AUTO** — read-only triage (~2 s), notifies the verdict, then runs the
+  matching fix: pactl timeout → R4c · no card → R4a · ≥2 transport failures
+  in 3 min → R4a · streams off the BT sink → R2 · streams active + stable
+  link → R3 · nothing wrong → no-op. R3 is only chosen when the link is
+  provably stable.
+- **R4a** — PC-side headset reconnect (`bluetoothctl disconnect/connect`, NO
+  headset buttons, call survives, ~10–15 s gap) + guarded HFP bring-up +
+  stream re-pinning. Proven 2026-09-09.
+- **R4b** — adapter power cycle (`bluetoothctl power off/on`) — codifies the
+  09-22 recovery recipe step 1; escalation when R4a doesn't bring the card.
+- **R4c** — `systemctl --user restart wireplumber pipewire pipewire-pulse` +
+  R4a — the proven 2026-09-09 wedged-stack recovery.
+- AUTO escalates R4a → R4b automatically; all actions log
+  `mode=r4a/r4b/r4c/auto-<MODE>` to call-prep.log.
+
+### New mid-call playbook
+
+Audio breaks during a call → run **AUTO** (rofi or `rofi_call_prep.sh auto`).
+Read the verdict notification, let it fix the right layer. Manual R4 if you
+already know it's the link. R3 only when AUTO reports `STALE-LOOPBACK?`

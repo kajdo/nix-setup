@@ -8,6 +8,13 @@
 #   • Recover R1/R2/R3   — mid-call recovery strategies, individually selectable so
 #                          you can try them one-by-one during a lagged call and learn
 #                          which lever actually fixes it
+#   • AUTO · triage-first — read-only checks classify the CURRENT failure mode
+#                          (stack hang / no card / transport collapse / misrouting /
+#                          classic stale loopback), show the verdict, run the matching
+#                          fix. Start here when audio breaks mid-call.
+#   • R4 ladder          — link-layer live fixes, NO headset buttons needed:
+#                          R4a PC-side reconnect · R4b adapter power-cycle ·
+#                          R4c PipeWire stack restart.
 #   • Gather diagnostics — writes a ready-to-paste analysis prompt (live audio state
 #                          + full background context) to /tmp/call-audio-diag.md and
 #                          the clipboard, so a fresh session can diagnose with no
@@ -21,7 +28,7 @@
 # Usage:
 #   rofi_call_prep.sh             # show the menu
 #   rofi_call_prep.sh prep        # skip menu (for a future hotkey binding)
-#   rofi_call_prep.sh music|r1|r2|r3|status|diag
+#   rofi_call_prep.sh auto|r4|r4b|r4c|music|r1|r2|r3|status|diag
 #
 # Every action is appended to $XDG_STATE_HOME/call-prep.log (default
 # ~/.local/state/call-prep.log) for post-call debugging.
@@ -74,11 +81,16 @@ park_sink() {
 }
 
 sink_inputs_on() {
-	# IDs of sink-inputs currently routed to the given sink.
-	LC_ALL=C pactl list sink-inputs 2>/dev/null | awk -v want="$1" '
+	# IDs of sink-inputs currently routed to the given sink. NOTE: pactl lists
+	# the target as a sink INDEX ("Sink: 75126"), not a name — comparing by
+	# name only made this return 0 for every stream (2026-10-07: triage then
+	# misfired as MISROUTED and AUTO ran a no-op R2 instead of R3). Match both.
+	local idx
+	idx="$(LC_ALL=C pactl list sinks short 2>/dev/null | awk -v w="$1" '$2 == w {print $1; exit}')"
+	LC_ALL=C pactl list sink-inputs 2>/dev/null | awk -v want="$1" -v idx="$idx" '
 		/^Sink Input #/ { id = $3; sub(/#/, "", id); sn = "" }
 		$1 == "Sink:" { sn = $2 }
-		id != "" && sn == want { print id; id = "" }
+		id != "" && (sn == want || (idx != "" && sn == idx)) { print id; id = ""; sn = "" }
 	'
 }
 
@@ -139,6 +151,85 @@ cycle_to_headset() {
 	rc=$?
 	wpctl settings bluetooth.autoswitch-to-headset-profile "${as_prev:-true}" 2>/dev/null || true
 	return "$rc"
+}
+
+# ---- link-layer triage helpers (AUTO / R4) ---------------------------------
+
+bt_mac() {
+	# Device address of the first BT audio card; falls back to any connected,
+	# then any paired device (card can be absent in NO-CARD situations).
+	local c mac
+	c="$(bt_card)"
+	if [ -n "$c" ]; then
+		echo "$c" | sed 's/^bluez_card\.//; s/_/:/g'
+		return 0
+	fi
+	mac="$(bluetoothctl devices Connected 2>/dev/null | awk 'NR==1 {print $2}')"
+	[ -z "$mac" ] && mac="$(bluetoothctl devices Paired 2>/dev/null | awk 'NR==1 {print $2}')"
+	echo "$mac"
+}
+
+transport_failures() {
+	# Count "Failure in Bluetooth audio transport" lines in the wireplumber
+	# journal of the last N minutes (default 3) — the H4 collapse signal.
+	journalctl --user -u wireplumber --since "-${1:-3} min" --no-pager 2>/dev/null |
+		grep -c 'Failure in Bluetooth audio transport'
+}
+
+pulse_alive() {
+	# Is the PipeWire/pulse server answering at all? (R4c signal: hung stack)
+	timeout 3 pactl info >/dev/null 2>&1
+}
+
+triage() {
+	# Read-only classification of the CURRENT failure mode. Sets TRIAGE_MODE /
+	# TRIAGE_LABEL / TRIAGE_PLAN globals for do_auto(). Order matters: link and
+	# stack problems first — pressing R3 into a collapsing link removes the last
+	# working sink (2026-09-28 incident: settle=n/a, total silence).
+	local card sink si_n bt_n so_n fails
+	TRIAGE_MODE="HEALTHY"
+	TRIAGE_LABEL="nothing obviously broken"
+	TRIAGE_PLAN="none"
+	if ! pulse_alive; then
+		TRIAGE_MODE="STACK-HUNG"
+		TRIAGE_LABEL="PipeWire/pulse server not answering"
+		TRIAGE_PLAN="R4c"
+		return 0
+	fi
+	card="$(bt_card)"
+	if [ -z "$card" ]; then
+		TRIAGE_MODE="NO-CARD"
+		TRIAGE_LABEL="no Bluetooth audio card (device gone or not exported)"
+		TRIAGE_PLAN="R4a"
+		return 0
+	fi
+	fails="$(transport_failures 3)"
+	if [ "${fails:-0}" -ge 2 ]; then
+		TRIAGE_MODE="TRANSPORT-COLLAPSE"
+		TRIAGE_LABEL="${fails} BT transport failures in 3 min — the link is dying"
+		TRIAGE_PLAN="R4a"
+		return 0
+	fi
+	sink="$(bt_sink)"
+	si_n="$(LC_ALL=C pactl list sink-inputs short 2>/dev/null | wc -l | tr -d ' ')"
+	bt_n=0
+	[ -n "$sink" ] && bt_n="$(sink_inputs_on "$sink" | wc -l | tr -d ' ')"
+	so_n="$(LC_ALL=C pactl list source-outputs short 2>/dev/null | wc -l | tr -d ' ')"
+	if [ "$si_n" -gt 0 ] && [ -n "$sink" ] && [ "$bt_n" -eq 0 ]; then
+		TRIAGE_MODE="MISROUTED"
+		TRIAGE_LABEL="playback streams exist but none on the BT sink"
+		TRIAGE_PLAN="R2"
+		return 0
+	fi
+	if [ "$si_n" -gt 0 ] || [ "$so_n" -gt 0 ]; then
+		TRIAGE_MODE="STALE-LOOPBACK?"
+		TRIAGE_LABEL="streams active, link stable — classic mic-delay pattern"
+		TRIAGE_PLAN="R3"
+	else
+		TRIAGE_MODE="HEALTHY"
+		TRIAGE_LABEL="no active streams, no failures"
+		TRIAGE_PLAN="none"
+	fi
 }
 
 # Compact tag of the current default sink (bt / alsa / hdmi / other / none) —
@@ -376,6 +467,146 @@ do_r3() {
 	log R3 "$pre" "$post"
 }
 
+r4_bringup() {
+	# Shared tail of R4a/R4b/R4c: wait for the card, ensure the call profile
+	# (guarded off→HFP cycle unless autoswitch already did it), wait for the
+	# sink, then re-pin the remembered playback streams and restore the default
+	# sink. Arg 1: space-separated sink-input ids. rc 0 = sink usable.
+	local ids="$1" card sink id i
+	i=0
+	while [ "$i" -lt 12 ] && [ -z "$(bt_card)" ]; do
+		sleep 1
+		i=$((i + 1))
+	done
+	SETTLE_SECS="$i"
+	card="$(bt_card)"
+	[ -z "$card" ] && return 1
+	case "$(active_profile "$card")" in
+		headset-head-unit*) ;; # autoswitch got there first
+		*)
+			cycle_to_headset "$card" ||
+				set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" ||
+				true
+			;;
+	esac
+	i=0
+	while [ "$i" -lt 6 ] && [ -z "$(bt_sink)" ]; do
+		sleep 1
+		i=$((i + 1))
+	done
+	sink="$(bt_sink)"
+	if [ -n "$sink" ]; then
+		pactl set-default-sink "$sink" 2>/dev/null || true
+		for id in $ids; do
+			pactl move-sink-input "$id" "$sink" 2>/dev/null || true
+		done
+	fi
+	[ -n "$sink" ]
+}
+
+do_r4a() {
+	# R4a — PC-side headset reconnect (2026-09-28): the live fix for H4
+	# transport collapse and a missing card. bluetoothctl disconnect/connect
+	# needs NO headset buttons (no 30s long-press dance); the browser call
+	# survives, expect a ~10-15s audio gap. Proven 2026-09-09.
+	local mac pre ids n
+	mac="$(bt_mac)"
+	if [ -z "$mac" ]; then
+		notify_force "⚠️ R4: no Bluetooth device address found."
+		log R4 none none
+		return 1
+	fi
+	pre="$(active_profile "$(bt_card)")"
+	notify_force "$(printf '🔌 R4a: reconnecting headset %s…\n~10-15s audio gap — the call itself survives.' "$mac")"
+	# remember ALL playback streams so they can be re-pinned afterwards
+	ids="$(LC_ALL=C pactl list sink-inputs short 2>/dev/null | awk '{print $1}')"
+	timeout 10 bluetoothctl disconnect "$mac" >/dev/null 2>&1 || true
+	sleep 2
+	timeout 15 bluetoothctl connect "$mac" >/dev/null 2>&1 || true
+	if ! r4_bringup "$ids"; then
+		notify_force "⚠️ R4a: card/sink did not come back.\nNext: R4b (adapter power cycle) or rejoin."
+		ACTION_MODE=r4a
+		log R4 "${pre:-none}" "$(active_profile "$(bt_card)")"
+		return 1
+	fi
+	n="$(printf '%s\n' "$ids" | wc -w | tr -d ' ')"
+	ACTION_MODE=r4a
+	notify "$(printf '🎧 R4a done: %s (%s stream(s) re-pinned).' "$(active_profile "$(bt_card)")" "$n")"
+	log R4 "${pre:-none}" "$(active_profile "$(bt_card)")"
+	return 0
+}
+
+do_r4b() {
+	# R4b — adapter power cycle (R4a escalation when the card won't come back,
+	# e.g. after an hci0 firmware wedge à la 2026-09-09).
+	local mac pre ids n
+	mac="$(bt_mac)"
+	if [ -z "$mac" ]; then
+		notify_force "⚠️ R4b: no Bluetooth device address found."
+		log R4b none none
+		return 1
+	fi
+	pre="$(active_profile "$(bt_card)")"
+	notify_force "🔄 R4b: power-cycling the BT adapter (~20-25s)…"
+	ids="$(LC_ALL=C pactl list sink-inputs short 2>/dev/null | awk '{print $1}')"
+	bluetoothctl power off >/dev/null 2>&1 || true
+	sleep 1
+	bluetoothctl power on >/dev/null 2>&1 || true
+	sleep 3
+	timeout 15 bluetoothctl connect "$mac" >/dev/null 2>&1 || true
+	if ! r4_bringup "$ids"; then
+		notify_force "⚠️ R4b: still no card.\nNext: R4c (stack restart) or rejoin the call."
+		ACTION_MODE=r4b
+		log R4b "${pre:-none}" "$(active_profile "$(bt_card)")"
+		return 1
+	fi
+	n="$(printf '%s\n' "$ids" | wc -w | tr -d ' ')"
+	ACTION_MODE=r4b
+	notify "$(printf '🎧 R4b done: %s (%s stream(s) re-pinned).' "$(active_profile "$(bt_card)")" "$n")"
+	log R4b "${pre:-none}" "$(active_profile "$(bt_card)")"
+	return 0
+}
+
+do_r4c() {
+	# R4c — audio-stack restart (pactl unresponsive; the 2026-09-09 wedged
+	# stack). Restart pipewire/wireplumber, then run the R4a reconnect tail.
+	local pre
+	pre="$(active_profile "$(bt_card)")"
+	notify_force "♻️ R4c: restarting PipeWire stack (~30s)…"
+	systemctl --user restart wireplumber pipewire pipewire-pulse 2>/dev/null || true
+	sleep 4
+	do_r4a
+	ACTION_MODE=r4c
+	log R4c "${pre:-none}" "$(active_profile "$(bt_card)")"
+}
+
+do_auto() {
+	# Triage-first rescue: classify read-only, TELL the user the verdict (the
+	# visibility the R1-R3 menu lacked), then run the matching fix. R3 is only
+	# chosen when the link is provably stable — pressing it into a collapsing
+	# transport removes the last working sink (2026-09-28 incident).
+	local pre
+	triage
+	notify_force "$(printf '🔍 AUTO verdict: %s\n%s\n→ plan: %s' "$TRIAGE_MODE" "$TRIAGE_LABEL" "$TRIAGE_PLAN")"
+	pre="$(active_profile "$(bt_card)")"
+	case "$TRIAGE_PLAN" in
+		R4c) do_r4c ;;
+		R4a)
+			do_r4a || do_r4b
+			;;
+		R2) do_r2 ;;
+		R3) do_r3 ;;
+		*)
+			notify "✅ AUTO: nothing to fix."
+			ACTION_MODE="auto-none"
+			log AUTO "${pre:-none}" "$(active_profile "$(bt_card)")"
+			return 0
+			;;
+	esac
+	ACTION_MODE="auto-${TRIAGE_MODE}"
+	log AUTO "${pre:-none}" "$(active_profile "$(bt_card)")"
+}
+
 do_status() {
 	local card prof sink src n id lat msg
 	card="$(bt_card)"
@@ -458,7 +689,7 @@ Captured: ${now}
 
 Hi — I'm hitting the audio-delay issue again during a browser call with my
 Bluetooth headset. Please analyze the LIVE snapshot below and tell me the most
-likely cause + which recovery to try (R1 / R2 / R3 / rejoin). Do NOT change
+likely cause + which recovery to try (AUTO / R1 / R2 / R3 / R4 / rejoin). Do NOT change
 anything or switch the Bluetooth profile without confirming with me first.
 
 This file is self-contained: the "Quick read", "Hypotheses" and "Background"
@@ -528,6 +759,13 @@ I have a rofi helper (this script) that:
         both routing and node freshness — usually the one that actually fixes it).
         The off-phase is autoswitch-guarded: unguarded, WirePlumber's autoswitch
         recorded 'off' as the end-of-call restore target and left the card dead.
+  - AUTO: triage-first rescue — read-only checks detect WHICH failure mode is
+        live (stack hang / no card / transport collapse / misrouting / classic
+        stale loopback), notify the verdict, then run the matching fix.
+  - R4:  PC-side headset reconnect (bluetoothctl disconnect/connect — NO headset
+        buttons, the browser call survives, ~10-15s audio gap) followed by HFP
+        bring-up and stream re-pinning. The live fix for H4 transport collapse.
+        Escalations: R4b = adapter power cycle, R4c = PipeWire stack restart.
 
 Fixes already applied (services.pipewire.wireplumber in audio.nix):
   - 10-disable-suspend      ALSA nodes:        session.suspend-timeout-seconds = 0
@@ -624,16 +862,22 @@ case "${1:-}" in
 	r1) do_r1; exit ;;
 	r2) do_r2; exit ;;
 	r3) do_r3; exit ;;
+	auto) do_auto; exit ;;
+	r4) do_r4a; exit ;;
+	r4b) do_r4b; exit ;;
+	r4c) do_r4c; exit ;;
 	status) do_status; exit ;;
 	diag) do_diag; exit ;;
 esac
 
 items=(
+	"🚑  AUTO · diagnose & fix (start here)"
 	"📞  Prep for call (force HSP/HFP)"
 	"🎵  Back to music (force A2DP)"
 	"🎧  Recover R1 · suspend/resume (gentle)"
 	"🎧  Recover R2 · move stream out & back"
 	"🎧  Recover R3 · profile cycle off→HFP (aggressive)"
+	"🔌  R4 · reconnect headset (link-layer, no buttons)"
 	"📋  Gather diagnostics (prompt → /tmp + clipboard)"
 	"📊  Show audio state (debug)"
 )
@@ -641,11 +885,13 @@ items=(
 sel="$(printf '%s\n' "${items[@]}" | rofi -dmenu -i -no-custom -p "🎧 Call Prep")"
 
 case "$sel" in
+	*"AUTO"*) do_auto ;;
 	*"Prep for call"*) do_prep ;;
 	*"Back to music"*) do_music ;;
 	*"R1"*) do_r1 ;;
 	*"R2"*) do_r2 ;;
 	*"R3"*) do_r3 ;;
+	*"R4"*) do_r4a ;;
 	*"Gather diagnostics"*) do_diag ;;
 	*"Show audio state"*) do_status ;;
 	"") exit 0 ;;
