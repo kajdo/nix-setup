@@ -236,6 +236,78 @@ hl.window_rule({
 hl.window_rule({ match = { class = "^(org.gnome.Calculator)$" }, float = true })
 hl.window_rule({ match = { class = ".*tauri-test.*" }, float = true })
 
+-- Thunar file manager: always open floating, never tiled
+hl.window_rule({
+  match = { class = "^(thunar)$" },
+  float = true,
+  size = { "(monitor_w*0.65)", "(monitor_h*0.7)" },
+})
+
+-- Bitwarden browser-extension window (login prompt, Ctrl+Shift+L):
+-- Chromium extension windows get class "chrome-<ext-id>-Default". The
+-- ext-id is key-derived (stable per install source) but differs between
+-- sources. Static rule for the current install + a generic "^chrome%-"
+-- branch in the window.open listener below (initial_title matching is
+-- NOT available on 0.56.x -- verified -- so the listener is the generic
+-- fallback for any extension id).
+hl.window_rule({
+  match = { class = "^chrome-mnohbhncmaenaaigligdegaipglbnppp" },
+  float = true,
+  center = true,
+})
+
+-- Citrix virtual apps (Wfica, e.g. remote Outlook): tiled, but assigned to
+-- workspace 4. Title varies by app, so match on class only.
+-- Use workspace = "4 silent" to avoid focusing ws 4 when the app opens.
+hl.window_rule({
+  match = { class = "^(Wfica)$" },
+  workspace = "4",
+})
+
+-- Citrix "I'm working..." splash popup (class + title): floating.
+-- MUST come after the rule above: later rules take precedence, so
+-- workspace = "unset" keeps the popup on the current workspace
+-- instead of dragging it to workspace 4.
+hl.window_rule({
+  match = { class = "^(Wfica)$", title = "^(Citrix Workspace)$" },
+  float = true,
+  workspace = "unset",
+})
+
+-- Helium browser popups (e.g. PayPal checkout): float, while the main
+-- browser window stays tiled.
+--
+-- Why an event listener instead of a static window_rule with
+-- initial_title = "^about:blank"? Static rules are evaluated when the
+-- window is CREATED, and at that moment chromium popups still have an
+-- EMPTY title -- "about:blank - Helium" is only set a few events later
+-- (still pre-map), so title-based static matching never fires (verified
+-- live with an instrumented config on Hyprland 0.56.2). The window.title
+-- event also fires PRE-map, so dispatching there targets a not-yet-mapped
+-- window and is silently dropped. The window.open event fires at map time
+-- with class + title fully populated; dispatching float there applies in
+-- the same frame (no tile->float flicker; verified). Main windows never
+-- start with about:blank, so they stay tiled.
+-- Generic popup geometry: fixed 600x400 px, centered on the popup's
+-- monitor. Dispatchers take plain pixel coords only (no monitor_w math).
+-- NOTE: keep exactly ONE hl.on() registration per event name -- a second
+-- registration for the same event silently breaks the callback (0.56.x).
+hl.on("window.open", function(w)
+  if w == nil then return end
+  if w.class == "helium" and w.title and w.title:match("^about:blank") then
+    hl.dispatch(hl.dsp.window.float({ action = "set", window = w }))
+    hl.dispatch(hl.dsp.window.resize({ x = 600, y = 400, relative = false, window = w }))
+    hl.dispatch(hl.dsp.window.center({ window = w }))
+  elseif w.class and w.class:match("^chrome%-") then
+    -- any chromium extension window (class "chrome-<ext-id>-Default"),
+    -- e.g. Bitwarden login: float + fixed 600x400 + center (their own
+    -- requested size is unreliable, chromium remembers ad-hoc sizes)
+    hl.dispatch(hl.dsp.window.float({ action = "set", window = w }))
+    hl.dispatch(hl.dsp.window.resize({ x = 600, y = 400, relative = false, window = w }))
+    hl.dispatch(hl.dsp.window.center({ window = w }))
+  end
+end)
+
 --------------------------------------------------------------------------------
 -- ██╗  ██╗███████╗██╗   ██╗    ██████╗ ██╗███╗   ██╗██████╗ ██╗███╗   ██╗ ██████╗ ███████╗
 -- ██║ ██╔╝██╔════╝╚██╗ ██╔╝    ██╔══██╗██║████╗  ██║██╔══██╗██║████╗  ██║██╔════╝ ██╔════╝

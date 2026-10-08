@@ -22,5 +22,8 @@ sudo nixos-rebuild switch
 # (run :LazyClean inside nvim after this)
 rm -f ~/.local/share/nvim/lazy/lazy-lock.json
 
+# make Hyprland pick up config changes (nix store symlink swap is not watched)
+hyprctl reload
+
 # send a notification that it's done
 notify-send NixOS "Rebuild & Switch done!" --icon /run/current-system/sw/share/icons/hicolor/128x128/apps/nix-snowflake.png
