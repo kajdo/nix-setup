@@ -76,7 +76,9 @@ Observed bugs (all reproduced & root-caused, see `ANALYSIS-baseline.md`):
 1. **Reboot** (clean state; Hyprland restores last-active-ws per monitor!)
 2. Open the tmux-scratchpad kitty, start the agent, run:
    `tests/hypr-workspaces/ws_test.sh`
-3. **Hands off mouse/keyboard** for the ~3–4 min runtime
+3. **Hands off mouse/keyboard** for the ~4 min runtime — progress is announced
+   via `notify-send`: phase changes, `[step/52 · elapsed] id — N remaining`
+   for every check, and a final `✔ DONE` summary
 4. **At most one run per boot** — pre-fix cases create ws10, which would
    false-fail the `max-ws ≤ 9` invariant on a second run
 
@@ -97,6 +99,10 @@ Mode is auto-detected: pre-fix (bind dispatchers) vs post-fix (global
   the **focused window** — the correct form is a selector:
   `{ window = "address:0x…" }` (source: `LuaBindingsDispatchers.cpp → hlWindowKill`)
 - Manual `hyprctl … kill` outside the script is forbidden
+- Known measurement limit: the runner's own scratchpad (class
+  `KittyScratchpad`) can overlay the focused ws and report as `activewindow`;
+  the `win` sub-check is skipped in that case (ws/focus/cursor carry the
+  verdict) and the skip is noted in the report
 
 ## Checks & acceptance
 

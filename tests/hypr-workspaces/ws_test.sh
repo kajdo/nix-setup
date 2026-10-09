@@ -36,6 +36,22 @@ mkdir -p "$OUTDIR"
 log()  { printf '%s\n' "$*"; }
 md()   { printf '%s\n' "$*" >> "$REPORT"; }
 
+# --- user-facing progress notifications (notify-send) --------------------------
+NOTIFY_OK=0; command -v notify-send >/dev/null 2>&1 && NOTIFY_OK=1
+TOTAL_STEPS=52          # B:2 + F:6 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
+STEP=0
+T0=$SECONDS
+notify() { # notify <text> [timeout-ms]
+  [ "$NOTIFY_OK" = "1" ] && notify-send -t "${2:-2500}" "hypr_ws_test" "$*" >/dev/null 2>&1
+}
+notify_step() { # notify_step <id> <desc>
+  STEP=$((STEP+1))
+  notify "[$STEP/$TOTAL_STEPS · $((SECONDS-T0))s] $1: $2 — $((TOTAL_STEPS-STEP)) remaining" 2000
+}
+notify_phase() { # notify_phase <name>
+  notify "— Phase $1 —" 1500
+}
+
 # ----------------------------------------------------------------------------
 # state capture
 # ----------------------------------------------------------------------------
@@ -267,6 +283,12 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
 
   [ "$aws" = "$ews" ]   || { verdict="FAIL"; reason+=" active-ws=$aws@$amon (want $ews);"; }
   [ "$fmon" = "$emon" ] || { verdict="FAIL"; reason+=" focused-mon='$fmon' (want $emon);"; }
+  if [ "$acls" = "KittyScratchpad" ]; then
+    # the runner's own scratchpad overlays the focused ws and reports as
+    # activewindow — the win sub-check cannot see the real target ws content.
+    # Skip it (ws/focus/cursor carry the verdict); note for the record.
+    reason+=" [win-check skipped: runner overlay]"
+  else
   case "$ewin" in
     NONE) [ "$awin" = "NONE" ] || { verdict="FAIL"; reason+=" active-win='$awin' (want NONE);"; } ;;
     any)  [ "$awin" != "NONE" ] || { verdict="FAIL"; reason+=" active-win=NONE (want a window);"; } ;;
@@ -280,6 +302,7 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
       fi ;;
     *)    [[ "$awin" == *"$ewin"* ]] || { verdict="FAIL"; reason+=" active-win='$awin' (want ~'$ewin');"; } ;;
   esac
+  fi
   [ "$fnmon" = "1" ] || { verdict="FAIL"; reason+=" focused-monitors=$fnmon (want exactly 1);"; }
   if [ "$maxws" != "?" ]; then
     [ "$maxws" -le 9 ] 2>/dev/null || { verdict="FAIL"; reason+=" max-ws-id=$maxws (ws>9 created!);"; }
@@ -303,6 +326,7 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
   fi
 
   if [ "$verdict" = "PASS" ]; then PASS_COUNT=$((PASS_COUNT+1)); else FAIL_COUNT=$((FAIL_COUNT+1)); fi
+  notify_step "$id" "$desc"
   log "[$verdict] $id | $desc"
   log "         action: $action"
   log "         actual: ws=$aws@$amon focused=$fmon win='$awin' ($acls) cursor@$cmon $wline${reason:+  => $reason}"
@@ -311,6 +335,7 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
 
 skip_case() { # skip_case <case-id> <description> <reason>
   SKIP_COUNT=$((SKIP_COUNT+1))
+  notify_step "$1" "SKIPPED ($3)"
   log "[SKIP] $1 | $2 ($3)"
   md "| $1 | $2 | - | - | - | **SKIP** ($3) |"
 }
@@ -341,6 +366,7 @@ t3_check() { # t3_check <id> <desc> <expected-ws> : verify ALT+T opened kitty on
     fi
   fi
   if [ "$verdict" = "PASS" ]; then PASS_COUNT=$((PASS_COUNT+1)); else FAIL_COUNT=$((FAIL_COUNT+1)); fi
+  notify_step "$id" "$desc"
   log "[$verdict] $id | $desc"
   log "         actual: win='$acls' on ws${wsws:--1}, active-ws=$aws, focused=$fmon, $wline${reason:+  => $reason}"
   md "| $id | $desc | exec kitty after switch to ws$ews | kitty on ws$ews, focused on its monitor | win='$acls' on ws${wsws:--1}, active-ws=$aws, focused=$fmon${wline:+, $wline} | **$verdict**${reason:+<br>$reason} |"
@@ -381,6 +407,7 @@ md "- Protected pre-existing windows: ${#GUARD_ADDRS[@]} (never touched by this 
 
 # --- Phase B: boot snapshot (MUST be first — no dispatch happened yet) -------
 snap B1
+notify "Starting: $TOTAL_STEPS checks, ~4 min — hands off mouse & keyboard!" 3000
 
 # --- socket2 event capture for the waybar-highlight replay (EXPECTED.md §6c) --
 EVENTLOG="$OUTDIR/events.log"; : > "$EVENTLOG"
@@ -405,20 +432,24 @@ WS_PERSIST=$(jq '[.[] | select(.ispersistent)] | length' "$OUTDIR/B1_workspaces.
 OCCUPIED=$(jq -r '[.[] | select(.windows > 0) | (.id|tostring)] | join(",")' "$OUTDIR/B1_workspaces.json" 2>/dev/null)
 log "[BOOT] B1: cursor=($BOOT_CURPOS -> on $BOOT_CURSOR), focused monitor: $BOOT_FMON"
 log "       workspaces present: $WS_COUNT (persistent: $WS_PERSIST), occupied ws: ${OCCUPIED:-none}"
-md "| B1 | boot snapshot | (none) | 9 persistent ws, correct bindings; record boot state | cursor=$BOOT_CURPOS on $BOOT_CURSOR, focused=$BOOT_FMON, ws=$WS_COUNT (persist $WS_PERSIST), occupied=${OCCUPIED:-none} | info |"
+md "| B1 | boot snapshot | (none) | 9 persistent ws, correct bindings; record boot state | cursor=$BOOT_CURPOS on $BOOT_CURSOR, focused=$BOOT_FMON, ws-present=$WS_COUNT (persist $WS_PERSIST), occupied=${OCCUPIED:-none} | info |"
 if [ "${WS_COUNT:-0}" = "9" ] && [ "${WS_PERSIST:-0}" = "9" ]; then
   log "[PASS] B1a: all 9 workspaces exist and are persistent"
+  notify_step B1a "9 persistent workspaces OK"
   PASS_COUNT=$((PASS_COUNT+1))
 else
   log "[FAIL] B1a: expected 9 persistent workspaces, found ${WS_COUNT:-?} (${WS_PERSIST:-?} persistent)"
+  notify_step B1a "persistent-workspace count WRONG"
   FAIL_COUNT=$((FAIL_COUNT+1))
 fi
 BAD_BIND=$(jq -r '([.[] | select((.id==1 or .id==9) and .monitor != "eDP-1")] + [.[] | select(.id>=2 and .id<=8 and .monitor != "HDMI-A-2")]) | length' "$OUTDIR/B1_workspaces.json" 2>/dev/null)
 if [ "${BAD_BIND:-1}" = "0" ]; then
   log "[PASS] B1b: ws->monitor bindings correct (1,9->eDP-1; 2-8->HDMI-A-2)"
+  notify_step B1b "ws→monitor bindings OK"
   PASS_COUNT=$((PASS_COUNT+1))
 else
   log "[FAIL] B1b: ${BAD_BIND:-?} workspace(s) on wrong monitor"
+  notify_step B1b "ws→monitor bindings WRONG"
   FAIL_COUNT=$((FAIL_COUNT+1))
 fi
 log ""
@@ -433,6 +464,7 @@ log ""
 
 # --- Phase F: plain focus() semantics (expected UNCHANGED by the fix) --------
 log "=== Phase F: plain focus({workspace=N}) semantics ==="
+notify_phase "F: focus semantics (6 checks)"
 
 if [ -n "$E1" ]; then
   cursor_to eDP-1
@@ -484,6 +516,7 @@ log ""
 
 # --- Phase C: cycle semantics (exact bind code path) --------------------------
 log "=== Phase C: cycle semantics (mode: $MODE) ==="
+notify_phase "C: cycle semantics (6 checks)"
 
 prep HDMI-A-2 2
 cycle "+1"
@@ -523,6 +556,7 @@ log ""
 
 # --- Phase T1: TEST 1 table — alt+u / alt+i from EVERY workspace ----------------
 log "=== Phase T1: TEST 1 wraparound table (mode: $MODE) ==="
+notify_phase "T1: wraparound table (18 checks)"
 for n in 1 2 3 4 5 6 7 8 9; do
   prev=$(( (n + 7) % 9 + 1 ))   # alt+u: n-1 with wrap (1 -> 9)
   next=$(( n % 9 + 1 ))         # alt+i: n+1 with wrap (9 -> 1)
@@ -540,6 +574,7 @@ log ""
 
 # --- Phase T2: TEST 2 — direct switch alt+N from wherever -----------------------
 log "=== Phase T2: TEST 2 direct switches (mode: $MODE2) ==="
+notify_phase "T2: direct switches alt+1..9 (18 checks)"
 for cur in eDP-1 HDMI-A-2; do
   for n in 1 2 3 4 5 6 7 8 9; do
     prep "$cur" 2
@@ -552,6 +587,7 @@ log ""
 
 # --- Phase T3: TEST 3 — ALT+T opens kitty on the switched-to workspace ----------
 log "=== Phase T3: TEST 3 alt+T on focused ws ==="
+notify_phase "T3: alt+T spawn placement (2 checks)"
 if [ -n "$ET3A" ]; then
   prep eDP-1 2
   t2_goto "$ET3A"
@@ -601,5 +637,6 @@ md "- Boot state: cursor=$BOOT_CURPOS (on $BOOT_CURSOR), focused monitor=$BOOT_F
 
 log ""
 log "=== SUMMARY: PASS=$PASS_COUNT FAIL=$FAIL_COUNT SKIP=$SKIP_COUNT (modes: C/T1=$MODE, T2=$MODE2) ==="
+notify "✔ DONE after $((SECONDS-T0))s — PASS=$PASS_COUNT FAIL=$FAIL_COUNT SKIP=$SKIP_COUNT. Workspace state restored. Report: $(basename "$OUTDIR")" 7000
 log "report: $REPORT"
 exit 0
