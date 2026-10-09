@@ -461,6 +461,56 @@ function cycle_workspace(delta)
   goto_workspace(((id - 1 + delta) % 9) + 1)
 end
 
+-- S6: monitor monitor delta away from the focused one (nil if <2 monitors)
+function monitor_by_delta(delta)
+  local mons = hl.get_monitors()
+  if #mons < 2 then return nil end
+  local cur = hl.get_active_workspace().monitor
+  local ci  = 1
+  for i, m in ipairs(mons) do
+    if m.name == cur.name then ci = i end
+  end
+  return mons[((ci - 1 + delta) % #mons) + 1]
+end
+
+-- S6: jump to the other monitor's ACTIVE workspace (dwm focusmon semantics:
+-- the target monitor's own state decides — ws1 or ws9 on eDP, whichever it
+-- shows right now). Reuses the full goto discipline (warp + switch + focus
+-- last window). Plain focus({monitor="+1"}) left the pointer parked on the
+-- source monitor under a hovered window (no_warps guts its warpCursor),
+-- and follow_mouse re-asserted it as active: waybar flipped back, spawns
+-- landed on the OLD ws (split-brain).
+function goto_monitor(delta)
+  local target = monitor_by_delta(delta)
+  if target then goto_workspace(target.active_workspace.id) end
+end
+
+-- S6: "previous" workspace via Hyprland's own history tracker — same source
+-- as the old focus({workspace="previous"}). goto_workspace warps only when
+-- the previous ws lives on the OTHER monitor (same-display history = no
+-- cursor jump). Guard preserves old behavior: prev == current is a no-op.
+function goto_previous_workspace()
+  local prev = hl.get_last_workspace()
+  if prev and prev.id ~= hl.get_active_workspace().id then
+    goto_workspace(prev.id)
+  end
+end
+
+-- S6: send-and-follow monitor move. follow=true alone would split-brain
+-- (its warpCursor() is neutered by no_warps) — pre-warp the cursor to the
+-- target monitor first, then the follow path (move + view + focus) is
+-- coherent.
+function move_window_to_monitor(delta)
+  if not hl.get_active_window() then return end
+  local target = monitor_by_delta(delta)
+  if not target then return end
+  hl.dispatch(hl.dsp.cursor.move({
+    x = target.x + target.width / 2,
+    y = target.y + target.height / 2,
+  }))
+  hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = true }))
+end
+
 -- Direct switch with mainMod/ALT + [1-9] (key 0 -> ws10 dropped: the set is
 -- exactly 1..9, S3; old binds used plain focus() and suffered focus theft)
 
@@ -479,13 +529,13 @@ hl.bind("ALT + U", function() cycle_workspace(-1) end)
 
 -- jumping between monitors
 
-hl.bind("ALT + comma", hl.dsp.focus({ monitor = "+1" }))
-hl.bind("ALT + SHIFT + comma", hl.dsp.window.move({ monitor = "+1" }))
+hl.bind("ALT + comma", function() goto_monitor(1) end)
+hl.bind("ALT + SHIFT + comma", function() move_window_to_monitor(1) end)
 
 -- (allow_workspace_cycles is set in the binds category above)
 
-hl.bind(mainMod .. " + Escape", hl.dsp.focus({ workspace = "previous" }))
-hl.bind("ALT + Escape", hl.dsp.focus({ workspace = "previous" }))
+hl.bind(mainMod .. " + Escape", function() goto_previous_workspace() end)
+hl.bind("ALT + Escape", function() goto_previous_workspace() end)
 
 -- Move active window to a workspace with mainMod + SHIFT + [1-9] ----------------
 -- (and the ALT + SHIFT variant; key 0 dropped with the switch binds — S3:

@@ -129,3 +129,26 @@ FIX BRANCH fix/dwm-workspace-cycling @987cd95: goto_workspace/cycle_workspace im
 - 50/6/0, modes fixed/fixed, zero remnants; PASS+FAIL maps byte-identical
   to AFTER_BOOT12 (diff-verified). §5 automation requirement satisfied.
 - REMAINING: manual checklist M1–M5, then merge to main.
+
+## S6 (2026-10-10, post-soak) — pointer-coherent monitor/history paths
+- Live repro (user): alt+, with pointer hovering a browser link on the source
+  monitor -> waybar flips to ws1 then immediately back to ws2; keyboard
+  focus/blue border stays ws1; new terminals spawn on ws2 (split brain).
+- Root cause (v0.56.2 source-verified): focus({monitor="+1"}) warps via
+  warpCursor() -> PointerController::warpTo, which under cursor:no_warps=true
+  (config line 111) flips monitor focus but leaves the pointer behind;
+  input:follow_mouse=1 (line 85) then re-asserts the window under the pointer
+  on any mouse activity (mouseMoveUnified refocus, delta > threshold).
+  alt+N immune: goto_workspace pre-warps via dsp.cursor.move (force=true).
+- FIXES (local, NOT pushed; tag ws-fix-v2-validated marks the soak-good state):
+  - goto_monitor(d): goto target monitor's ACTIVE ws (its own state decides)
+  - goto_previous_workspace(): hl.get_last_workspace() (Hyprland's own
+    history tracker, same source as "previous"); no warp on same-display
+    history; guard: prev==current -> no-op (old behavior preserved)
+  - move_window_to_monitor(d): send-and-follow — pre-warp cursor to target
+    center, then window.move({monitor=target, follow=true}) (its warpCursor
+    would be neutered by no_warps -> pre-warp required)
+  - binds: ALT+comma, ALT+SHIFT+comma, mainMod+Escape, ALT+Escape
+- All API primitives live-probed: get_last_workspace -> HL.Workspace(1:1);
+  monitor math CUR=HDMI-A-2 -> TARGET=eDP-1 ws1; get_active_window verified.
+- User tests manually before push; rollback = checkout ws-fix-v2-validated.
