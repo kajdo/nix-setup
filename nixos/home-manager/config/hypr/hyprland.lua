@@ -436,7 +436,21 @@ function goto_workspace(n)
       }))
     end
   end
+  -- ws + monitor switch (CA::changeWorkspace: does NOT move keyboard focus)
   hl.dispatch(hl.dsp.focus({ workspace = n }))
+  -- hand keyboard focus to the target ws's most-recently-focused window:
+  -- changeWorkspace alone leaves the previously-focused window focused (the
+  -- user-reported theft: alt+N switches ws but the old window keeps keyboard;
+  -- measured FAIL in AFTER-diagnostic T4a — scratchpad kept focus cross-mon)
+  local best, bestid = nil, math.huge
+  for _, w in ipairs(hl.get_windows()) do
+    if w.workspace and w.workspace.id == n and w.focus_history_id >= 0 and w.focus_history_id < bestid then
+      best, bestid = w, w.focus_history_id
+    end
+  end
+  if best then
+    hl.dispatch(hl.dsp.focus({ window = "address:" .. best.address }))
+  end
 end
 
 -- S4: global arithmetic cycling over the fixed set 1..9 with wraparound
