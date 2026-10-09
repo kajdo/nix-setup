@@ -38,7 +38,7 @@ md()   { printf '%s\n' "$*" >> "$REPORT"; }
 
 # --- user-facing progress notifications (notify-send) --------------------------
 NOTIFY_OK=0; command -v notify-send >/dev/null 2>&1 && NOTIFY_OK=1
-TOTAL_STEPS=54          # B:2 + F:8 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
+TOTAL_STEPS=56          # B:2 + F:8 + C:6 + T1:18 + T2:18 + T3:2 + T4:2 (all funnel through check/skip_case/t3_check)
 STEP=0
 T0=$SECONDS
 notify() { # notify <text> [timeout-ms]
@@ -483,10 +483,10 @@ log ""
 # --- dynamic empty-workspace targets (runner terminal may sit anywhere!) -----
 E_HDMI=($(jq -r '[.[] | select(.id>=2 and .id<=8 and .windows==0) | .id] | sort | .[]' "$OUTDIR/B1_workspaces.json" 2>/dev/null))
 E_EDP=$(jq -r '[.[] | select((.id==9 or .id==1) and .windows==0) | .id] | sort_by(-.) | first // empty' "$OUTDIR/B1_workspaces.json" 2>/dev/null)
-E1=${E_HDMI[0]:-}; E2=${E_HDMI[1]:-}; ESPAWN=${E_HDMI[2]:-}; ET3A=${E_HDMI[3]:-}; ET3B=${E_HDMI[4]:-}
-E9=$E_EDP   # empty eDP ws for F8 (same-monitor window-focus check)
+E1=${E_HDMI[0]:-}; E2=${E_HDMI[1]:-}; ESPAWN=${E_HDMI[2]:-}; ET3A=${E_HDMI[3]:-}; ET3B=${E_HDMI[4]:-}; ET4A=${E_HDMI[5]:-}
+E9=$E_EDP   # empty eDP ws for F8/T4b (same-monitor window-focus checks)
 log "[DYN] empty HDMI ws pool: ${E_HDMI[*]:-none}; empty eDP ws: ${E_EDP:-none}"
-log "       targets: E1=${E1:-?} E2=${E2:-?} spawn=$ESPAWN T3a=$ET3A T3b=$ET3B"
+log "       targets: E1=${E1:-?} E2=${E2:-?} spawn=$ESPAWN T3a=$ET3A T3b=$ET3B T4a=$ET4A F8/T4b(eDP)=$E9"
 log ""
 
 # --- Phase F: plain focus() semantics (expected UNCHANGED by the fix) --------
@@ -677,6 +677,49 @@ if [ -n "$ET3B" ]; then
   fi
 else
   skip_case T3b "alt+T after switch to had-app ws" "not enough empty HDMI ws"
+fi
+log ""
+
+# --- Phase T4: TEST 4 — app focus after BIND-path switch (user complaint) -------
+# Real-world report: ws1 has an app running, ws2 has the kitty scratchpad
+# active; switching via alt+1 / alt+u switches the WORKSPACE but keyboard focus
+# stays with the scratchpad — the target ws's app never receives focus.
+# Emulation: spawned kitty = the running target app; prep(eDP-1, ws1) = the
+# scratchpad is the active window; the switch goes through THE BIND PATH
+# (fixed mode: goto_workspace / cycle_workspace — the exact alt+1/alt+u code;
+# legacy mode: the current plain focus / r±1 binds).
+log "=== Phase T4: TEST 4 app focus after bind-path switch ==="
+notify_phase "T4: app focus after switch (2 checks)"
+
+# T4a: direct bind (alt+N) onto a NON-EMPTY ws: its app must hold focus
+if [ -n "$ET4A" ]; then
+  T4AMON=$(monitor_for "$ET4A")
+  spawn_on_ws "$ET4A"
+  if [ -n "$WSTEST_PGID" ]; then
+    prep eDP-1 1               # scratchpad (ws1) is the active window
+    t2_goto "$ET4A"            # bind path: alt+N
+    check T4a "alt+N to NON-EMPTY ws$ET4A: its app receives focus" "spawn kitty@ws$ET4A; prep(eDP-1, ws1, scratchpad active); goto ws$ET4A (bind path)" "$ET4A" "$T4AMON" "class:WSTEST" "$T4AMON"
+    cleanup_spawned
+  else
+    skip_case T4a "app focus after alt+N to non-empty ws" "WSTEST spawn failed"
+  fi
+else
+  skip_case T4a "app focus after alt+N to non-empty ws" "not enough empty HDMI ws"
+fi
+
+# T4b: cycle bind (alt+u/-1, wraps 1->9) onto a NON-EMPTY eDP ws
+if [ -n "$E9" ]; then
+  spawn_on_ws "$E9"
+  if [ -n "$WSTEST_PGID" ]; then
+    prep eDP-1 1               # scratchpad (ws1) is the active window
+    cycle "-1"                 # bind path: alt+u (wrap 1 -> ws$E9)
+    check T4b "alt+u wrap 1->ws$E9: its app receives focus" "spawn kitty@ws$E9; prep(eDP-1, ws1, scratchpad active); cycle(-1) (bind path)" "$E9" eDP-1 "class:WSTEST" eDP-1
+    cleanup_spawned
+  else
+    skip_case T4b "app focus after cycle onto non-empty ws" "WSTEST spawn failed"
+  fi
+else
+  skip_case T4b "app focus after cycle onto non-empty ws" "no empty eDP ws"
 fi
 log ""
 
