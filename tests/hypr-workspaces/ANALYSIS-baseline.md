@@ -1,12 +1,14 @@
 # Baseline Analysis & Implementation Proposal — Workspace Switching
 
 **Run:** `results/BASELINE_BOOT3` (fresh boot 2026-02-10, single clean run, hands-off)
-> **OFFICIAL BASELINE: BASELINE_BOOT3 — PASS=26 FAIL=25 SKIP=1**
-> (modes C/T1=legacy, T2=legacy; amended script; no script changes before or
-> during the run). All 25 FAILs genuine, defect map identical to every prior
-> run. T3b SKIPped due to a runner incident (kitty close/reopen race at kill,
-> see §7) — not a defect verdict; the T3-type defect is proven by T3a in this
-> run and T3b in BOOT1. Waybar: zero double-highlights; guard intact.
+> **DEMODED to failed-baseline record** — T3b SKIPped due to a script bug
+> (incomplete process closure, §7: only the recorded pid was closed, a second
+> WSTEST process survived; cleanup also failed to restore the start
+> workspace). Defect evidence itself is valid and identical to all prior
+> runs; but the baseline gate requires a clean 52-check run.
+> **FINAL BASELINE: next fresh-boot run with the hardened script** (§7 fixes:
+> process sweep to zero remnants, pre-flight dirty-session abort, start-state
+> restore).
 >
 > History: BOOT1 (2026-02-05, 24/28/0) = fresh boot but pre-amendment script
 > (2 runner artifacts: F6 spawn-subshell, T2_HDMI-2_2 overlay);
@@ -57,19 +59,30 @@ window on the focused ws. Fixed in the amended script (win sub-check skipped
 for class `KittyScratchpad`); BOOT3: T2_HDMI-2_2 PASSes. Same for BOOT1's F6
 (spawn ran in a subshell pre-fix): F6 passes in BOOT3.
 
-## 7. Runner incident (BOOT3, T3b): kitty close/reopen race at kill
+## 7. Runner incident (BOOT3, T3b): incomplete process closure — FIXED
 
-After T3a's verdict, the spawned WSTEST kitty was killed and verified gone
-(address + recorded pid dead) — but `events.log` shows `closewindow>>A`
-followed by `openwindow>>A` a moment later: `window.kill` is a *graceful
-close*, and kitty during early init **re-maps its window under the recycled
-address with a new pid**. The one-at-a-time interlock then (correctly)
-refused T3b's spawn → SKIP, and the leftover survived cleanup (the tracked
-pid was the first process). Post-run: leftover removed manually by pid with
-before/after proof (only KittyScratchpad remained, workspaces exactly 1–9);
-script hardened afterwards (safe_kill retry + SIGKILL loop on the current
-owner of a recorded address; cleanup re-kill for recorded addresses) —
-**no script change happened before or during the BASELINE_BOOT3 run**.
+After T3a's verdict the script closed the spawned kitty's window and killed
+the ONE recorded pid, verified address gone + pid dead — but a SECOND WSTEST
+process (different pid) was still running and re-surfaced as a window under
+the recycled address (events.log: `closewindow>>A` … `openwindow>>A`). The
+script failed its own contract: **close everything you spawned**. The
+one-at-a-time interlock then correctly refused T3b's spawns → SKIP, and the
+leftover survived cleanup. Post-run the leftover was removed by pid with
+before/after proof.
+
+**Fixes (applied AFTER the BOOT3 run, to be proven by the final baseline):**
+1. `wstest_procs()` — every process carrying the suite-exclusive
+   `kitty --app-id WSTEST` cmdline is script-spawned by construction;
+   `safe_kill` now SIGKILLs **all** of them and verifies **zero WSTEST
+   windows AND zero WSTEST processes** (recorded pid alone is insufficient)
+2. `wstest_spawn` refuses when ANY WSTEST window OR process lingers
+3. Pre-flight abort: any WSTEST remnant at script start = dirty session,
+   hard abort (protects the sweep's exclusivity assumption)
+4. Cleanup now **restores the start state** (focus + cursor back to the
+   workspace/monitor recorded at B1) instead of parking on ws2
+
+**BASELINE_BOOT3 is demoted to a failed-baseline record.** Final baseline =
+next fresh-boot run with this hardened script.
 
 ## 3. Waybar highlights (new coverage)
 

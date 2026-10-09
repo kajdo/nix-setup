@@ -89,12 +89,16 @@ Mode is auto-detected: pre-fix (bind dispatchers) vs post-fix (global
 
 - All script-spawned windows run as `kitty --app-id WSTEST` → class `WSTEST`
   can never collide with user windows, however dirty the session
-- `pid`+address are recorded **at spawn time**; cleanup kills **exactly those
-  pids** (selector-kill + SIGTERM), verifying per kill: window gone, pid dead,
-  **every pre-existing window still present** (abort on any anomaly)
+- `pid`+address are recorded **at spawn time**; closure is verified per kill:
+  window gone, **zero WSTEST windows AND zero WSTEST processes remain**
+  (every process carrying the suite-exclusive WSTEST cmdline is
+  script-spawned by construction — the recorded pid alone proved
+  insufficient once), and **every pre-existing window still present**
+  (abort on any anomaly)
+- Pre-flight: any WSTEST remnant at script start = dirty session → hard abort
 - Exactly one WSTEST window alive at any time; the spawner refuses otherwise
-- Nothing is ever selected by "which kitties exist now" (addresses are
-  recycled by the compositor; kitty-count reasoning is meaningless)
+- End of run: start state restored (focus + cursor back to the workspace the
+  script started from), zero remnants asserted
 - ⚠ `hl.dsp.window.kill({ address = … })` is **silently ignored** and kills
   the **focused window** — the correct form is a selector:
   `{ window = "address:0x…" }` (source: `LuaBindingsDispatchers.cpp → hlWindowKill`)
