@@ -116,6 +116,12 @@ spawn placement. Every check also asserts the **waybar invariant**
 (exactly one `.active` button == expected ws, via event-stream replay of
 waybar's algorithm) and `max-ws ≤ 9`.
 
+**Baseline (ACCEPTED):** `results/BASELINE_BOOT7` — fresh boot, single
+hands-off run: **26 PASS / 26 FAIL / 0 SKIP** (52/52 checks, T3b live),
+clean log, zero remnants, start state restored; FAIL map byte-identical to
+the independent BOOT6 rerun. The 26 FAILs are the documented product defects
+(see `ANALYSIS-baseline.md`). BOOT6/BOOT3/BOOT1 = discarded/history.
+
 **Fix acceptance**: all C/T1/T2/T3 checks PASS on two consecutive reboot
 cycles, F-phase unchanged (plain dispatcher semantics stay), manual checklist
 (see `ANALYSIS-baseline.md`) green.

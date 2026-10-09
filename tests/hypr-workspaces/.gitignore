@@ -7,3 +7,7 @@ results/BASELINE_BOOT1/*
 results/BASELINE_BOOT3/*
 !results/BASELINE_BOOT3/report.md
 !results/BASELINE_BOOT3/events.log
+!results/BASELINE_BOOT7/
+results/BASELINE_BOOT7/*
+!results/BASELINE_BOOT7/report.md
+!results/BASELINE_BOOT7/events.log

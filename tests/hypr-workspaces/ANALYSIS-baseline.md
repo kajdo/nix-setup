@@ -1,30 +1,25 @@
 # Baseline Analysis & Implementation Proposal — Workspace Switching
 
-**Run:** `results/BASELINE_BOOT3` (fresh boot 2026-02-10, single clean run, hands-off)
-> **DEMODED to failed-baseline record** — T3b SKIPped due to a script bug
-> (incomplete process closure, §7: only the recorded pid was closed, a second
-> WSTEST process survived; cleanup also failed to restore the start
-> workspace). Defect evidence itself is valid and identical to all prior
-> runs; but the baseline gate requires a clean 52-check run.
-> **FINAL BASELINE: next fresh-boot run with the hardened script** (§7 fixes:
-> process sweep to zero remnants, pre-flight dirty-session abort, start-state
-> restore).
+**Run:** `results/BASELINE_BOOT7` (fresh boot 2026-02-10, single clean run, hands-off, **ACCEPTED baseline**)
+> **26 PASS / 26 FAIL / 0 SKIP — all 52 checks executed** (first run with
+> T3b live), zero log errors, zero remnants, start state restored, and a
+> **byte-identical FAIL map to BOOT6** (independent fresh boot) — the 26
+> defects reproduce deterministically.
 >
-> History: BOOT1 (2026-02-05, 24/28/0) = fresh boot but pre-amendment script
-> (2 runner artifacts: F6 spawn-subshell, T2_HDMI-2_2 overlay);
-> `results/VALIDATION_SAMEBOOT` (27/25/0) = full-suite validation of the
-> amended script but same-boot rerun after an aborted first attempt —
-> disqualified as baseline on protocol, kept as evidence. Per-case counts
-> below are corrected against authoritative log recounts.
-**Config under test:** `nixos/home-manager/config/hypr/hyprland.lua` @ current `main`
-**Companion spec:** `README.md` (S1–S7) · raw report: `results/BASELINE_BOOT3/report.md`
+> History: BOOT6 (same map, log bug: 4 false [KILL][ERROR] attributions —
+> fixed BEFORE baseline per protocol, run discarded). BOOT3 (26/25/1, T3b
+> SKIPped by script bug) demoted to failed-baseline record. BOOT1 (24/28/0,
+> 2 runner artifacts) + VALIDATION_SAMEBOOT (same-boot rerun) = evidence only.
+> Per-case counts below are corrected against authoritative log recounts.
+**Config under test:** `nixos/home-manager/config/hypr/hyprland.lua` @ `main` @ baseline commit
+**Companion spec:** `README.md` (S1–S7) · raw report: `results/BASELINE_BOOT7/report.md`
 
-## 1. Boot state (B1, BASELINE_BOOT3)
+## 1. Boot state (B1, BASELINE_BOOT7)
 
 - Cursor −960,540 on eDP-1, focused=eDP-1, active ws=1, occupied: ws1 (runner terminal)
 - **B1a FAIL: ws10 existed at boot** (10 workspaces, 9 persistent) — the previous
   session's leaked ws10 is **restored across reboots**; confirmed on every true
-  fresh boot (BOOT1, BOOT3). Empty+inactive → auto-destroys during the run.
+  fresh boot (BOOT1, BOOT3, BOOT6, BOOT7). Empty+inactive → auto-destroys during the run.
   S1 violation is sticky until ws10 stops being created.
 
 ## 2. Failure map — all 25 genuine FAILs reduce to 3 measured defects
@@ -33,7 +28,7 @@
 Empty target ws → focus cleared → `follow_mouse=1` re-grabs a window under the
 cursor on the *other* monitor; `no_warps=true` keeps the cursor parked.
 
-| Phase | Failing cases (BOOT3, corrected) | Evidence |
+| Phase | Failing cases (= BOOT7 map) | Evidence |
 |---|---|---|
 | B | B1a | 10 workspaces at boot (ws10 restored) |
 | F | F1, F2 (eDP→empty HDMI), F4 (HDMI→empty eDP, mirrored) | switch "doesn't happen": activews stays on cursor's monitor (F3/F5/F6 controls pass) |
@@ -65,24 +60,19 @@ After T3a's verdict the script closed the spawned kitty's window and killed
 the ONE recorded pid, verified address gone + pid dead — but a SECOND WSTEST
 process (different pid) was still running and re-surfaced as a window under
 the recycled address (events.log: `closewindow>>A` … `openwindow>>A`). The
-script failed its own contract: **close everything you spawned**. The
-one-at-a-time interlock then correctly refused T3b's spawns → SKIP, and the
-leftover survived cleanup. Post-run the leftover was removed by pid with
-before/after proof.
+script failed its own contract: **close everything you spawned**.
 
-**Fixes (applied AFTER the BOOT3 run, to be proven by the final baseline):**
-1. `wstest_procs()` — every process carrying the suite-exclusive
-   `kitty --app-id WSTEST` cmdline is script-spawned by construction;
-   `safe_kill` now SIGKILLs **all** of them and verifies **zero WSTEST
-   windows AND zero WSTEST processes** (recorded pid alone is insufficient)
-2. `wstest_spawn` refuses when ANY WSTEST window OR process lingers
-3. Pre-flight abort: any WSTEST remnant at script start = dirty session,
-   hard abort (protects the sweep's exclusivity assumption)
-4. Cleanup now **restores the start state** (focus + cursor back to the
-   workspace/monitor recorded at B1) instead of parking on ws2
-
-**BASELINE_BOOT3 is demoted to a failed-baseline record.** Final baseline =
-next fresh-boot run with this hardened script.
+**Fix — final design (process ownership, per user):** the script spawns
+kitties itself (`setsid kitty --app-id WSTEST &` → `$!` = process-group id)
+and closes each group with ONE `kill -- -PGID`; no compositor dispatch, no
+`window.kill`, no address bookkeeping (addresses are recycled — two T3b
+failures came from that mistake). Verification: own-group state per close
+(zombie-immune), global zero-remnant assert only in the final cleanup;
+process matching by executable (`comm`, incl. Nix `.kitty-wrapped`) —
+raw-cmdline matching self-matches. Additionally: spawn interlock refuses on
+any lingering WSTEST window/process; pre-flight abort on dirty sessions;
+cleanup restores the start state (focus + cursor). **Proven by BASELINE_BOOT7**
+(0 SKIP — T3b runs — zero remnants, clean log, start state restored).
 
 ## 3. Waybar highlights (new coverage)
 

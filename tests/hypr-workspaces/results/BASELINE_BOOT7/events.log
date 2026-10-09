@@ -5,7 +5,7 @@ focusedmonv2>>HDMI-A-2,10
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 destroyworkspace>>10
@@ -17,14 +17,14 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP F1
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>3
 workspacev2>>3,3
 activewindow>>,
@@ -34,7 +34,7 @@ focusedmonv2>>HDMI-A-2,3
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP F2
 focusedmon>>HDMI-A-2,3
 focusedmonv2>>HDMI-A-2,3
@@ -57,11 +57,11 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>1
 workspacev2>>1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP F5
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -69,16 +69,15 @@ activewindow>>,
 activewindowv2>>
 workspace>>4
 workspacev2>>4,4
-windowtitle>>63c4b1a2aec0
-windowtitlev2>>63c4b1a2aec0,kitty
-openwindow>>63c4b1a2aec0,4,WSTEST,kitty
+windowtitle>>637e825da280
+windowtitlev2>>637e825da280,kitty
+openwindow>>637e825da280,4,WSTEST,kitty
 activewindow>>WSTEST,kitty
-activewindowv2>>63c4b1a2aec0
-windowtitle>>63c4b1a2aec0
-windowtitlev2>>63c4b1a2aec0,bash
+activewindowv2>>637e825da280
+windowtitle>>637e825da280
+windowtitlev2>>637e825da280,bash
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1a2aec0
-closelayer>>notifications
+activewindowv2>>637e825da280
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 focusedmon>>HDMI-A-2,4
@@ -86,7 +85,7 @@ focusedmonv2>>HDMI-A-2,4
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -96,22 +95,23 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
+closelayer>>notifications
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1a2aec0
+activewindowv2>>637e825da280
 workspace>>4
 workspacev2>>4,4
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1a2aec0
+activewindowv2>>637e825da280
 ###SNAP F6
 openlayer>>notifications
-closewindow>>63c4b1a2aec0
+closewindow>>637e825da280
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,4
 focusedmonv2>>HDMI-A-2,4
 activewindow>>,
@@ -140,7 +140,7 @@ workspace>>10
 workspacev2>>10,10
 ###SNAP C3
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>1
 workspacev2>>1,1
 destroyworkspace>>10
@@ -151,7 +151,7 @@ focusedmonv2>>HDMI-A-2,8
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -161,7 +161,7 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP C5
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -170,7 +170,7 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP C6pre
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -179,7 +179,7 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 closelayer>>notifications
 ###SNAP C6
 openlayer>>notifications
@@ -191,14 +191,14 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T1I1
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T1U2
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -278,7 +278,7 @@ workspacev2>>2,2
 focusedmon>>eDP-1,10
 focusedmonv2>>eDP-1,10
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>1
 workspacev2>>1,1
 destroyworkspace>>10
@@ -291,7 +291,7 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 activewindow>>,
@@ -299,7 +299,7 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_2
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -308,13 +308,13 @@ activewindowv2>>
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>3
 workspacev2>>3,3
 activewindow>>,
@@ -324,14 +324,14 @@ focusedmonv2>>HDMI-A-2,3
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_3
 focusedmon>>HDMI-A-2,3
 focusedmonv2>>HDMI-A-2,3
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -341,13 +341,13 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>4
 workspacev2>>4,4
 activewindow>>,
@@ -357,14 +357,14 @@ focusedmonv2>>HDMI-A-2,4
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_4
 focusedmon>>HDMI-A-2,4
 focusedmonv2>>HDMI-A-2,4
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -374,13 +374,13 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>5
 workspacev2>>5,5
 activewindow>>,
@@ -390,14 +390,14 @@ focusedmonv2>>HDMI-A-2,5
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_5
 focusedmon>>HDMI-A-2,5
 focusedmonv2>>HDMI-A-2,5
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -407,13 +407,13 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>6
 workspacev2>>6,6
 activewindow>>,
@@ -423,14 +423,14 @@ focusedmonv2>>HDMI-A-2,6
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_6
 focusedmon>>HDMI-A-2,6
 focusedmonv2>>HDMI-A-2,6
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -440,13 +440,13 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>7
 workspacev2>>7,7
 activewindow>>,
@@ -456,14 +456,14 @@ focusedmonv2>>HDMI-A-2,7
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_7
 focusedmon>>HDMI-A-2,7
 focusedmonv2>>HDMI-A-2,7
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -473,13 +473,13 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>8
 workspacev2>>8,8
 activewindow>>,
@@ -489,14 +489,14 @@ focusedmonv2>>HDMI-A-2,8
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_eDP-1_8
 focusedmon>>HDMI-A-2,8
 focusedmonv2>>HDMI-A-2,8
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>2
 workspacev2>>2,2
 activewindow>>,
@@ -506,7 +506,7 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,1
 focusedmonv2>>eDP-1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 activewindow>>,
 activewindowv2>>
 workspace>>9
@@ -517,11 +517,11 @@ focusedmonv2>>HDMI-A-2,2
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 workspace>>1
 workspacev2>>1,1
 activewindow>>KittyScratchpad,tmux
-activewindowv2>>63c4b166a990
+activewindowv2>>637e8213b870
 ###SNAP T2_HDMI-A-2_1
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
@@ -577,19 +577,19 @@ workspace>>5
 workspacev2>>5,5
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
-windowtitle>>63c4b1b580a0
-windowtitlev2>>63c4b1b580a0,kitty
-openwindow>>63c4b1b580a0,9,WSTEST,kitty
+windowtitle>>637e826eeab0
+windowtitlev2>>637e826eeab0,kitty
+openwindow>>637e826eeab0,9,WSTEST,kitty
 activewindow>>WSTEST,kitty
-activewindowv2>>63c4b1b580a0
-windowtitle>>63c4b1b580a0
-windowtitlev2>>63c4b1b580a0,bash
+activewindowv2>>637e826eeab0
+windowtitle>>637e826eeab0
+windowtitlev2>>637e826eeab0,bash
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
+activewindowv2>>637e826eeab0
 closelayer>>notifications
 ###SNAP T3a
 openlayer>>notifications
-closewindow>>63c4b1b580a0
+closewindow>>637e826eeab0
 activewindow>>,
 activewindowv2>>
 focusedmon>>HDMI-A-2,5
@@ -598,53 +598,47 @@ workspace>>6
 workspacev2>>6,6
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
-windowtitle>>63c4b1b580a0
-windowtitlev2>>63c4b1b580a0,kitty
-openwindow>>63c4b1b580a0,9,WSTEST,kitty
+windowtitle>>637e826ee7a0
+windowtitlev2>>637e826ee7a0,kitty
+openwindow>>637e826ee7a0,9,WSTEST,kitty
 activewindow>>WSTEST,kitty
-activewindowv2>>63c4b1b580a0
-closelayer>>notifications
-windowtitle>>63c4b1b580a0
-windowtitlev2>>63c4b1b580a0,bash
+activewindowv2>>637e826ee7a0
+windowtitle>>637e826ee7a0
+windowtitlev2>>637e826ee7a0,bash
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
-focusedmon>>HDMI-A-2,6
-focusedmonv2>>HDMI-A-2,6
-focusedmon>>eDP-1,9
-focusedmonv2>>eDP-1,9
-activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
-workspace>>2
-workspacev2>>2,2
+activewindowv2>>637e826ee7a0
+closewindow>>637e826ee7a0
 activewindow>>,
 activewindowv2>>
-focusedmon>>HDMI-A-2,2
-focusedmonv2>>HDMI-A-2,2
+closelayer>>notifications
+focusedmon>>HDMI-A-2,6
+focusedmonv2>>HDMI-A-2,6
+workspace>>2
+workspacev2>>2,2
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
-activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
 focusedmon>>HDMI-A-2,2
 focusedmonv2>>HDMI-A-2,2
-focusedmon>>eDP-1,9
-focusedmonv2>>eDP-1,9
-activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
 workspace>>6
 workspacev2>>6,6
-activewindow>>,
-activewindowv2>>
-focusedmon>>HDMI-A-2,6
-focusedmonv2>>HDMI-A-2,6
 focusedmon>>eDP-1,9
 focusedmonv2>>eDP-1,9
+windowtitle>>637e826ee120
+windowtitlev2>>637e826ee120,kitty
+openwindow>>637e826ee120,9,WSTEST,kitty
+activewindow>>WSTEST,kitty
+activewindowv2>>637e826ee120
+windowtitle>>637e826ee120
+windowtitlev2>>637e826ee120,bash
 activewindow>>WSTEST,bash
-activewindowv2>>63c4b1b580a0
+activewindowv2>>637e826ee120
+###SNAP T3b
 openlayer>>notifications
-focusedmon>>HDMI-A-2,6
-focusedmonv2>>HDMI-A-2,6
+closewindow>>637e826ee120
 activewindow>>,
 activewindowv2>>
-workspace>>2
-workspacev2>>2,2
+activewindow>>KittyScratchpad,tmux
+activewindowv2>>637e8213b870
+workspace>>1
+workspacev2>>1,1
 ###SNAP FINAL

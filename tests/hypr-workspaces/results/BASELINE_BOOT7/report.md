@@ -1,4 +1,4 @@
-# Workspace semantics run — Fr 09 Okt 2026 22:29:39 CEST
+# Workspace semantics run — Fr 09 Okt 2026 23:13:15 CEST
 
 - Hyprland: Hyprland 0.56.2 built from branch v0.56.2-b at commit efb50993780079460b0cbed1363e2166a2de1d9f clean ([gha] Nix: update inputs).
 - Mode of phase C/T1: **legacy** (fixed = global cycle_workspace()); mode of T2: **legacy** (fixed = global goto_workspace())
@@ -57,11 +57,11 @@
 | T2_HDMI-A-2_8 | TEST2: alt+8 from ws2, cursor@HDMI-A-2 | `prep(HDMI-A-2, ws2); alt+8` | ws=8, focus=HDMI-A-2, win=auto:8, cursor=HDMI-A-2 | ws=8@HDMI-A-2, focus=HDMI-A-2, win='NONE' (NONE), cursor@HDMI-A-2, waybar[A=8]: single .active | **PASS** |
 | T2_HDMI-A-2_9 | TEST2: alt+9 from ws2, cursor@HDMI-A-2 | `prep(HDMI-A-2, ws2); alt+9` | ws=9, focus=eDP-1, win=auto:9, cursor=eDP-1 | ws=2@HDMI-A-2, focus=HDMI-A-2, win='NONE' (NONE), cursor@HDMI-A-2, waybar[A=2]: single .active | **FAIL**<br> active-ws=2@HDMI-A-2 (want 9); focused-mon='HDMI-A-2' (want eDP-1); cursor-on='HDMI-A-2' (want eDP-1); |
 | T3a | TEST3: alt+T after switch to never-used ws5 | exec kitty after switch to ws5 | kitty on ws5, focused on its monitor | win='WSTEST' on ws9, active-ws=9, focused=eDP-1, waybar[A=9]: single .active | **FAIL**<br> win-ws=9 (want 5); active-ws=9 (want 5); focused=eDP-1 (want HDMI-A-2); |
-| T3b | alt+T after switch to had-app ws | - | - | - | **SKIP** (WSTEST spawn failed) |
+| T3b | TEST3: alt+T after switch to ws6 (had an app before) | exec kitty after switch to ws6 | kitty on ws6, focused on its monitor | win='WSTEST' on ws9, active-ws=9, focused=eDP-1, waybar[A=9]: single .active | **FAIL**<br> win-ws=9 (want 6); active-ws=9 (want 6); focused=eDP-1 (want HDMI-A-2); |
 
 ## Summary
 - PASS: 26
-- FAIL: 25
-- SKIP: 1
+- FAIL: 26
+- SKIP: 0
 - Modes: C/T1=legacy, T2=legacy
 - Boot state: cursor=-960, 540 (on eDP-1), focused monitor=eDP-1, occupied ws=1

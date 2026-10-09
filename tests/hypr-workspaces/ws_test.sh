@@ -129,23 +129,26 @@ monitor_for() { # monitor_for <ws-id> : which monitor ws is bound to (live query
 }
 
 # ----------------------------------------------------------------------------
-# safe window spawn/kill — PID-BASED, UNIQUE APP-ID "WSTEST"
+# safe window spawn/close — PROCESS OWNERSHIP, UNIQUE APP-ID "WSTEST"
 #
-# Design (per user): every window this script spawns runs as
-#   kitty --app-id WSTEST
-# → its class is "WSTEST", which NO user window ever has — identification is
-#   safe even in a dirty session. pid+address are recorded AT SPAWN TIME and
-# cleanup kills EXACTLY those recorded pids. Nothing is ever selected by
-# "which kitties exist right now" (address/kitty-count reasoning is unreliable:
-# addresses get recycled, users open/close terminals at will).
+# Design (per user): the script SPAWNS the kitty itself and OWNS the process:
+#   setsid kitty --app-id WSTEST … &
+# → $! is the session leader = process-group id (validated live: kitty maps no
+#   extra groups; kittens join the leader's group). Closing = ONE signal to
+#   the group: `kill -- -PGID` — window closes with the client connection,
+#   kittens die with it. NO compositor dispatch, NO window.kill, NO address
+#   bookkeeping for lifecycle (addresses are recycled by the compositor and
+#   must never decide liveness — two T3b bugs came from that mistake).
 #
-# NOTE window.kill API trap (verified in source + live): hl.dsp.window.kill
-# requires a window SELECTOR: { window = "address:0x…" } — passing
+# The app-id → class "WSTEST" is suite-exclusive: identification by class is
+# safe even in a dirty session; WSTEST_ADDR is kept for REPORTING only.
+#
+# Historical trap (no longer used, kept as warning): hl.dsp.window.kill
+# requires a window SELECTOR { window = "address:0x…" } — passing
 # { address = … } is SILENTLY IGNORED and kills the FOCUSED window instead.
 # ----------------------------------------------------------------------------
-declare -A SPAWNED_PID=()   # addr -> pid of every WSTEST window we spawned
-declare -A KILLED=()        # addrs already killed (don't kill twice)
-declare -a GUARD_ADDRS=()   # pre-existing windows at script start: NEVER kill (2nd line of defense)
+declare -a SPAWN_PGIDS=()   # process-group ids of every kitty WE spawned (script owns them)
+declare -a GUARD_ADDRS=()   # pre-existing windows at script start: passive integrity check
 
 guard_snapshot() { # record all existing client addresses as protected
   local addr
@@ -157,89 +160,62 @@ guard_snapshot() { # record all existing client addresses as protected
 wstest_windows() { # print "addr pid" lines for every WSTEST window currently alive
   $HYPRCTL -j clients | jq -r '.[] | select(.class=="WSTEST") | "\(.address) \(.pid)"' 2>/dev/null
 }
-wstest_procs() { # every process of a suite-spawned kitty (app-id is suite-exclusive)
-  pgrep -f 'kitty --app-id WSTEST' || true
+wstest_procs() { # live (non-zombie) pids of suite-spawned kitties; comm is matched against
+  # the kitty executable OR its Nix wrapper — never raw cmdlines (they
+  # self-match the awk process and any wrapper embedding the pattern string)
+  ps -eo pid=,stat=,comm=,args= | awk '$2 !~ /Z/ && ($3 == "kitty" || $3 ~ /^\.?kitty/) && index($0, "--app-id WSTEST") { print $1 }'
+}
+pgid_alive() { # pgid_alive <pgid> : any LIVE (non-zombie) process left in that group?
+  ps -eo pgid=,stat= | awk -v g="$1" '{ gsub(/ /, "", $1); if ($1 == g && $2 !~ /Z/) f = 1 } END { exit f ? 0 : 1 }'
 }
 
-wstest_spawn() { # exec_cmd a WSTEST kitty, record pid+addr; sets global WSTEST_ADDR ("" on failure)
-  # NOTE: must NOT be called inside $( ) — SPAWNED_PID/KILLED state must survive!
-  local n np line addr pid
-  WSTEST_ADDR=""
+wstest_spawn() { # spawn a WSTEST kitty as OUR OWN process group; sets WSTEST_PGID (+ WSTEST_ADDR, report-only)
+  # NOTE: must NOT be called inside $( ) — SPAWN_PGIDS state must survive!
+  local n np pgid line try
+  WSTEST_ADDR=""; WSTEST_PGID=""
   n=$(wstest_windows | grep -c . || true)
   np=$(wstest_procs | grep -c . || true)
   [ "${n:-0}" = "0" ] && [ "${np:-0}" = "0" ] || { log "[SPAWN][ERROR] leftovers: $n WSTEST window(s), $np process(es) — run cleanup first"; return 1; }
-  dispatch 'hl.dsp.exec_cmd("kitty --app-id WSTEST")'
-  sleep 2.5
-  while IFS= read -r line; do
-    addr=${line%% *}; pid=${line##* }
-    [ -n "$addr" ] && [ -n "$pid" ] && SPAWNED_PID["$addr"]="$pid"
-  done < <(wstest_windows)
-  for addr in "${!SPAWNED_PID[@]}"; do
-    [ -n "${KILLED[$addr]:-}" ] && continue
-    WSTEST_ADDR="$addr"   # the one window alive right now
-    return 0
+  # the script owns what it spawns: setsid → $! is the pgid (validated live)
+  setsid kitty --app-id WSTEST >/dev/null 2>&1 &
+  pgid=$!
+  SPAWN_PGIDS+=("$pgid")
+  WSTEST_PGID="$pgid"
+  # poll for the window (kitty start latency varies; up to 8s)
+  try=0
+  while [ $try -lt 16 ] && [ -z "$(wstest_windows | head -1)" ]; do
+    sleep 0.5; try=$((try + 1))
   done
-  return 1   # spawn produced nothing
+  [ $try -gt 4 ] && log "[SPAWN] window needed $((try / 2)).$(( (try % 2) * 5 ))s to map (slow start)"
+  line=$(wstest_windows | head -1)
+  if [ -n "$line" ]; then
+    WSTEST_ADDR="${line%% *}"   # reporting only — never used for lifecycle
+    return 0
+  fi
+  return 1   # spawn produced nothing (no window after polling)
 }
 
-safe_kill() { # safe_kill <address> : close a WSTEST window AND every process of it, verified
-  local addr="$1" pid present addrs_json g guard_missing
-  [ -n "$addr" ] || return 0
-  # 1. only ever close what we spawned and recorded at spawn time
-  pid="${SPAWNED_PID[$addr]:-}"
-  [ -n "$pid" ] || { log "[GUARD] refusing to kill unrecorded window $addr"; return 1; }
-  # 2. never a window that existed before the script started
-  for g in "${GUARD_ADDRS[@]}"; do
-    [ "$g" = "$addr" ] && { log "[GUARD] refusing to kill pre-existing window $addr"; return 1; }
+close_spawned() { # close_spawned <pgid> : kill a process group WE spawned — verified by
+  # ITS OWN group state ONLY (never by "any WSTEST anywhere": during mid-run
+  # case-local cleanups the NEXT case's window is legitimately alive — global
+  # zero-remnant is asserted by cleanup_spawned at the end, where it holds)
+  local pgid="$1" try
+  [ -n "$pgid" ] || return 0
+  if ! pgid_alive "$pgid"; then
+    log "[KILL] WSTEST pgid $pgid already closed"
+    return 0
+  fi
+  kill -- -"$pgid" 2>/dev/null           # graceful TERM to the whole group
+  for try in 1 2 3; do                   # grace, then hard kill if needed
+    sleep 0.4
+    pgid_alive "$pgid" || break
+    kill -9 -- -"$pgid" 2>/dev/null
   done
-  # 3. don't kill twice
-  [ -n "${KILLED[$addr]:-}" ] && return 0
-  # 4. close: window selector kill + SIGTERM recorded pid, then retry window-kill
-  #    while the address is (still/again) present
-  dispatch "hl.dsp.window.kill({ window = \"address:$addr\" })"
-  kill "$pid" 2>/dev/null
-  local try cur_pid
-  for try in 1 2 3; do
-    sleep 0.6
-    present=$($HYPRCTL -j clients | jq -r --arg a "$addr" '[.[] | select(.address==$a)] | length' 2>/dev/null)
-    [ "${present:-1}" = "0" ] && break
-    cur_pid=$($HYPRCTL -j clients | jq -r --arg a "$addr" 'first(.[] | select(.address==$a) | .pid)' 2>/dev/null)
-    log "[KILL] $addr still present (pid ${cur_pid:-?}, try $try) — re-kill"
-    [ -n "${cur_pid:-}" ] && kill -9 "$cur_pid" 2>/dev/null
-    dispatch "hl.dsp.window.kill({ window = \"address:$addr\" })"
-  done
-  # 5. PROCESS SWEEP — the guarantee: EVERY process carrying the suite-exclusive
-  #    WSTEST app-id is script-spawned by construction; close them ALL. The
-  #    recorded pid alone is not sufficient (BOOT3 incident: a second WSTEST
-  #    process survived killing only the recorded one).
-  local p
-  for p in $(wstest_procs); do kill -9 "$p" 2>/dev/null; done
-  kill -9 "$pid" 2>/dev/null
-  sleep 0.6
-  # 6. verify: address gone AND zero WSTEST windows AND zero WSTEST processes
-  present=$($HYPRCTL -j clients | jq -r --arg a "$addr" '[.[] | select(.address==$a)] | length' 2>/dev/null)
-  if [ "${present:-1}" != "0" ]; then
-    log "[GUARD][ERROR] kill of $addr FAILED (window still present)"
+  if pgid_alive "$pgid"; then
+    log "[KILL][ERROR] pgid $pgid: group STILL ALIVE after TERM+KILL"
     return 1
   fi
-  local rem_p rem_w
-  rem_p=$(wstest_procs | grep -c . || true)
-  rem_w=$(wstest_windows | grep -c . || true)
-  if [ "${rem_p:-1}" != "0" ] || [ "${rem_w:-1}" != "0" ]; then
-    log "[GUARD][ERROR] $addr closed but WSTEST remnants survive (procs=$rem_p windows=$rem_w)"
-    return 1
-  fi
-  # 6. guard integrity: every pre-existing window must still be there
-  addrs_json=$($HYPRCTL -j clients | jq -r '[.[].address]' 2>/dev/null)
-  guard_missing=$(for g in "${GUARD_ADDRS[@]}"; do
-    jq -rn --arg a "$g" --argjson p "$addrs_json" '$p | index($a) == null' 2>/dev/null
-  done | grep -c true || true)
-  if [ "${guard_missing:-0}" != "0" ]; then
-    log "[GUARD][ERROR] $guard_missing pre-existing window(s) DISAPPEARED — aborting further kills"
-    return 2
-  fi
-  KILLED["$addr"]=1
-  log "[KILL] WSTEST $addr (pid $pid) removed cleanly; ${#GUARD_ADDRS[@]} protected windows verified intact"
+  log "[KILL] WSTEST pgid $pgid closed cleanly (group kill)"
   return 0
 }
 
@@ -250,31 +226,20 @@ spawn_on_ws() { # spawn_on_ws <ws> : focus ws, spawn WSTEST kitty; sets WSTEST_A
 }
 
 cleanup_spawned() { # close everything the script created — verified down to zero remnants
-  local addr rc=0
-  for addr in "${!SPAWNED_PID[@]}"; do
-    [ -n "${KILLED[$addr]:-}" ] && continue
-    safe_kill "$addr"
-    rc=$?
-    [ "$rc" = "2" ] && break   # guard violation: abort all further kills
-    # rc=1 (refusal / failed kill): log and continue with the rest
+  local pgid rem_p rem_w addrs_json guard_missing g
+  for pgid in "${SPAWN_PGIDS[@]}"; do
+    close_spawned "$pgid"      # idempotent: dead group → no-op, verify still passes
   done
-  local left_w left_p p re_addr re_line
-  left_w=$(wstest_windows | grep -c . || true)
-  left_p=$(wstest_procs | grep -c . || true)
-  if [ "${left_w:-0}" != "0" ] || [ "${left_p:-0}" != "0" ]; then
-    # remnants: re-kill recorded addresses, then hard-sweep every WSTEST process
-    while IFS= read -r re_line; do
-      re_addr=${re_line%% *}
-      [ -n "${SPAWNED_PID[$re_addr]:-}" ] || { log "[CLEANUP][ERROR] UNTRACKED WSTEST window $re_addr — NOT touching it, manual cleanup needed"; continue; }
-      unset "KILLED[$re_addr]"
-      safe_kill "$re_addr"
-    done < <(wstest_windows)
-    for p in $(wstest_procs); do kill -9 "$p" 2>/dev/null; done
-    sleep 0.5
-    left_w=$(wstest_windows | grep -c . || true)
-    left_p=$(wstest_procs | grep -c . || true)
-    [ "${left_w:-0}" = "0" ] && [ "${left_p:-0}" = "0" ] || log "[CLEANUP][ERROR] $left_w WSTEST window(s) + $left_p process(es) STILL ALIVE — manual cleanup needed"
-  fi
+  # final assertion: zero WSTEST windows AND zero WSTEST processes remain
+  rem_p=$(wstest_procs | grep -c . || true)
+  rem_w=$(wstest_windows | grep -c . || true)
+  [ "${rem_p:-0}" = "0" ] && [ "${rem_w:-0}" = "0" ] || log "[CLEANUP][ERROR] $rem_w WSTEST window(s) + $rem_p process(es) STILL ALIVE — manual cleanup needed"
+  # passive integrity check: every pre-existing window must still be there
+  addrs_json=$($HYPRCTL -j clients | jq -r '[.[].address]' 2>/dev/null)
+  guard_missing=$(for g in "${GUARD_ADDRS[@]}"; do
+    jq -rn --arg a "$g" --argjson p "$addrs_json" '$p | index($a) == null' 2>/dev/null
+  done | grep -c true || true)
+  [ "${guard_missing:-0}" = "0" ] || log "[CLEANUP][ERROR] $guard_missing pre-existing window(s) DISAPPEARED"
 }
 
 # ----------------------------------------------------------------------------
@@ -553,12 +518,12 @@ check F5 "focus NON-EMPTY ws1 (eDP), cursor on HDMI-A-2" "prep(HDMI-A-2, ws2); f
 
 if [ -n "$ESPAWN" ]; then
   spawn_on_ws "$ESPAWN"
-  KTY="$WSTEST_ADDR"
-  [ -n "$KTY" ] && log "[INFO] spawned test kitty $KTY on ws$ESPAWN"
+  KPG="$WSTEST_PGID"
+  [ -n "$KPG" ] && log "[INFO] spawned test kitty (pgid $KPG) on ws$ESPAWN"
   prep eDP-1 2
   focus_ws "$ESPAWN"
   check F6 "focus NON-EMPTY ws$ESPAWN (HDMI), cursor on eDP-1" "spawn kitty@ws$ESPAWN; prep(eDP-1, ws2); focus ws$ESPAWN" "$ESPAWN" HDMI-A-2 any
-  safe_kill "$KTY"        # release the ws again (one WSTEST window at a time)
+  close_spawned "$KPG"    # release the ws again (one WSTEST window at a time)
 else
   skip_case F6 "focus NON-EMPTY spawned HDMI ws" "not enough empty HDMI ws"
 fi
@@ -655,8 +620,8 @@ fi
 
 if [ -n "$ET3B" ]; then
   spawn_on_ws "$ET3B"
-  KP="$WSTEST_ADDR"
-  safe_kill "$KP"      # ws had an app before, now closed again
+  KPG="$WSTEST_PGID"
+  close_spawned "$KPG"    # ws had an app before, now closed again
   prep eDP-1 2
   t2_goto "$ET3B"
   wstest_spawn || true
