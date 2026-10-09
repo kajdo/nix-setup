@@ -417,19 +417,51 @@ hl.bind("ALT + SHIFT + L", hl.dsp.window.move({ direction = "r" }))
 hl.bind("ALT + SHIFT + K", hl.dsp.window.move({ direction = "u" }))
 hl.bind("ALT + SHIFT + J", hl.dsp.window.move({ direction = "d" }))
 
--- Switch workspaces -------------------------------------------------------------
--- with mainMod + [0-9] ...
+-- Switch workspaces (dwm-style) -------------------------------------------------
+-- Global helpers (NOT local: the test suite drives them via `hyprctl eval`
+-- and real binds) — see tests/hypr-workspaces/ (BASELINE_BOOT7).
 
-for i = 1, 10 do
-  local key = i % 10 -- 10 maps to key 0
-  hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
-  hl.bind("ALT + " .. key, hl.dsp.focus({ workspace = i })) -- to make it work on android (sunshine)
+-- S2+S5: switch to ws n and warp the cursor to the target monitor's center
+-- BEFORE focusing, so keyboard focus follows the workspace regardless of
+-- where the cursor currently is (fixes cross-monitor focus theft).
+function goto_workspace(n)
+  local ws  = hl.get_workspace(n)
+  local mon = ws and ws.monitor
+  if mon then
+    local at = hl.get_monitor_at_cursor()
+    if not at or at.name ~= mon.name then
+      hl.dispatch(hl.dsp.cursor.move({
+        x = mon.x + mon.width / 2,
+        y = mon.y + mon.height / 2,
+      }))
+    end
+  end
+  hl.dispatch(hl.dsp.focus({ workspace = n }))
 end
 
-hl.bind(mainMod .. " + I", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind(mainMod .. " + U", hl.dsp.focus({ workspace = "r-1" }))
-hl.bind("ALT + I", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind("ALT + U", hl.dsp.focus({ workspace = "r-1" }))
+-- S4: global arithmetic cycling over the fixed set 1..9 with wraparound
+-- (9 -> +1 wraps to 1, 1 -> -1 wraps to 9). Never leaves the 1..9 range.
+function cycle_workspace(delta)
+  local aws = hl.get_active_workspace()
+  local id  = aws and aws.id or 1
+  goto_workspace(((id - 1 + delta) % 9) + 1)
+end
+
+-- Direct switch with mainMod/ALT + [1-9] (key 0 -> ws10 dropped: the set is
+-- exactly 1..9, S3; old binds used plain focus() and suffered focus theft)
+
+for i = 1, 9 do
+  hl.bind(mainMod .. " + " .. i, function() goto_workspace(i) end)
+  hl.bind("ALT + " .. i, function() goto_workspace(i) end) -- to make it work on android (sunshine)
+end
+
+-- Arithmetic cycling with mainMod/ALT + I/U (old: r+1/r-1 — no wraparound:
+-- +1 from ws9 created ws10, -1 from ws1 was a no-op)
+
+hl.bind(mainMod .. " + I", function() cycle_workspace(1) end)
+hl.bind(mainMod .. " + U", function() cycle_workspace(-1) end)
+hl.bind("ALT + I", function() cycle_workspace(1) end)
+hl.bind("ALT + U", function() cycle_workspace(-1) end)
 
 -- jumping between monitors
 
@@ -441,13 +473,14 @@ hl.bind("ALT + SHIFT + comma", hl.dsp.window.move({ monitor = "+1" }))
 hl.bind(mainMod .. " + Escape", hl.dsp.focus({ workspace = "previous" }))
 hl.bind("ALT + Escape", hl.dsp.focus({ workspace = "previous" }))
 
--- Move active window to a workspace with mainMod + SHIFT + [0-9] ----------------
--- (and the ALT + SHIFT variant)
+-- Move active window to a workspace with mainMod + SHIFT + [1-9] ----------------
+-- (and the ALT + SHIFT variant; key 0 dropped with the switch binds — S3:
+-- the workspace set is exactly 1..9. follow=true theft is a flagged
+-- follow-up, out of scope here)
 
-for i = 1, 10 do
-  local key = i % 10 -- 10 maps to key 0
-  hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i, follow = true }))
-  hl.bind("ALT + SHIFT + " .. key, hl.dsp.window.move({ workspace = i, follow = true }))
+for i = 1, 9 do
+  hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i, follow = true }))
+  hl.bind("ALT + SHIFT + " .. i, hl.dsp.window.move({ workspace = i, follow = true }))
 end
 
 -- Special workspace (scratchpad) ------------------------------------------------
@@ -455,10 +488,10 @@ end
 hl.bind("ALT + B", hl.dsp.workspace.toggle_special("magic"))
 hl.bind("ALT + SHIFT + B", hl.dsp.window.move({ workspace = "special:magic", follow = true }))
 
--- Scroll through existing workspaces with mainMod + scroll ----------------------
+-- Scroll through workspaces with mainMod + scroll (same fixed-set cycle) --------
 
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "r-1" }))
+hl.bind(mainMod .. " + mouse_down", function() cycle_workspace(1) end)
+hl.bind(mainMod .. " + mouse_up", function() cycle_workspace(-1) end)
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging -----------------------
 
