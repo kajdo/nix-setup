@@ -1,12 +1,17 @@
 # Baseline Analysis & Implementation Proposal — Workspace Switching
 
 **Run:** `results/BASELINE_BOOT1` (fresh boot 2026-02-05, run once, hands-off)
-> **SUPERSEDED — official baseline is now `results/BASELINE_BOOT2`** (fresh boot,
-> corrected script: spawn-path fix + overlay-aware win-check + B1 label).
-> Same failure map, cleaner numbers: **PASS=27 FAIL=25 SKIP=0, 25/25 genuine**
-> (BOOT1's extra 2 FAILs were runner artifacts: F6 spawn-in-subshell,
-> T2_HDMI-2_2 scratchpad overlay — both eliminated). Every finding below
-> reproduces unchanged in BOOT2; per-case verdicts see `results/BASELINE_BOOT2/report.md`.
+> **STATUS: no official baseline yet.**
+> - BOOT1: fresh boot, but script had 2 runner artifacts (F6 spawn-subshell,
+> T2_HDMI-2_2 overlay) → script amended
+> - `results/VALIDATION_SAMEBOOT` (27/25/0): full-suite validation of the amended
+>   script, but **same-boot rerun** after an aborted first attempt (crash at F6,
+> `$ws`→`$1` bug) — start state was mutated (active ws 2@HDMI vs true boot
+> 1@eDP-1; boot-restored ws10 already auto-destroyed). Disqualified as baseline
+> on protocol, kept as script validation: failure map identical (25 genuine,
+> defects A/B/C), waybar invariant clean, cleanup verified, notify-send works.
+> - **Official baseline: BASELINE_BOOT3** — next fresh boot, single run, no
+>   script changes before or during.
 **Result:** **PASS=24 FAIL=28 SKIP=0** (52 checks; 1 of the 28 FAILs is a
 runner-overlay artifact → **27 genuine failures**)
 **Config under test:** `nixos/home-manager/config/hypr/hyprland.lua` @ current `main`

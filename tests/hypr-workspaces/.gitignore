@@ -3,7 +3,7 @@ results/*
 results/BASELINE_BOOT1/*
 !results/BASELINE_BOOT1/report.md
 !results/BASELINE_BOOT1/events.log
-!results/BASELINE_BOOT2/
-results/BASELINE_BOOT2/*
-!results/BASELINE_BOOT2/report.md
-!results/BASELINE_BOOT2/events.log
+!results/VALIDATION_SAMEBOOT/
+results/VALIDATION_SAMEBOOT/*
+!results/VALIDATION_SAMEBOOT/report.md
+!results/VALIDATION_SAMEBOOT/events.log
