@@ -1,42 +1,44 @@
 # Baseline Analysis & Implementation Proposal — Workspace Switching
 
-**Run:** `results/BASELINE_BOOT1` (fresh boot 2026-02-05, run once, hands-off)
-> **STATUS: no official baseline yet.**
-> - BOOT1: fresh boot, but script had 2 runner artifacts (F6 spawn-subshell,
-> T2_HDMI-2_2 overlay) → script amended
-> - `results/VALIDATION_SAMEBOOT` (27/25/0): full-suite validation of the amended
->   script, but **same-boot rerun** after an aborted first attempt (crash at F6,
-> `$ws`→`$1` bug) — start state was mutated (active ws 2@HDMI vs true boot
-> 1@eDP-1; boot-restored ws10 already auto-destroyed). Disqualified as baseline
-> on protocol, kept as script validation: failure map identical (25 genuine,
-> defects A/B/C), waybar invariant clean, cleanup verified, notify-send works.
-> - **Official baseline: BASELINE_BOOT3** — next fresh boot, single run, no
->   script changes before or during.
-**Result:** **PASS=24 FAIL=28 SKIP=0** (52 checks; 1 of the 28 FAILs is a
-runner-overlay artifact → **27 genuine failures**)
+**Run:** `results/BASELINE_BOOT3` (fresh boot 2026-02-10, single clean run, hands-off)
+> **OFFICIAL BASELINE: BASELINE_BOOT3 — PASS=26 FAIL=25 SKIP=1**
+> (modes C/T1=legacy, T2=legacy; amended script; no script changes before or
+> during the run). All 25 FAILs genuine, defect map identical to every prior
+> run. T3b SKIPped due to a runner incident (kitty close/reopen race at kill,
+> see §7) — not a defect verdict; the T3-type defect is proven by T3a in this
+> run and T3b in BOOT1. Waybar: zero double-highlights; guard intact.
+>
+> History: BOOT1 (2026-02-05, 24/28/0) = fresh boot but pre-amendment script
+> (2 runner artifacts: F6 spawn-subshell, T2_HDMI-2_2 overlay);
+> `results/VALIDATION_SAMEBOOT` (27/25/0) = full-suite validation of the
+> amended script but same-boot rerun after an aborted first attempt —
+> disqualified as baseline on protocol, kept as evidence. Per-case counts
+> below are corrected against authoritative log recounts.
 **Config under test:** `nixos/home-manager/config/hypr/hyprland.lua` @ current `main`
-**Companion spec:** `README.md` (S1–S7) · raw report: `results/BASELINE_BOOT1/report.md`
+**Companion spec:** `README.md` (S1–S7) · raw report: `results/BASELINE_BOOT3/report.md`
 
-## 1. Boot state (B1)
+## 1. Boot state (B1, BASELINE_BOOT3)
 
 - Cursor −960,540 on eDP-1, focused=eDP-1, active ws=1, occupied: ws1 (runner terminal)
-- **ws10 existed at boot** (workspace ids `[1..9, 10]`, ws10 empty): Hyprland
-  restored the previous session's leftover — the ws10 leak is **sticky across
-  reboots**. S1 violation persists until ws10 stops being created.
+- **B1a FAIL: ws10 existed at boot** (10 workspaces, 9 persistent) — the previous
+  session's leaked ws10 is **restored across reboots**; confirmed on every true
+  fresh boot (BOOT1, BOOT3). Empty+inactive → auto-destroys during the run.
+  S1 violation is sticky until ws10 stops being created.
 
-## 2. Failure map — all 27 genuine FAILs reduce to 3 measured defects
+## 2. Failure map — all 25 genuine FAILs reduce to 3 measured defects
 
 ### Defect A — cross-monitor focus theft (empty target, cursor elsewhere)
 Empty target ws → focus cleared → `follow_mouse=1` re-grabs a window under the
 cursor on the *other* monitor; `no_warps=true` keeps the cursor parked.
 
-| Phase | Failing cases | Evidence |
+| Phase | Failing cases (BOOT3, corrected) | Evidence |
 |---|---|---|
-| F | F1, F2 (eDP→empty HDMI), F4 (HDMI→empty eDP, mirrored), F6 | switch "doesn't happen": activews stays on cursor's monitor |
+| B | B1a | 10 workspaces at boot (ws10 restored) |
+| F | F1, F2 (eDP→empty HDMI), F4 (HDMI→empty eDP, mirrored) | switch "doesn't happen": activews stays on cursor's monitor (F3/F5/F6 controls pass) |
 | C | C2 (8→9), C5 (1→2), C6 | same |
-| T1 | I1 (1→2), U1 (−1 from 1†), I8, U8 (8↔9 boundary) | same |
-| T2 | eDP_2..8 (7×), HDMI_1†, HDMI_9 | **every** cross-monitor alt+N with cursor on other monitor fails; **every** same-monitor one passes (eDP_1, eDP_9, HDMI_3..8 pass) |
-| T3 | T3a, T3b | alt+T kitty landed on ws9 (stolen focus ws), not target 7/8 |
+| T1 | I1 (1→2), U1 (−1 from 1†), U2†, I8, U9 (8↔9 boundary), I9 | same |
+| T2 | eDP_2..8 (7×), HDMI_1†, HDMI_9 | **every** cross-monitor alt+N with cursor on other monitor fails; **every** same-monitor one passes (eDP_1, eDP_9, HDMI_2..8 pass) |
+| T3 | T3a | alt+T kitty landed on ws9 (stolen focus ws), not target 5; T3b SKIP'd (runner incident §7) |
 
 † = same-defect family: HDMI_1 fails *only* on cursor (switch worked — ws1
 non-empty); T1U2 same (2→1 works, cursor not warped).
@@ -49,10 +51,25 @@ boot-restored next session, see §1). C4 & T1U1: `1 − 1` → no-op.
 Every successful cross-monitor switch leaves the cursor behind
 (T1U2, T2_HDMI_1 cursor-only FAILs; also embedded in all Defect-A rows).
 
-**Runner artifact (not a defect):** T2_HDMI-2_2 FAILs only on
+**Runner artifacts (not defects):** BOOT1's T2_HDMI-2_2 FAILed only on
 `active-win='tmux'` — the runner's own scratchpad overlay reports as active
-window on the focused ws. Known limitation of running the suite from inside
-the session; documented here, evaluated again post-fix.
+window on the focused ws. Fixed in the amended script (win sub-check skipped
+for class `KittyScratchpad`); BOOT3: T2_HDMI-2_2 PASSes. Same for BOOT1's F6
+(spawn ran in a subshell pre-fix): F6 passes in BOOT3.
+
+## 7. Runner incident (BOOT3, T3b): kitty close/reopen race at kill
+
+After T3a's verdict, the spawned WSTEST kitty was killed and verified gone
+(address + recorded pid dead) — but `events.log` shows `closewindow>>A`
+followed by `openwindow>>A` a moment later: `window.kill` is a *graceful
+close*, and kitty during early init **re-maps its window under the recycled
+address with a new pid**. The one-at-a-time interlock then (correctly)
+refused T3b's spawn → SKIP, and the leftover survived cleanup (the tracked
+pid was the first process). Post-run: leftover removed manually by pid with
+before/after proof (only KittyScratchpad remained, workspaces exactly 1–9);
+script hardened afterwards (safe_kill retry + SIGKILL loop on the current
+owner of a recorded address; cleanup re-kill for recorded addresses) —
+**no script change happened before or during the BASELINE_BOOT3 run**.
 
 ## 3. Waybar highlights (new coverage)
 

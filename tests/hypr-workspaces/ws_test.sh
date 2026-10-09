@@ -193,11 +193,31 @@ safe_kill() { # safe_kill <address> : kill a WSTEST window BY ITS RECORDED PID, 
   # 4. kill: window selector kill + SIGTERM to the recorded pid (belt and braces)
   dispatch "hl.dsp.window.kill({ window = \"address:$addr\" })"
   kill "$pid" 2>/dev/null
-  sleep 0.5
-  # 5. verify: address gone AND pid dead
+  # 5. verify with retry — kitty can close+REOPEN its window during early init
+  #    (observed: closewindow >> A followed by openwindow >> A with a NEW pid).
+  #    window.kill is a graceful close; the remapped process needs SIGKILL.
+  #    Killing whatever pid currently owns a RECORDED address stays inside the
+  #    spawn-time-recording safety model (address-keyed identity).
+  local try cur_pid
+  for try in 1 2 3 4; do
+    sleep 0.6
+    present=$($HYPRCTL -j clients | jq -r --arg a "$addr" '[.[] | select(.address==$a)] | length' 2>/dev/null)
+    if [ "${present:-1}" != "0" ]; then
+      cur_pid=$($HYPRCTL -j clients | jq -r --arg a "$addr" 'first(.[] | select(.address==$a) | .pid)' 2>/dev/null)
+      log "[KILL] $addr reappeared (pid ${cur_pid:-?}, try $try) — SIGKILL + re-kill"
+      [ -n "${cur_pid:-}" ] && kill -9 "$cur_pid" 2>/dev/null
+      dispatch "hl.dsp.window.kill({ window = \"address:$addr\" })"
+      continue
+    fi
+    # address gone — confirm the recorded pid died too
+    kill -0 "$pid" 2>/dev/null || break
+    kill -9 "$pid" 2>/dev/null
+    break
+  done
+  sleep 0.6
   present=$($HYPRCTL -j clients | jq -r --arg a "$addr" '[.[] | select(.address==$a)] | length' 2>/dev/null)
   if [ "${present:-1}" != "0" ]; then
-    log "[GUARD][ERROR] kill of $addr FAILED (window still present)"
+    log "[GUARD][ERROR] kill of $addr FAILED (window still/re-again present after retries)"
     return 1
   fi
   if kill -0 "$pid" 2>/dev/null; then
@@ -233,9 +253,20 @@ cleanup_spawned() { # kill everything the script created (tracked pids only, ver
     [ "$rc" = "2" ] && break   # guard violation: abort all further kills
     # rc=1 (refusal / failed kill): log and continue with the rest
   done
-  local left
+  local left re_addr re_line
   left=$(wstest_windows | grep -c . || true)
-  [ "${left:-0}" = "0" ] || log "[CLEANUP][WARN] $left WSTEST window(s) still alive"
+  if [ "${left:-0}" != "0" ]; then
+    # recorded addresses reappeared (kitty close/reopen race) — re-kill via
+    # safe_kill's retry logic; unknown addresses are NEVER touched
+    while IFS= read -r re_line; do
+      re_addr=${re_line%% *}
+      [ -n "${SPAWNED_PID[$re_addr]:-}" ] || { log "[CLEANUP][WARN] untracked WSTEST window $re_addr left alive"; continue; }
+      unset "KILLED[$re_addr]"
+      safe_kill "$re_addr"
+    done < <(wstest_windows)
+    left=$(wstest_windows | grep -c . || true)
+    [ "${left:-0}" = "0" ] || log "[CLEANUP][WARN] $left WSTEST window(s) still alive after re-kill"
+  fi
 }
 
 # ----------------------------------------------------------------------------
