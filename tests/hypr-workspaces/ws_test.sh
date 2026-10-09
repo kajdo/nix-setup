@@ -38,7 +38,7 @@ md()   { printf '%s\n' "$*" >> "$REPORT"; }
 
 # --- user-facing progress notifications (notify-send) --------------------------
 NOTIFY_OK=0; command -v notify-send >/dev/null 2>&1 && NOTIFY_OK=1
-TOTAL_STEPS=52          # B:2 + F:6 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
+TOTAL_STEPS=53          # B:2 + F:7 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
 STEP=0
 T0=$SECONDS
 notify() { # notify <text> [timeout-ms]
@@ -311,6 +311,8 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
       else
         [ "$awin" != "NONE" ] || { verdict="FAIL"; reason+=" active-win=NONE (want a window, ws${ewin#auto:} has $tws_n);"; }
       fi ;;
+    class:*) # the active window's CLASS must match exactly (F7: window-level focus)
+      [[ "$acls" == "${ewin#class:}" ]] || { verdict="FAIL"; reason+=" active-win-class='$acls' (want ${ewin#class:});"; } ;;
     *)    [[ "$awin" == *"$ewin"* ]] || { verdict="FAIL"; reason+=" active-win='$awin' (want ~'$ewin');"; } ;;
   esac
   fi
@@ -486,7 +488,7 @@ log ""
 
 # --- Phase F: plain focus() semantics (expected UNCHANGED by the fix) --------
 log "=== Phase F: plain focus({workspace=N}) semantics ==="
-notify_phase "F: focus semantics (6 checks)"
+notify_phase "F: focus semantics (7 checks)"
 
 if [ -n "$E1" ]; then
   cursor_to eDP-1
@@ -533,6 +535,21 @@ if [ -n "$ESPAWN" ]; then
   close_spawned "$KPG"    # release the ws again (one WSTEST window at a time)
 else
   skip_case F6 "focus NON-EMPTY spawned HDMI ws" "not enough empty HDMI ws"
+fi
+
+# F7: user-reported defect — switching to a NON-EMPTY ws on the other screen
+# switches the workspace, but keyboard focus stays with the original display's
+# window (F5/F6 only assert the focused MONITOR; F7 asserts the target WINDOW
+# receives keyboard focus — active window CLASS must be the spawned kitty)
+if [ -n "$ESPAWN" ]; then
+  spawn_on_ws "$ESPAWN"
+  KPG="$WSTEST_PGID"
+  prep eDP-1 2
+  focus_ws "$ESPAWN"
+  check F7 "focus NON-EMPTY ws$ESPAWN (HDMI): target window receives focus" "spawn kitty@ws$ESPAWN; prep(eDP-1, ws2); focus ws$ESPAWN" "$ESPAWN" HDMI-A-2 "class:WSTEST" HDMI-A-2
+  close_spawned "$KPG"
+else
+  skip_case F7 "window-focus on NON-EMPTY spawned HDMI ws" "not enough empty HDMI ws"
 fi
 log ""
 
