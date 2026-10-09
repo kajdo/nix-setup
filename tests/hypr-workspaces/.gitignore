@@ -16,3 +16,8 @@ results/BEFORE_BOOT10/*
 !results/BEFORE_BOOT10/report.md
 !results/BEFORE_BOOT10/events.log
 !results/BEFORE_BOOT10/run.log
+!results/AFTER_BOOT12/
+results/AFTER_BOOT12/*
+!results/AFTER_BOOT12/report.md
+!results/AFTER_BOOT12/events.log
+!results/AFTER_BOOT12/run.log
