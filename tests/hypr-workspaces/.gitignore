@@ -21,3 +21,8 @@ results/AFTER_BOOT12/*
 !results/AFTER_BOOT12/report.md
 !results/AFTER_BOOT12/events.log
 !results/AFTER_BOOT12/run.log
+!results/AFTER2_BOOT13/
+results/AFTER2_BOOT13/*
+!results/AFTER2_BOOT13/report.md
+!results/AFTER2_BOOT13/events.log
+!results/AFTER2_BOOT13/run.log
