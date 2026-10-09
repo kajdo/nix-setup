@@ -101,7 +101,14 @@ dispatch() { # dispatch <lua-expr>
 
 focus_ws()      { dispatch "hl.dsp.focus({ workspace = $1 })"; }
 cycle_legacy()  { dispatch "hl.dsp.focus({ workspace = \"$1\" })"; }  # $1 = r+1 | r-1
-cycle_fixed()   { $HYPRCTL eval "cycle_workspace($1)" >/dev/null 2>&1; sleep "$SLEEP"; }
+cycle_fixed() {  # $1 = +1 | -1 — strip leading '+': hyprctl eval's Lua parser
+  # rejects unary plus ("cycle_workspace(+1)" -> unexpected symbol near '+',
+  # silently swallowed by the old >/dev/null — BOOT8: every +1 case no-opped)
+  local d="${1#+}" out rc
+  out=$($HYPRCTL eval "cycle_workspace($d)" 2>&1); rc=$?
+  [ $rc -ne 0 ] && log "[CYCLE][ERROR] eval cycle_workspace($d): $out"
+  sleep "$SLEEP"
+}
 cycle()         { if [ "$MODE" = "fixed" ]; then cycle_fixed "$1"; else cycle_legacy "$1"; fi; }
 
 t2_goto() { # t2_goto <n> : direct switch, exact bind path (TEST 2)
