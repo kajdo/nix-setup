@@ -226,7 +226,14 @@ close_spawned() { # close_spawned <pgid> : kill a process group WE spawned — v
   return 0
 }
 
-spawn_on_ws() { # spawn_on_ws <ws> : focus ws, spawn WSTEST kitty; sets WSTEST_ADDR
+spawn_on_ws() { # spawn_on_ws <ws> : DETERMINISTIC placement — cursor to the target's
+  # monitor FIRST, then focus ws, then spawn. The kitty maps on the FOCUSED
+  # monitor's active ws; with the cursor on the target monitor, follow_mouse
+  # guarantees that equals the target ws — regardless of whether the plain
+  # dispatcher honors the switch (BOOT9-diagnostic: without the cursor move,
+  # class-A theft made F7's kitty map on ws1 while the system was broken,
+  # and would artifact false FAILs on T4a once the fix lands)
+  cursor_to "$(monitor_for "$1")"
   focus_ws "$1"
   sleep 0.3
   wstest_spawn
