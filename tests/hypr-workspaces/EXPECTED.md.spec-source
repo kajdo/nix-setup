@@ -85,6 +85,7 @@ focus ws N. "Predicted (pre-fix)" column = expectation for the **baseline** run.
 | F4 | cursor→HDMI, ws2 | `focus ws9` (empty, eDP) | ws9 active on eDP, focused=eDP, win=NONE | **FAIL**: eDP's active ws → 9, but focused monitor stays HDMI/ws2 (theft) |
 | F5 | cursor→HDMI, ws2 | `focus ws1` (non-empty, eDP) | ws1 active on eDP, focused=eDP, win=any (last window) | PASS (cursor stays on HDMI — no warp, informational) |
 | F6 | spawn kitty on ws5, cursor→eDP-1, ws2 | `focus ws5` (non-empty) | ws5 active on HDMI, focused=HDMI, win=kitty | PASS (non-empty target holds focus) |
+| F7 | spawn kitty on ws$ESPAWN, cursor→eDP-1, ws2 | `focus ws$ESPAWN` (non-empty) | ws active on HDMI, focused=HDMI, active-win CLASS=WSTEST | user-reported 2026-02-10: ws switches but window focus stays on the old display — window-level focus theft |
 | C1 | prep(cursor→HDMI, ws2) | cycle +1 | ws3/HDMI focused, cursor stays HDMI | PASS |
 | C2 | prep(cursor→HDMI, ws8) | cycle +1 | ws9/eDP focused, cursor warps to eDP (wrap boundary, cross-monitor) | **FAIL**: eDP switches to ws9 but focus stays ws8/HDMI (empty-ws theft), no warp |
 | C3 | prep(cursor→eDP, ws9) | cycle +1 | ws1/eDP focused (wrap 9→1) | **FAIL**: **ws10 created** (no wrap) |
