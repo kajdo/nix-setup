@@ -38,7 +38,7 @@ md()   { printf '%s\n' "$*" >> "$REPORT"; }
 
 # --- user-facing progress notifications (notify-send) --------------------------
 NOTIFY_OK=0; command -v notify-send >/dev/null 2>&1 && NOTIFY_OK=1
-TOTAL_STEPS=53          # B:2 + F:7 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
+TOTAL_STEPS=54          # B:2 + F:8 + C:6 + T1:18 + T2:18 + T3:2 (all funnel through check/skip_case/t3_check)
 STEP=0
 T0=$SECONDS
 notify() { # notify <text> [timeout-ms]
@@ -294,10 +294,12 @@ check() { # check <case-id> <description> <action-desc> <exp-ws> <exp-focused-mo
 
   [ "$aws" = "$ews" ]   || { verdict="FAIL"; reason+=" active-ws=$aws@$amon (want $ews);"; }
   [ "$fmon" = "$emon" ] || { verdict="FAIL"; reason+=" focused-mon='$fmon' (want $emon);"; }
-  if [ "$acls" = "KittyScratchpad" ]; then
+  if [ "$acls" = "KittyScratchpad" ] && [[ "$ewin" != class:* ]]; then
     # the runner's own scratchpad overlays the focused ws and reports as
     # activewindow — the win sub-check cannot see the real target ws content.
     # Skip it (ws/focus/cursor carry the verdict); note for the record.
+    # NOT for class: expectations — there, a scratchpad-class active window IS
+    # the window-theft signal (it must FAIL, not be skipped)
     reason+=" [win-check skipped: runner overlay]"
   else
   case "$ewin" in
@@ -482,13 +484,14 @@ log ""
 E_HDMI=($(jq -r '[.[] | select(.id>=2 and .id<=8 and .windows==0) | .id] | sort | .[]' "$OUTDIR/B1_workspaces.json" 2>/dev/null))
 E_EDP=$(jq -r '[.[] | select((.id==9 or .id==1) and .windows==0) | .id] | sort_by(-.) | first // empty' "$OUTDIR/B1_workspaces.json" 2>/dev/null)
 E1=${E_HDMI[0]:-}; E2=${E_HDMI[1]:-}; ESPAWN=${E_HDMI[2]:-}; ET3A=${E_HDMI[3]:-}; ET3B=${E_HDMI[4]:-}
+E9=$E_EDP   # empty eDP ws for F8 (same-monitor window-focus check)
 log "[DYN] empty HDMI ws pool: ${E_HDMI[*]:-none}; empty eDP ws: ${E_EDP:-none}"
 log "       targets: E1=${E1:-?} E2=${E2:-?} spawn=$ESPAWN T3a=$ET3A T3b=$ET3B"
 log ""
 
 # --- Phase F: plain focus() semantics (expected UNCHANGED by the fix) --------
 log "=== Phase F: plain focus({workspace=N}) semantics ==="
-notify_phase "F: focus semantics (7 checks)"
+notify_phase "F: focus semantics (8 checks)"
 
 if [ -n "$E1" ]; then
   cursor_to eDP-1
@@ -550,6 +553,22 @@ if [ -n "$ESPAWN" ]; then
   close_spawned "$KPG"
 else
   skip_case F7 "window-focus on NON-EMPTY spawned HDMI ws" "not enough empty HDMI ws"
+fi
+
+# F8: generalized user complaint — after ANY workspace switch, if the target
+# ws has a running app, keyboard focus must be on one of ITS apps. Same-
+# monitor non-empty -> non-empty switch (ws1 with the runner terminal active
+# -> ws$E9 with the spawned kitty): the kitty must receive focus, not the
+# scratchpad that had it before the switch
+if [ -n "$E9" ]; then
+  spawn_on_ws "$E9"
+  KPG="$WSTEST_PGID"
+  prep eDP-1 1               # switch back: ws1 active, runner terminal focused
+  focus_ws "$E9"             # the switch under test
+  check F8 "focus NON-EMPTY ws$E9 (eDP, same mon): target app receives focus" "spawn kitty@ws$E9; focus ws1 (runner active); focus ws$E9" "$E9" eDP-1 "class:WSTEST" eDP-1
+  close_spawned "$KPG"
+else
+  skip_case F8 "window-focus on same-monitor non-empty ws" "no empty eDP ws"
 fi
 log ""
 

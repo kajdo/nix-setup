@@ -65,7 +65,7 @@ Observed bugs (all reproduced & root-caused, see `ANALYSIS-baseline.md`):
 
 | File | Purpose |
 |---|---|
-| `ws_test.sh` | The suite (53 checks, phases B/F/C/T1/T2/T3 + waybar replay) |
+| `ws_test.sh` | The suite (54 checks, phases B/F/C/T1/T2/T3 + waybar replay) |
 | `test_waybar_replay.sh` | Unit test for the waybar replay logic (fixtures only) |
 | `EXPECTED.md.spec-source` | Original working spec (historical reference) |
 | `ANALYSIS-baseline.md` | Fresh-boot baseline results + implementation proposal |
@@ -77,7 +77,7 @@ Observed bugs (all reproduced & root-caused, see `ANALYSIS-baseline.md`):
 2. Open the tmux-scratchpad kitty, start the agent, run:
    `tests/hypr-workspaces/ws_test.sh`
 3. **Hands off mouse/keyboard** for the ~4 min runtime — progress is announced
-   via `notify-send`: phase changes, `[step/53 · elapsed] id — N remaining`
+   via `notify-send`: phase changes, `[step/54 · elapsed] id — N remaining`
    for every check, and a final `✔ DONE` summary
 4. **At most one run per boot** — pre-fix cases create ws10, which would
    false-fail the `max-ws ≤ 9` invariant on a second run
@@ -110,7 +110,7 @@ Mode is auto-detected: pre-fix (bind dispatchers) vs post-fix (global
 
 ## Checks & acceptance
 
-53 checks: B1 boot snapshot, F1–F7 focus semantics, C1–C6 cycle path,
+54 checks: B1 boot snapshot, F1–F8 focus semantics, C1–C6 cycle path,
 T1×18 wrap table, T2×18 alt+1..9 from both cursor positions, T3a/b alt+T
 spawn placement. Every check also asserts the **waybar invariant**
 (exactly one `.active` button == expected ws, via event-stream replay of
