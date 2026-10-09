@@ -11,3 +11,8 @@ results/BASELINE_BOOT3/*
 results/BASELINE_BOOT7/*
 !results/BASELINE_BOOT7/report.md
 !results/BASELINE_BOOT7/events.log
+!results/BEFORE_BOOT10/
+results/BEFORE_BOOT10/*
+!results/BEFORE_BOOT10/report.md
+!results/BEFORE_BOOT10/events.log
+!results/BEFORE_BOOT10/run.log

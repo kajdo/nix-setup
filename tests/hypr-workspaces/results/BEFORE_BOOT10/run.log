@@ -1,0 +1,229 @@
+=== workspace semantics test — modes: C/T1=legacy, T2=legacy ===
+results dir: /home/kajdo/git/nix-setup/tests/hypr-workspaces/results/run_20261009_235803
+
+[GUARD] 1 pre-existing window(s) protected from killing
+[BOOT] start state recorded for restore: ws1@eDP-1
+[INFO] waybar event capture started (pid 4745)
+[BOOT] B1: cursor=(-960, 540 -> on eDP-1), focused monitor: eDP-1
+       workspaces present: 10 (persistent: 9), occupied ws: 1
+[FAIL] B1a: expected 9 persistent workspaces, found 10 (9 persistent)
+[PASS] B1b: ws->monitor bindings correct (1,9->eDP-1; 2-8->HDMI-A-2)
+
+[DYN] empty HDMI ws pool: 2 3 4 5 6 7 8; empty eDP ws: 9
+       targets: E1=2 E2=3 spawn=4 T3a=5 T3b=6 T4a=7 F8/T4b(eDP)=9
+
+=== Phase F: plain focus({workspace=N}) semantics ===
+[FAIL] F1 | focus EMPTY ws2 (HDMI) with cursor on eDP-1
+         action: cursor->eDP-1; focus ws2
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 2); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay]
+[FAIL] F2 | focus EMPTY ws3 (same mon) — user's failing case
+         action: (continue from F1); focus ws3
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 3); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay]
+[PASS] F3 | focus EMPTY ws3, cursor on HDMI-A-2 (control)
+         action: prep(HDMI-A-2, ws2); focus ws3
+         actual: ws=3@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=3]: single .active
+[FAIL] F4 | focus EMPTY ws9 (eDP), cursor on HDMI-A-2
+         action: prep(HDMI-A-2, ws2); focus ws9
+         actual: ws=2@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=2]: single .active  =>  active-ws=2@HDMI-A-2 (want 9); focused-mon='HDMI-A-2' (want eDP-1);
+[PASS] F5 | focus NON-EMPTY ws1 (eDP), cursor on HDMI-A-2
+         action: prep(HDMI-A-2, ws2); focus ws1
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@HDMI-A-2 waybar[A=1]: single .active  =>  [win-check skipped: runner overlay]
+[INFO] spawned test kitty (pgid 5176) on ws4
+[PASS] F6 | focus NON-EMPTY ws4 (HDMI), cursor on eDP-1
+         action: spawn kitty@ws4; prep(eDP-1, ws2); focus ws4
+         actual: ws=4@HDMI-A-2 focused=HDMI-A-2 win='bash' (WSTEST) cursor@eDP-1 waybar[A=4]: single .active
+[KILL] WSTEST pgid 5176 closed cleanly (group kill)
+[FAIL] F7 | focus NON-EMPTY ws4 (HDMI): target window receives focus
+         action: spawn kitty@ws4; prep(eDP-1, ws2); focus ws4
+         actual: ws=4@HDMI-A-2 focused=HDMI-A-2 win='bash' (WSTEST) cursor@eDP-1 waybar[A=4]: single .active  =>  cursor-on='eDP-1' (want HDMI-A-2);
+[KILL] WSTEST pgid 5430 closed cleanly (group kill)
+[PASS] F8 | focus NON-EMPTY ws9 (eDP, same mon): target app receives focus
+         action: spawn kitty@ws9; focus ws1 (runner active); focus ws9
+         actual: ws=9@eDP-1 focused=eDP-1 win='bash' (WSTEST) cursor@eDP-1 waybar[A=9]: single .active
+[KILL] WSTEST pgid 5664 closed cleanly (group kill)
+
+=== Phase C: cycle semantics (mode: legacy) ===
+[PASS] C1 | cycle +1 from ws2 (same monitor)
+         action: prep(HDMI-A-2, ws2); cycle(+1)
+         actual: ws=3@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=3]: single .active
+[FAIL] C2 | cycle +1 from ws8 (boundary, crosses to eDP)
+         action: prep(HDMI-A-2, ws8); cycle(+1)
+         actual: ws=8@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=8]: single .active  =>  active-ws=8@HDMI-A-2 (want 9); focused-mon='HDMI-A-2' (want eDP-1); cursor-on='HDMI-A-2' (want eDP-1);
+[FAIL] C3 | cycle +1 from ws9 (wrap 9->1)
+         action: prep(eDP-1, ws9); cycle(+1)
+         actual: ws=10@eDP-1 focused=eDP-1 win='NONE' (NONE) cursor@eDP-1 waybar[A=10]: single .active  =>  active-ws=10@eDP-1 (want 1); active-win=NONE (want a window, ws1 has 1); max-ws-id=10 (ws>9 created!);
+[FAIL] C4 | cycle -1 from ws1 (wrap 1->9)
+         action: prep(eDP-1, ws1); cycle(-1)
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 9); [win-check skipped: runner overlay]
+[FAIL] C5 | cycle +1 from ws1 (crosses to HDMI)
+         action: prep(eDP-1, ws1); cycle(+1)
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 2); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[INFO] C6 pre-state: ws=1@eDP-1, focused=eDP-1, win='tmux'
+[FAIL] C6 | cycle +1 from unstable 'on ws2, cursor eDP-1' state
+         action: cursor->eDP-1; focus ws2 (unstable); r+1
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 3); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+
+=== Phase T1: TEST 1 wraparound table (mode: legacy) ===
+[FAIL] T1U1 | TEST1: alt+u from ws1 -> ws9
+         action: prep(eDP-1, ws1); alt+u
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 9); [win-check skipped: runner overlay]
+[FAIL] T1I1 | TEST1: alt+i from ws1 -> ws2
+         action: prep(eDP-1, ws1); alt+i
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 2); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T1U2 | TEST1: alt+u from ws2 -> ws1
+         action: prep(HDMI-A-2, ws2); alt+u
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@HDMI-A-2 waybar[A=1]: single .active  =>  [win-check skipped: runner overlay] cursor-on='HDMI-A-2' (want eDP-1);
+[PASS] T1I2 | TEST1: alt+i from ws2 -> ws3
+         action: prep(HDMI-A-2, ws2); alt+i
+         actual: ws=3@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=3]: single .active
+[PASS] T1U3 | TEST1: alt+u from ws3 -> ws2
+         action: prep(HDMI-A-2, ws3); alt+u
+         actual: ws=2@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=2]: single .active
+[PASS] T1I3 | TEST1: alt+i from ws3 -> ws4
+         action: prep(HDMI-A-2, ws3); alt+i
+         actual: ws=4@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=4]: single .active
+[PASS] T1U4 | TEST1: alt+u from ws4 -> ws3
+         action: prep(HDMI-A-2, ws4); alt+u
+         actual: ws=3@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=3]: single .active
+[PASS] T1I4 | TEST1: alt+i from ws4 -> ws5
+         action: prep(HDMI-A-2, ws4); alt+i
+         actual: ws=5@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=5]: single .active
+[PASS] T1U5 | TEST1: alt+u from ws5 -> ws4
+         action: prep(HDMI-A-2, ws5); alt+u
+         actual: ws=4@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=4]: single .active
+[PASS] T1I5 | TEST1: alt+i from ws5 -> ws6
+         action: prep(HDMI-A-2, ws5); alt+i
+         actual: ws=6@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=6]: single .active
+[PASS] T1U6 | TEST1: alt+u from ws6 -> ws5
+         action: prep(HDMI-A-2, ws6); alt+u
+         actual: ws=5@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=5]: single .active
+[PASS] T1I6 | TEST1: alt+i from ws6 -> ws7
+         action: prep(HDMI-A-2, ws6); alt+i
+         actual: ws=7@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=7]: single .active
+[PASS] T1U7 | TEST1: alt+u from ws7 -> ws6
+         action: prep(HDMI-A-2, ws7); alt+u
+         actual: ws=6@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=6]: single .active
+[PASS] T1I7 | TEST1: alt+i from ws7 -> ws8
+         action: prep(HDMI-A-2, ws7); alt+i
+         actual: ws=8@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=8]: single .active
+[PASS] T1U8 | TEST1: alt+u from ws8 -> ws7
+         action: prep(HDMI-A-2, ws8); alt+u
+         actual: ws=7@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=7]: single .active
+[FAIL] T1I8 | TEST1: alt+i from ws8 -> ws9
+         action: prep(HDMI-A-2, ws8); alt+i
+         actual: ws=8@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=8]: single .active  =>  active-ws=8@HDMI-A-2 (want 9); focused-mon='HDMI-A-2' (want eDP-1); cursor-on='HDMI-A-2' (want eDP-1);
+[FAIL] T1U9 | TEST1: alt+u from ws9 -> ws8
+         action: prep(eDP-1, ws9); alt+u
+         actual: ws=9@eDP-1 focused=eDP-1 win='NONE' (NONE) cursor@eDP-1 waybar[A=9]: single .active  =>  active-ws=9@eDP-1 (want 8); focused-mon='eDP-1' (want HDMI-A-2); cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T1I9 | TEST1: alt+i from ws9 -> ws1
+         action: prep(eDP-1, ws9); alt+i
+         actual: ws=10@eDP-1 focused=eDP-1 win='NONE' (NONE) cursor@eDP-1 waybar[A=10]: single .active  =>  active-ws=10@eDP-1 (want 1); active-win=NONE (want a window, ws1 has 1); max-ws-id=10 (ws>9 created!);
+
+=== Phase T2: TEST 2 direct switches (mode: legacy) ===
+[PASS] T2_eDP-1_1 | TEST2: alt+1 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+1
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  [win-check skipped: runner overlay]
+[FAIL] T2_eDP-1_2 | TEST2: alt+2 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+2
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 2); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_3 | TEST2: alt+3 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+3
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 3); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_4 | TEST2: alt+4 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+4
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 4); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_5 | TEST2: alt+5 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+5
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 5); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_6 | TEST2: alt+6 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+6
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 6); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_7 | TEST2: alt+7 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+7
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 7); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[FAIL] T2_eDP-1_8 | TEST2: alt+8 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+8
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 8); focused-mon='eDP-1' (want HDMI-A-2); [win-check skipped: runner overlay] cursor-on='eDP-1' (want HDMI-A-2);
+[PASS] T2_eDP-1_9 | TEST2: alt+9 from ws2, cursor@eDP-1
+         action: prep(eDP-1, ws2); alt+9
+         actual: ws=9@eDP-1 focused=eDP-1 win='NONE' (NONE) cursor@eDP-1 waybar[A=9]: single .active
+[FAIL] T2_HDMI-A-2_1 | TEST2: alt+1 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+1
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@HDMI-A-2 waybar[A=1]: single .active  =>  [win-check skipped: runner overlay] cursor-on='HDMI-A-2' (want eDP-1);
+[PASS] T2_HDMI-A-2_2 | TEST2: alt+2 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+2
+         actual: ws=2@HDMI-A-2 focused=HDMI-A-2 win='tmux' (KittyScratchpad) cursor@HDMI-A-2 waybar[A=2]: single .active  =>  [win-check skipped: runner overlay]
+[PASS] T2_HDMI-A-2_3 | TEST2: alt+3 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+3
+         actual: ws=3@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=3]: single .active
+[PASS] T2_HDMI-A-2_4 | TEST2: alt+4 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+4
+         actual: ws=4@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=4]: single .active
+[PASS] T2_HDMI-A-2_5 | TEST2: alt+5 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+5
+         actual: ws=5@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=5]: single .active
+[PASS] T2_HDMI-A-2_6 | TEST2: alt+6 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+6
+         actual: ws=6@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=6]: single .active
+[PASS] T2_HDMI-A-2_7 | TEST2: alt+7 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+7
+         actual: ws=7@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=7]: single .active
+[PASS] T2_HDMI-A-2_8 | TEST2: alt+8 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+8
+         actual: ws=8@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=8]: single .active
+[FAIL] T2_HDMI-A-2_9 | TEST2: alt+9 from ws2, cursor@HDMI-A-2
+         action: prep(HDMI-A-2, ws2); alt+9
+         actual: ws=2@HDMI-A-2 focused=HDMI-A-2 win='NONE' (NONE) cursor@HDMI-A-2 waybar[A=2]: single .active  =>  active-ws=2@HDMI-A-2 (want 9); focused-mon='HDMI-A-2' (want eDP-1); cursor-on='HDMI-A-2' (want eDP-1);
+
+=== Phase T3: TEST 3 alt+T on focused ws ===
+[FAIL] T3a | TEST3: alt+T after switch to never-used ws5
+         actual: win='WSTEST' on ws9, active-ws=9, focused=eDP-1, waybar[A=9]: single .active  =>  win-ws=9 (want 5); active-ws=9 (want 5); focused=eDP-1 (want HDMI-A-2);
+[KILL] WSTEST pgid 5176 already closed
+[KILL] WSTEST pgid 5430 already closed
+[KILL] WSTEST pgid 5664 already closed
+[KILL] WSTEST pgid 9270 closed cleanly (group kill)
+[KILL] WSTEST pgid 9511 closed cleanly (group kill)
+[FAIL] T3b | TEST3: alt+T after switch to ws6 (had an app before)
+         actual: win='WSTEST' on ws9, active-ws=9, focused=eDP-1, waybar[A=9]: single .active  =>  win-ws=9 (want 6); active-ws=9 (want 6); focused=eDP-1 (want HDMI-A-2);
+[KILL] WSTEST pgid 5176 already closed
+[KILL] WSTEST pgid 5430 already closed
+[KILL] WSTEST pgid 5664 already closed
+[KILL] WSTEST pgid 9270 already closed
+[KILL] WSTEST pgid 9511 already closed
+[KILL] WSTEST pgid 9659 closed cleanly (group kill)
+
+=== Phase T4: TEST 4 app focus after bind-path switch ===
+[FAIL] T4a | alt+N to NON-EMPTY ws7: its app receives focus
+         action: spawn kitty@ws7; prep(eDP-1, ws1, scratchpad active); goto ws7 (bind path)
+         actual: ws=7@HDMI-A-2 focused=HDMI-A-2 win='bash' (WSTEST) cursor@eDP-1 waybar[A=7]: single .active  =>  cursor-on='eDP-1' (want HDMI-A-2);
+[KILL] WSTEST pgid 5176 already closed
+[KILL] WSTEST pgid 5430 already closed
+[KILL] WSTEST pgid 5664 already closed
+[KILL] WSTEST pgid 9270 already closed
+[KILL] WSTEST pgid 9511 already closed
+[KILL] WSTEST pgid 9659 already closed
+[KILL] WSTEST pgid 9919 closed cleanly (group kill)
+[FAIL] T4b | alt+u wrap 1->ws9: its app receives focus
+         action: spawn kitty@ws9; prep(eDP-1, ws1, scratchpad active); cycle(-1) (bind path)
+         actual: ws=1@eDP-1 focused=eDP-1 win='tmux' (KittyScratchpad) cursor@eDP-1 waybar[A=1]: single .active  =>  active-ws=1@eDP-1 (want 9); active-win-class='KittyScratchpad' (want WSTEST);
+[KILL] WSTEST pgid 5176 already closed
+[KILL] WSTEST pgid 5430 already closed
+[KILL] WSTEST pgid 5664 already closed
+[KILL] WSTEST pgid 9270 already closed
+[KILL] WSTEST pgid 9511 already closed
+[KILL] WSTEST pgid 9659 already closed
+[KILL] WSTEST pgid 9919 already closed
+[KILL] WSTEST pgid 10183 closed cleanly (group kill)
+
+[KILL] WSTEST pgid 5176 already closed
+[KILL] WSTEST pgid 5430 already closed
+[KILL] WSTEST pgid 5664 already closed
+[KILL] WSTEST pgid 9270 already closed
+[KILL] WSTEST pgid 9511 already closed
+[KILL] WSTEST pgid 9659 already closed
+[KILL] WSTEST pgid 9919 already closed
+[KILL] WSTEST pgid 10183 already closed
+=== cleanup done: zero WSTEST remnants (windows + processes), start state restored: ws1 focused, cursor on eDP-1 ===
+
+=== SUMMARY: PASS=27 FAIL=29 SKIP=0 (modes: C/T1=legacy, T2=legacy) ===
+report: /home/kajdo/git/nix-setup/tests/hypr-workspaces/results/run_20261009_235803/report.md
