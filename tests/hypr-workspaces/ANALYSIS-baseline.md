@@ -1,6 +1,12 @@
 # Baseline Analysis & Implementation Proposal — Workspace Switching
 
 **Run:** `results/BASELINE_BOOT1` (fresh boot 2026-02-05, run once, hands-off)
+> **SUPERSEDED — official baseline is now `results/BASELINE_BOOT2`** (fresh boot,
+> corrected script: spawn-path fix + overlay-aware win-check + B1 label).
+> Same failure map, cleaner numbers: **PASS=27 FAIL=25 SKIP=0, 25/25 genuine**
+> (BOOT1's extra 2 FAILs were runner artifacts: F6 spawn-in-subshell,
+> T2_HDMI-2_2 scratchpad overlay — both eliminated). Every finding below
+> reproduces unchanged in BOOT2; per-case verdicts see `results/BASELINE_BOOT2/report.md`.
 **Result:** **PASS=24 FAIL=28 SKIP=0** (52 checks; 1 of the 28 FAILs is a
 runner-overlay artifact → **27 genuine failures**)
 **Config under test:** `nixos/home-manager/config/hypr/hyprland.lua` @ current `main`

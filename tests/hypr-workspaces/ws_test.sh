@@ -219,7 +219,7 @@ safe_kill() { # safe_kill <address> : kill a WSTEST window BY ITS RECORDED PID, 
 }
 
 spawn_on_ws() { # spawn_on_ws <ws> : focus ws, spawn WSTEST kitty; sets WSTEST_ADDR
-  focus_ws "$ws"
+  focus_ws "$1"
   sleep 0.3
   wstest_spawn
 }
