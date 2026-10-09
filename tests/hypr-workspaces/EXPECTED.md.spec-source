@@ -1,0 +1,248 @@
+# Hyprland Workspace Semantics — Specification & Test Plan
+
+**Purpose:** get a provable, before/after picture of the workspace-cycling behavior
+(dwm-style: fixed set of 9 workspaces, global arithmetic cycling, wraparound 9↔1)
+before touching any configuration. This document defines the *desired* end state,
+the test matrix, and the *predicted* current behavior (from live diagnostics on
+2026-02-05, Hyprland 0.56.2, Waybar 0.15.0). Predictions are confirmed or refuted
+by the first test run after a fresh reboot.
+
+---
+
+## 1. System under test
+
+| Item | Value |
+|---|---|
+| Hyprland | 0.56.2 (Lua config) |
+| Waybar | 0.15.0, `active-only: false`, `all-outputs: true` |
+| Monitors | `eDP-1` @ -1920x0 (1920x1080), `HDMI-A-2` @ 0x0 (1920x1080) |
+| Workspace rules | ws1 → eDP-1, ws2–8 → HDMI-A-2, ws9 → eDP-1 — all `persistent = true` |
+| Input config | `follow_mouse = 1`, `cursor:no_warps = true` |
+| Current cycle binds | `ALT+I` / `$mainMod+I` / `$mainMod+scroll_down` → `focus({workspace="r+1"})`, `…U…/scroll_up` → `r-1` |
+| Current direct-switch binds | for-loop (config line 423): `mainMod/ALT + key` → plain `focus({workspace=i})` for `i = 1..10`, key `0` → **ws10** (to be dropped — decision 2026-02-05: ws10 is example-config convention, not compositor-special) |
+| Current move-window binds | for-loop (config line 447): `mainMod/ALT + SHIFT + key` → `window.move({workspace=i, follow=true})`, `i = 1..10` (out of TEST 1–3 scope; flagged follow-up: `follow=true` exposes the same empty-ws theft) |
+| Cross-monitor focus bind | `ALT+,` → `focus monitor +1` (untouched by this effort) |
+
+## 2. Terminology (important for reading Waybar correctly)
+
+- **Active workspace (per monitor):** every monitor *always* has exactly one active
+  workspace — that is Hyprland's model; with 2 monitors there are always 2 active
+  workspaces. This is *inherent* and not a bug. Waybar shows the active workspace
+  highlighted on that monitor's bar.
+- **Focused workspace/monitor (global):** exactly one monitor holds keyboard focus;
+  its active workspace is "the focused workspace". **The invariant we want: never
+  more than one focused workspace, and it is always the one you just cycled to.**
+- **Active window:** the window receiving keyboard input; `NONE` when the focused
+  workspace is empty.
+
+> The currently observed bug ("waybar shows multiple workspaces active") is the
+> combination of (a) two actives being normal, and (b) **focus theft**: focus
+> landing on a workspace/window you did not choose, so *both* monitors' bars
+> appear equally highlighted. The fix target is (b).
+
+## 3. Desired semantics (target spec)
+
+| ID | Requirement |
+|---|---|
+| S1 | All 9 workspaces exist at boot, persistent, on their bound monitors → Waybar shows 1–9 on both bars immediately after login. |
+| S2 | `alt+i` / `alt+u` cycle as **global arithmetic** over the fixed set 1–9: from ws2 `alt+i` → ws3, from ws9 `alt+i` → **ws1** (wrap), from ws1 `alt+u` → **ws9** (wrap). |
+| S3 | A workspace id > 9 is **never created** by cycling; the key-0 → ws10 binds are removed; the workspace set is exactly {1…9}. |
+| S4 | After any cycle: target ws is active on **its** monitor AND the focused monitor is that monitor (keyboard focus follows the workspace, dwl/dwm multi-screen semantics). |
+| S5 | If the target ws is empty → active window is `NONE` but focus stays anchored on the target monitor (no theft to the cursor's monitor). If non-empty → its last-focused window becomes active. |
+| S6 | Cursor **warps to the target monitor** when (and only when) cycling crosses monitors (user decision: dwm-style warp). |
+| S7 | All of the above independent of where the cursor happens to be (same monitor / other monitor / never moved since boot). |
+
+## 4. Root causes identified — **measured** on the live session 2026-02-05 (dry runs in `results/DRYRUN_*`, to be re-confirmed by the fresh-boot baseline)
+
+1. **`r+1`/`r-1` has no wraparound**: from ws9 `r+1` **creates ws10** (measured: C3 → ws10); from ws1 `r-1` is a **no-op** (measured: C4). Neither matches dwm's 9→1 / 1→9.
+2. **Focus follows the target only if it has a window (empty-workspace focus theft)**:
+   switching to an *empty* ws switches the per-monitor active workspace correctly (measured in F4: eDP's active ws became 9), but keyboard focus does **not** follow — `follow_mouse=1` re-picks the window under the cursor, which lives on the *other* monitor (measured F1/F2/F4/C2/C6: focused monitor stays with the cursor's monitor; the target ws shows active on its monitor — the "multiple active in waybar" state). With `no_warps=true` binds never move the cursor → after fresh reboot (cursor parked on eDP-1) cycling to any empty ws lands keyboard focus on ws1. Non-empty targets hold focus correctly (measured F5/F6).
+3. **The old init script is fully dead on 0.56**: `hyprctl dispatch workspace N` now errors (`lua dispatch` syntax change — verified) — every line of `hypr_init` fails silently. It also could never fix (2): cycling creates workspaces but leaves them empty. Workspace *existence* is guaranteed by persistent workspace rules (measured B1a: 9/9 persistent on correct monitors).
+4. **Corollary**: the legacy `r+1` arithmetic itself is global (C2: from ws8 it even switched eDP to ws9) — the visible "jump to ws1" when pressing alt+i is purely the focus theft from (2), not workspace arithmetic.
+5. **Direct-switch binds suffer the same theft**: the `alt/mainMod + 1..9` binds (loop-generated at config line 423 — hence easy to miss in static greps) use plain `focus({workspace=i})`, so switching to an *empty* ws while the cursor is elsewhere steals focus identically (TEST 2 currently unsatisfied). They also bind key 0 → ws10, violating S3.
+6. **TEST 3 works only when the switch actually anchored focus**: `ALT+T` (exec kitty) opens on the *focused* workspace — if the preceding switch was stolen (5), kitty lands on the wrong ws (the "open on ws2 and move it over" workaround pain).
+
+## 5. Test matrix
+
+Phases:
+- **B** — boot snapshot (must run before *any* interaction after login)
+- **F** — plain `focus({workspace=N})` semantics (documents the layer *under* the
+  binds; these are expected to be **unchanged** by the fix — verdicts here are
+  informational targets, the fix deliberately only changes the *cycle* path)
+- **C** — cycle semantics via the bind's exact code path (pre-fix: `r+1`/`r-1`
+  dispatcher; post-fix: `hyprctl eval 'cycle_workspace(±1)'` — detected
+  automatically by the script)
+
+Setup notation: `prep(cursor→M, ws=N)` = move cursor to center of monitor M,
+focus ws N. "Predicted (pre-fix)" column = expectation for the **baseline** run.
+
+| Case | Setup | Action | Expected (target spec) | Measured pre-fix (dry run 210538; fresh-boot baseline pending) |
+|---|---|---|---|---|
+| B1 | none (first!) | snapshot only | S1: 9 ws, persistent, correct monitors; record boot cursor pos + focused monitor | PASS (9/9 persistent, bindings ok) |
+| F1 | cursor→eDP-1 | `focus ws2` (empty) | ws2 active on HDMI, focused=HDMI, win=NONE | **FAIL**: focus steals to ws1/eDP (empty-ws theft) |
+| F2 | (continue F1) | `focus ws3` (empty) | ws3 active on HDMI, focused=HDMI, win=NONE | **FAIL**: HDMI shows ws3 active, but focused stays ws1/eDP; cursor gets warped to HDMI (cross-branch warp) |
+| F3 | cursor→HDMI, ws2 | `focus ws3` (empty) | same as F2 | PASS (cursor on target monitor) |
+| F4 | cursor→HDMI, ws2 | `focus ws9` (empty, eDP) | ws9 active on eDP, focused=eDP, win=NONE | **FAIL**: eDP's active ws → 9, but focused monitor stays HDMI/ws2 (theft) |
+| F5 | cursor→HDMI, ws2 | `focus ws1` (non-empty, eDP) | ws1 active on eDP, focused=eDP, win=any (last window) | PASS (cursor stays on HDMI — no warp, informational) |
+| F6 | spawn kitty on ws5, cursor→eDP-1, ws2 | `focus ws5` (non-empty) | ws5 active on HDMI, focused=HDMI, win=kitty | PASS (non-empty target holds focus) |
+| C1 | prep(cursor→HDMI, ws2) | cycle +1 | ws3/HDMI focused, cursor stays HDMI | PASS |
+| C2 | prep(cursor→HDMI, ws8) | cycle +1 | ws9/eDP focused, cursor warps to eDP (wrap boundary, cross-monitor) | **FAIL**: eDP switches to ws9 but focus stays ws8/HDMI (empty-ws theft), no warp |
+| C3 | prep(cursor→eDP, ws9) | cycle +1 | ws1/eDP focused (wrap 9→1) | **FAIL**: **ws10 created** (no wrap) |
+| C4 | prep(cursor→eDP, ws1) | cycle −1 | ws9/eDP focused (wrap 1→9) | **FAIL**: no-op (stays ws1; no wrap) |
+| C5 | prep(cursor→eDP, ws1) | cycle +1 | ws2/HDMI focused, cursor warps to HDMI | **FAIL**: ws switch works (focus follows only because ws2 had a window in dry run), no cursor warp |
+| C6 | cursor→eDP, focus ws2 (empty), *no stabilization possible* | cycle +1 | ws3/HDMI focused, anchored (user's workflow) | **FAIL**: focus already stolen to ws1; cycle lands keyboard on ws1 |
+| V (invariant) | after every action | — | exactly 1 focused monitor; all ws ids ≤ 9 | violated by C3 (ws10) |
+
+## 5b. User acceptance tests (binding — the fix must satisfy these in full)
+
+These are executed by the script phases T1/T2/T3, in both modes: pre-fix
+baseline (current binds, documents reality) and post-fix (global
+`cycle_workspace`/`goto_workspace` via `hyprctl eval`). They must hold
+**regardless of monitor, cursor position, and whether the workspace ever had a
+window**, including directly after a fresh reboot.
+
+### TEST 1 — cycle wraparound table (phase T1, 18 checks)
+
+| Active | ALT+U → | ALT+I → |
+|---|---|---|
+| 1 | 9 | 2 |
+| 2 | 1 | 3 |
+| 3 | 2 | 4 |
+| 4 | 3 | 5 |
+| 5 | 4 | 6 |
+| 6 | 5 | 7 |
+| 7 | 6 | 8 |
+| 8 | 7 | 9 |
+| 9 | 8 | **1** (corrected typo, confirmed 2026-02-05) |
+
+Each row also asserts: target ws active on its monitor, focused monitor = that
+monitor, cursor warped there when crossing monitors, window expectation auto
+(NONE if empty / focused window if occupied), no ws>9.
+
+### TEST 2 — direct switch (phase T2, 18 checks)
+
+`ALT+Number[1..9]` from **wherever** (cursor on eDP-1 and on HDMI-A-2, from
+ws2) → lands on `ws[Number]` with full anchor semantics as above.
+
+### TEST 3 — spawn on target workspace (phase T3, 2 checks)
+
+After a switch per TEST 2, `ALT+T` opens kitty on **that** workspace (verified
+for a never-used ws **and** a ws that previously had a window closed).
+
+### Fix-design implication
+
+Both bind families must route through the anchored helper:
+
+```lua
+function goto_workspace(n)   -- global, IPC-testable via hyprctl eval
+  local ws = hl.get_workspace(n)
+  local mon = ws and ws.monitor
+  if mon and hl.get_monitor_at_cursor().name ~= mon.name then
+    hl.dispatch(hl.dsp.cursor.move({ x = mon.x + mon.width / 2, y = mon.y + mon.height / 2 }))
+  end
+  hl.dispatch(hl.dsp.focus({ workspace = n }))
+end
+function cycle_workspace(delta)  -- global
+  goto_workspace(((hl.get_active_workspace().id - 1 + delta) % 9) + 1)
+end
+```
+
+- number binds: `for i = 1, 9` → `goto_workspace(i)` (key 0 dropped)
+- cycle binds: `cycle_workspace(±1)`
+- plain `focus` dispatcher itself stays untouched (waybar-click path unchanged;
+  its semantics remain documented by phase F)
+
+## 6b. Waybar highlight coverage (the "never two active" rule)
+
+**Semantics (verified against waybar v0.15.0 source, `src/modules/hyprland/{workspaces,workspace}.cpp`):**
+
+- The `hyprland/workspaces` module sets button class **`.active`** if
+  `ws.id == m_activeWorkspaceId` **OR** `ws.name == activeworkspace.name`.
+- There is **no `.focused` class** in this module — the `.focused` selector in
+  `style.css` is dead code (only `.active` ever highlights a button).
+- `m_activeWorkspaceId` is set to `activeworkspace.id` at startup, afterwards
+  only by events:
+  - `focusedmonv2>>MON,WSID` (Hyprland emits it **only when the focused monitor
+    changes**, `FocusState.cpp:rawMonitorFocus`), and
+  - `workspacev2>>…` handlers, which re-query `activeworkspace` live.
+
+**The user's "2 workspaces highlighted" bug:** when the event-fed
+`m_activeWorkspaceId` is **stale** (e.g. `focusedmonv2` fired mid-switch with
+the target ws while keyboard focus then fell back — the focus-theft dance of
+§4), one button matches by *id* and another by *name* → **two `.active`
+buttons**, persisting until the next workspace event. On a clean switch
+(focus lands on the target monitor) both conditions coincide → single
+highlight.
+
+**Test coverage:** `ws_test.sh` captures the socket2 event stream
+(`events.log`, markers `###SNAP <case>` per check) and **replays waybar's
+exact algorithm** (`waybar_replay()`; unit-tested in
+`test_waybar_replay.sh`). Every C/T1/T2/T3 check additionally asserts:
+
+- **W (waybar): exactly ONE `.active` button — the expected workspace.**
+  A stale-id double highlight fails the check with
+  `waybar: TWO .active buttons (wsA by stale event-id + wsN by activews-name)`.
+- The replay approximates waybar's live `activeworkspace` re-query on
+  `workspacev2` events with the case-final id (documented deviation; only
+  relevant mid-slice).
+
+## 7. How to run
+
+1. Reboot, log in. **Do not move the mouse.** Open a terminal with the keyboard
+   (window will land on the boot workspace — acceptable, documented deviation).
+2. Run: `~/hypr_ws_test/ws_test.sh`
+   - Creates `~/hypr_ws_test/results/run_<timestamp>/` with per-case JSON
+     snapshots + `report.md`, prints the verdict table to stdout.
+   - Leaves one kitty window on ws5 temporarily (killed automatically at the
+     end) and returns to ws2 with cursor at HDMI center.
+   - **Run at most once per boot**: the pre-fix wrap cases create ws10, which
+     would false-fail the `max_ws ≤ 9` invariant on a second in-session run.
+3. The baseline (pre-fix) run documents reality; after each fix iteration:
+   reboot → rerun → diff the reports. Success = all **C** and **V** verdicts
+   PASS (B keeps passing, F unchanged by design).
+
+## 8. Manual checklist (post-fix, human keypresses)
+
+- M1: fresh reboot, hands off mouse: `alt+i` walks 1→2→…→9→1 (wrap), pointer
+  follows whenever the target ws lives on the other monitor.
+- M2: `alt+u` walks backwards incl. 1→9 wrap.
+- M3: Waybar: all 9 visible on both bars; only one *focused* highlight; no ws10 ever.
+- M4: open an app on ws3, cycle away and back — focus correct both times.
+- M5: `alt+,` (focus monitor +1) still works as before.
+
+## 9. Runner-safety rules (v2 — PID-based, after live incidents 2026-02-05)
+
+The script is executed by the agent **from inside the very session it tests**
+(kitty + tmux), and the session may be DIRTY (user terminals, browser, …).
+Rules baked into `ws_test.sh`:
+
+1. Every window the script spawns runs as **`kitty --app-id WSTEST`** —
+   class `WSTEST` is unique to the script and can never collide with user
+   windows. pid+address are recorded **at spawn time**.
+2. Cleanup kills **exactly those recorded pids** (window-selector kill +
+   SIGTERM), then verifies per kill: window gone, pid dead, and **every
+   pre-existing window still present** — aborting on any anomaly.
+   Nothing is ever selected by "which kitties exist right now": addresses are
+   recycled by the compositor (observed live), kitty-count reasoning is
+   meaningless in dirty sessions.
+3. Only one WSTEST window exists at any time (each case cleans up before the
+   next); the spawner refuses to run otherwise.
+4. "Empty workspace" targets are detected at runtime from the boot snapshot,
+   never hardcoded — the runner's own terminal may sit on any ws.
+5. The script runs at most once per boot (pre-fix cases create ws10).
+6. `window.kill` API trap: it needs a window **selector**
+   (`{ window = "address:0x…" }`); `{ address = … }` is **silently ignored** and
+   kills the **focused window** (verified in source `hlWindowKill →
+   pushWindowUpval` and live — this killed the agent's own terminal once).
+7. Manual `hyprctl … kill` outside the script is forbidden.
+
+## 10. Acceptance criteria for the fix branch
+
+1. Baseline report exists and confirms/refutes the measurements in §5.
+2. After the fix: every C-case and the V invariant PASS across two consecutive
+   reboot+run cycles (cold + warm).
+3. F-phase behavior identical to baseline (fix must not alter plain `focus`).
+4. B1: cursor boot position + focused monitor recorded (context for S7).
+5. Implementation constraint: `cycle_workspace` **and** `goto_workspace` must
+   be **global** functions in `hyprland.lua` (not `local`) so the test script
+   can invoke the exact bind code paths via `hyprctl eval`.

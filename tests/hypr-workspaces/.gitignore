@@ -1,0 +1,5 @@
+results/*
+!results/BASELINE_BOOT1/
+results/BASELINE_BOOT1/*
+!results/BASELINE_BOOT1/report.md
+!results/BASELINE_BOOT1/events.log
