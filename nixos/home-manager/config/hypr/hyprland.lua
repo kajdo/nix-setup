@@ -53,9 +53,9 @@ end)
 
 local terminal = "kitty"
 local fileManager = "thunar"
-local menu = "wofi --show drun"
 -- for some reason the env=.... is not using path, but this way rofi gets the bash context
 local rofi_launch = [[bash -c 'PATH="$PATH:$HOME/.local/bin" ~/.local/bin/rofi_launch.sh']]
+local bookmarks = "~/git/bofi/bin/bofi"
 local change_wallpaper = "~/git/custom_scripts/hypr_helper/change_wallpaper_swww"
 local scratch_script = "~/.local/bin/scratch_kitty"
 local exit_command = "~/git/custom_scripts/hypr_helper/exit_wayland"
@@ -373,7 +373,8 @@ hl.bind("ALT + V", hl.dsp.window.float())
 
 -- Launchers -------------------------------------------------------------------
 
-hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd(menu))
+hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd(bookmarks))
+hl.bind("ALT + SHIFT + R", hl.dsp.exec_cmd(bookmarks))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(rofi_launch))
 hl.bind("ALT + R", hl.dsp.exec_cmd(rofi_launch))
 
