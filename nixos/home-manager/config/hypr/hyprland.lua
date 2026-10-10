@@ -417,37 +417,134 @@ hl.bind("ALT + SHIFT + L", hl.dsp.window.move({ direction = "r" }))
 hl.bind("ALT + SHIFT + K", hl.dsp.window.move({ direction = "u" }))
 hl.bind("ALT + SHIFT + J", hl.dsp.window.move({ direction = "d" }))
 
--- Switch workspaces -------------------------------------------------------------
--- with mainMod + [0-9] ...
+-- Switch workspaces (dwm-style) -------------------------------------------------
+-- Global helpers (NOT local: the test suite drives them via `hyprctl eval`
+-- and real binds) — see tests/hypr-workspaces/ (BASELINE_BOOT7).
 
-for i = 1, 10 do
-  local key = i % 10 -- 10 maps to key 0
-  hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
-  hl.bind("ALT + " .. key, hl.dsp.focus({ workspace = i })) -- to make it work on android (sunshine)
+-- S2+S5: switch to ws n and warp the cursor to the target monitor's center
+-- BEFORE focusing, so keyboard focus follows the workspace regardless of
+-- where the cursor currently is (fixes cross-monitor focus theft).
+function goto_workspace(n)
+  local ws  = hl.get_workspace(n)
+  local mon = ws and ws.monitor
+  if mon then
+    local at = hl.get_monitor_at_cursor()
+    if not at or at.name ~= mon.name then
+      hl.dispatch(hl.dsp.cursor.move({
+        x = mon.x + mon.width / 2,
+        y = mon.y + mon.height / 2,
+      }))
+    end
+  end
+  -- ws + monitor switch (CA::changeWorkspace: does NOT move keyboard focus)
+  hl.dispatch(hl.dsp.focus({ workspace = n }))
+  -- hand keyboard focus to the target ws's most-recently-focused window:
+  -- changeWorkspace alone leaves the previously-focused window focused (the
+  -- user-reported theft: alt+N switches ws but the old window keeps keyboard;
+  -- measured FAIL in AFTER-diagnostic T4a — scratchpad kept focus cross-mon)
+  local best, bestid = nil, math.huge
+  for _, w in ipairs(hl.get_windows()) do
+    if w.workspace and w.workspace.id == n and w.focus_history_id >= 0 and w.focus_history_id < bestid then
+      best, bestid = w, w.focus_history_id
+    end
+  end
+  if best then
+    hl.dispatch(hl.dsp.focus({ window = "address:" .. best.address }))
+  end
 end
 
-hl.bind(mainMod .. " + I", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind(mainMod .. " + U", hl.dsp.focus({ workspace = "r-1" }))
-hl.bind("ALT + I", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind("ALT + U", hl.dsp.focus({ workspace = "r-1" }))
+-- S4: global arithmetic cycling over the fixed set 1..9 with wraparound
+-- (9 -> +1 wraps to 1, 1 -> -1 wraps to 9). Never leaves the 1..9 range.
+function cycle_workspace(delta)
+  local aws = hl.get_active_workspace()
+  local id  = aws and aws.id or 1
+  goto_workspace(((id - 1 + delta) % 9) + 1)
+end
+
+-- S6: monitor monitor delta away from the focused one (nil if <2 monitors)
+function monitor_by_delta(delta)
+  local mons = hl.get_monitors()
+  if #mons < 2 then return nil end
+  local cur = hl.get_active_workspace().monitor
+  local ci  = 1
+  for i, m in ipairs(mons) do
+    if m.name == cur.name then ci = i end
+  end
+  return mons[((ci - 1 + delta) % #mons) + 1]
+end
+
+-- S6: jump to the other monitor's ACTIVE workspace (dwm focusmon semantics:
+-- the target monitor's own state decides — ws1 or ws9 on eDP, whichever it
+-- shows right now). Reuses the full goto discipline (warp + switch + focus
+-- last window). Plain focus({monitor="+1"}) left the pointer parked on the
+-- source monitor under a hovered window (no_warps guts its warpCursor),
+-- and follow_mouse re-asserted it as active: waybar flipped back, spawns
+-- landed on the OLD ws (split-brain).
+function goto_monitor(delta)
+  local target = monitor_by_delta(delta)
+  if target then goto_workspace(target.active_workspace.id) end
+end
+
+-- S6: "previous" workspace via Hyprland's own history tracker — same source
+-- as the old focus({workspace="previous"}). goto_workspace warps only when
+-- the previous ws lives on the OTHER monitor (same-display history = no
+-- cursor jump). Guard preserves old behavior: prev == current is a no-op.
+function goto_previous_workspace()
+  local prev = hl.get_last_workspace()
+  if prev and prev.id ~= hl.get_active_workspace().id then
+    goto_workspace(prev.id)
+  end
+end
+
+-- S6: send-and-follow monitor move. follow=true alone would split-brain
+-- (its warpCursor() is neutered by no_warps) — pre-warp the cursor to the
+-- target monitor first, then the follow path (move + view + focus) is
+-- coherent.
+function move_window_to_monitor(delta)
+  if not hl.get_active_window() then return end
+  local target = monitor_by_delta(delta)
+  if not target then return end
+  hl.dispatch(hl.dsp.cursor.move({
+    x = target.x + target.width / 2,
+    y = target.y + target.height / 2,
+  }))
+  hl.dispatch(hl.dsp.window.move({ monitor = target.name, follow = true }))
+end
+
+-- Direct switch with mainMod/ALT + [1-9] (key 0 -> ws10 dropped: the set is
+-- exactly 1..9, S3; old binds used plain focus() and suffered focus theft)
+
+for i = 1, 9 do
+  hl.bind(mainMod .. " + " .. i, function() goto_workspace(i) end)
+  hl.bind("ALT + " .. i, function() goto_workspace(i) end) -- to make it work on android (sunshine)
+end
+
+-- Arithmetic cycling with mainMod/ALT + I/U (old: r+1/r-1 — no wraparound:
+-- +1 from ws9 created ws10, -1 from ws1 was a no-op)
+
+hl.bind(mainMod .. " + I", function() cycle_workspace(1) end)
+hl.bind(mainMod .. " + U", function() cycle_workspace(-1) end)
+hl.bind("ALT + I", function() cycle_workspace(1) end)
+hl.bind("ALT + U", function() cycle_workspace(-1) end)
 
 -- jumping between monitors
 
-hl.bind("ALT + comma", hl.dsp.focus({ monitor = "+1" }))
-hl.bind("ALT + SHIFT + comma", hl.dsp.window.move({ monitor = "+1" }))
+hl.bind("ALT + comma", function() goto_monitor(1) end)
+hl.bind("ALT + SHIFT + comma", function() move_window_to_monitor(1) end)
 
 -- (allow_workspace_cycles is set in the binds category above)
 
-hl.bind(mainMod .. " + Escape", hl.dsp.focus({ workspace = "previous" }))
-hl.bind("ALT + Escape", hl.dsp.focus({ workspace = "previous" }))
+hl.bind(mainMod .. " + Escape", function() goto_previous_workspace() end)
+hl.bind("ALT + Escape", function() goto_previous_workspace() end)
 
--- Move active window to a workspace with mainMod + SHIFT + [0-9] ----------------
--- (and the ALT + SHIFT variant)
+-- Move active window to a workspace with mainMod + SHIFT + [1-9] ----------------
+-- (and the ALT + SHIFT variant; key 0 dropped with the switch binds — S3:
+-- the workspace set is exactly 1..9. follow=true theft is a flagged
+-- follow-up, out of scope here)
 
-for i = 1, 10 do
-  local key = i % 10 -- 10 maps to key 0
-  hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i, follow = true }))
-  hl.bind("ALT + SHIFT + " .. key, hl.dsp.window.move({ workspace = i, follow = true }))
+for i = 1, 9 do
+  hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i, follow = true }))
+  hl.bind("ALT + SHIFT + " .. i, hl.dsp.window.move({ workspace = i, follow = true }))
 end
 
 -- Special workspace (scratchpad) ------------------------------------------------
@@ -455,10 +552,10 @@ end
 hl.bind("ALT + B", hl.dsp.workspace.toggle_special("magic"))
 hl.bind("ALT + SHIFT + B", hl.dsp.window.move({ workspace = "special:magic", follow = true }))
 
--- Scroll through existing workspaces with mainMod + scroll ----------------------
+-- Scroll through workspaces with mainMod + scroll (same fixed-set cycle) --------
 
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }))
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "r-1" }))
+hl.bind(mainMod .. " + mouse_down", function() cycle_workspace(1) end)
+hl.bind(mainMod .. " + mouse_up", function() cycle_workspace(-1) end)
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging -----------------------
 
