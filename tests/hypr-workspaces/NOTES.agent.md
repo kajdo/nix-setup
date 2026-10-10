@@ -152,3 +152,12 @@ FIX BRANCH fix/dwm-workspace-cycling @987cd95: goto_workspace/cycle_workspace im
 - All API primitives live-probed: get_last_workspace -> HL.Workspace(1:1);
   monitor math CUR=HDMI-A-2 -> TARGET=eDP-1 ws1; get_active_window verified.
 - User tests manually before push; rollback = checkout ws-fix-v2-validated.
+
+## MERGE (2026-10-10) — S6 validated, merged to main
+- User manual validation of S6 passed (alt+, / alt+esc / alt+shift+comma).
+- Merged to main: hyprland.lua (single squash d10b8d4) + 56-check suite
+  (cherry-picked 472d50b..12a8d5c). Byte-identical to branch tip verified.
+- Branch-only (this archive): BEFORE_BOOT10 / AFTER_BOOT12 / AFTER2_BOOT13
+  evidence runs, NOTES.agent.md, evidence gitignore whitelists.
+- Rollback point tag ws-fix-v2-validated pushed. Branch = complete audit
+  trail; main = product + instrument.
