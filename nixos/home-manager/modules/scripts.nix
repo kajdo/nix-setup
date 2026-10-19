@@ -40,6 +40,23 @@
 
   # Bluetooth headset prep + mid-call recovery for browser calls (Teams)
   home.file.".local/bin/rofi_call_prep.sh".source = ./../scripts/rofi_call_prep.sh;
+  home.file.".local/bin/bt_audio_guard.sh".source = ./../scripts/bt_audio_guard.sh;
+
+  # Background watcher: auto-heal a BT headset parked at profile 'off'
+  # (connected, but no audio sink — e.g. after a failed post-call A2DP
+  # switch-back). Recovers via rofi_call_prep.sh music after a 30s debounce.
+  systemd.user.services.bt-audio-guard = {
+    Unit = {
+      Description = "Auto-recover Bluetooth headset parked at profile off";
+      After = [ "pipewire.service" "wireplumber.service" ];
+    };
+    Service = {
+      ExecStart = "${config.home.homeDirectory}/.local/bin/bt_audio_guard.sh";
+      Restart = "always";
+      RestartSec = "30";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Media/utility scripts
   home.file.".local/bin/vid".source = ./../scripts/vid;

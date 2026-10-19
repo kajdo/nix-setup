@@ -3,7 +3,9 @@
 #
 # One rofi menu covering:
 #   • Prep for call      — force HSP/HFP BEFORE joining (avoids the A2DP→HFP switch
-#                          lag on the first call of the day)
+#                          lag on the first call of the day). Verified entry
+#                          2026-10-15: recent link failures or an unstable cycle
+#                          trigger an automatic R4a reconnect BEFORE joining.
 #   • Back to music      — force A2DP (on-demand; autoswitch still does this alone)
 #   • Recover R1/R2/R3   — mid-call recovery strategies, individually selectable so
 #                          you can try them one-by-one during a lagged call and learn
@@ -12,6 +14,8 @@
 #                          (stack hang / no card / transport collapse / misrouting /
 #                          classic stale loopback), show the verdict, run the matching
 #                          fix. Start here when audio breaks mid-call.
+#                          After R3 it verifies the link and escalates to R4a
+#                          automatically if transports keep dying (2026-10-15).
 #   • R4 ladder          — link-layer live fixes, NO headset buttons needed:
 #                          R4a PC-side reconnect · R4b adapter power-cycle ·
 #                          R4c PipeWire stack restart.
@@ -176,6 +180,15 @@ transport_failures() {
 		grep -c 'Failure in Bluetooth audio transport'
 }
 
+bt_node_errors() {
+	# Count bluez node "-> error" lines in the last N minutes — companion
+	# signal to transport_failures: each transport death emits 2-3 of these,
+	# and they are visible even when the failure line itself lags in the
+	# journal (the 2026-10-15 one-second race).
+	journalctl --user -u wireplumber --since "-${1:-5} min" --no-pager 2>/dev/null |
+		grep -c 'bluez_.*-> error'
+}
+
 pulse_alive() {
 	# Is the PipeWire/pulse server answering at all? (R4c signal: hung stack)
 	timeout 3 pactl info >/dev/null 2>&1
@@ -186,7 +199,7 @@ triage() {
 	# TRIAGE_LABEL / TRIAGE_PLAN globals for do_auto(). Order matters: link and
 	# stack problems first — pressing R3 into a collapsing link removes the last
 	# working sink (2026-09-28 incident: settle=n/a, total silence).
-	local card sink si_n bt_n so_n fails
+	local card sink si_n bt_n so_n f5 f2 ne5
 	TRIAGE_MODE="HEALTHY"
 	TRIAGE_LABEL="nothing obviously broken"
 	TRIAGE_PLAN="none"
@@ -203,18 +216,29 @@ triage() {
 		TRIAGE_PLAN="R4a"
 		return 0
 	fi
-	fails="$(transport_failures 3)"
-	if [ "${fails:-0}" -ge 2 ]; then
-		TRIAGE_MODE="TRANSPORT-COLLAPSE"
-		TRIAGE_LABEL="${fails} BT transport failures in 3 min — the link is dying"
-		TRIAGE_PLAN="R4a"
-		return 0
-	fi
 	sink="$(bt_sink)"
 	si_n="$(LC_ALL=C pactl list sink-inputs short 2>/dev/null | wc -l | tr -d ' ')"
 	bt_n=0
 	[ -n "$sink" ] && bt_n="$(sink_inputs_on "$sink" | wc -l | tr -d ' ')"
 	so_n="$(LC_ALL=C pactl list source-outputs short 2>/dev/null | wc -l | tr -d ' ')"
+	# TRANSPORT-COLLAPSE detection (hardened 2026-10-15 after a one-second
+	# journal race made triage miss the decisive failure and run R3 into a
+	# collapsing link). Three signals, any one fires:
+	#   a) >= 2 transport failures in the last 5 min
+	#   b) >= 4 bluez node-error lines in 5 min (≈ 2 events)
+	#   c) ANY transport failure in the last 2 min WHILE a call capture is
+	#      active — the user presses because it broke NOW; even with total
+	#      journal lag on the newest event, earlier deaths are in the window.
+	f5="$(transport_failures 5)"
+	f2="$(transport_failures 2)"
+	ne5="$(bt_node_errors 5)"
+	if [ "${f5:-0}" -ge 2 ] || [ "${ne5:-0}" -ge 4 ] ||
+		{ [ "${f2:-0}" -ge 1 ] && [ "${so_n:-0}" -gt 0 ]; }; then
+		TRIAGE_MODE="TRANSPORT-COLLAPSE"
+		TRIAGE_LABEL="link dying (${f5} failures/5min, ${ne5} node-errors/5min)"
+		TRIAGE_PLAN="R4a"
+		return 0
+	fi
 	if [ "$si_n" -gt 0 ] && [ -n "$sink" ] && [ "$bt_n" -eq 0 ]; then
 		TRIAGE_MODE="MISROUTED"
 		TRIAGE_LABEL="playback streams exist but none on the BT sink"
@@ -270,6 +294,53 @@ log() {
 
 # ---- actions ---------------------------------------------------------------
 
+enter_call_verified() {
+	# Verified call-mode entry (2026-10-15) — used by prep and the F9 toggle.
+	# 1) Known-sick path: any transport failure in the last 2h → full R4a
+	#    reconnect directly (all three collapse incidents showed the first
+	#    link death seconds BEFORE the user switched to call mode).
+	# 2) Fast path: guarded off→HFP cycle, then VERIFY — 3s later the sink must
+	#    exist and no new transport failure may have occurred since the cycle
+	#    started. This also protects the FIRST call of the day on a long-idle
+	#    link with an empty journal: if the link is silently sick, the fresh
+	#    transport dies right here and we reconnect BEFORE the user joins.
+	# Returns 0 with profile = headset-head-unit. Sets ACTION_MODE
+	# (r4a-prep | cycle-verify) and SETTLE_SECS.
+	local card="$1" t0 new_fails prof_ok
+	if [ "$(transport_failures 120)" -ge 1 ]; then
+		notify_force "🔗 Link showed failures in the last 2h — fresh reconnect before the call (~15s)…"
+		if do_r4a; then
+			ACTION_MODE="r4a-prep"
+			return 0
+		fi
+		notify_force "⚠️ Reconnect failed — falling back to the profile cycle."
+	fi
+	t0="$(date '+%F %T')"
+	if ! cycle_to_headset "$card"; then
+		set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" || return 1
+	fi
+	sleep 3 # give a sick link time to drop the fresh transport
+	new_fails="$(journalctl --user -u wireplumber --since "$t0" --no-pager 2>/dev/null |
+		grep -c 'Failure in Bluetooth audio transport')"
+	# profile check (2026-10-15): a straggler profile writer can flip the card
+	# back to a2dp — a present sink alone is not proof of call mode
+	case "$(active_profile "$card")" in
+		headset-head-unit*) prof_ok=1 ;;
+		*) prof_ok=0 ;;
+	esac
+	if [ "${new_fails:-0}" -ge 1 ] || [ -z "$(bt_sink)" ] || [ "$prof_ok" -eq 0 ]; then
+		notify_force "⚠️ Link unstable after the cycle — fresh reconnect before you join (~15s)…"
+		if do_r4a; then
+			ACTION_MODE="r4a-prep"
+			return 0
+		fi
+		return 1
+	fi
+	ACTION_MODE="cycle-verify"
+	SETTLE_SECS=3
+	return 0
+}
+
 do_prep() {
 	local card pre post msg
 	card="$(bt_card)"
@@ -286,21 +357,17 @@ do_prep() {
 			return 0
 			;;
 	esac
-	# Standard since 2026-08-26: enter call mode via the full off→HFP cycle —
-	# in-place A2DP→HFP switches are the identified mic-delay trigger. Keep the
-	# in-place switch only as a fallback if the cycle cannot complete.
-	if cycle_to_headset "$card"; then
-		ACTION_MODE="cycle"
-	elif set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
-		ACTION_MODE="cycle-fb"
+	# Verified entry since 2026-10-15 (was: plain off→HFP cycle since
+	# 2026-08-26): recent link failures or an unstable cycle escalate to an
+	# automatic R4a reconnect BEFORE joining.
+	if enter_call_verified "$card"; then
+		sleep 0.5 # let the Bluetooth transport settle before the browser opens streams
 	else
 		ACTION_MODE="fail"
 		notify "$(printf '⚠️ Could not switch to a headset profile.\n(card: %s)' "$card")"
 		log prep "$pre" "$(active_profile "$card")"
 		return 1
 	fi
-	sleep 0.5 # let the Bluetooth transport settle before the browser opens streams
-	SETTLE_SECS=0.5
 	post="$(active_profile "$card")"
 	if [ -n "$(bt_source)" ]; then
 		msg="$(printf '✅ Call-ready: %s (via %s), mic available.\nJoin the call now.' "$post" "$ACTION_MODE")"
@@ -359,20 +426,16 @@ do_toggle() {
 			;;
 		*)
 			# currently music / off / unknown -> call mode.
-			# Full off→HFP cycle since 2026-08-26 (in-place = delay trigger);
-			# in-place only as a fallback.
-			if cycle_to_headset "$card"; then
-				ACTION_MODE="cycle"
-			elif set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd"; then
-				ACTION_MODE="cycle-fb"
+			# Verified entry since 2026-10-15: cycle + 3s stability check with
+			# automatic R4a escalation on a sick link (see enter_call_verified).
+			if enter_call_verified "$card"; then
+				sleep 0.5 # let the Bluetooth transport settle before joining
 			else
 				ACTION_MODE="fail"
 				notify_force "⚠️ Could not switch to headset profile."
 				log toggle "$pre" "$(active_profile "$card")"
 				return 1
 			fi
-			sleep 0.5 # let the Bluetooth transport settle before joining
-			SETTLE_SECS=0.5
 			post="$(active_profile "$card")"
 			notify "$(printf '📞 Call mode: %s (via %s) — join now.' "$post" "$ACTION_MODE")"
 			log toggle "$pre" "$post"
@@ -451,7 +514,7 @@ do_r3() {
 	# 2026-08-26 poisoning incident). Recreates the BT transport, the
 	# bluez_output sink AND the loopback source node; usually the lever that
 	# actually clears the delay.
-	local card pre post
+	local card pre post i
 	card="$(bt_card)"
 	if [ -z "$card" ]; then
 		notify "⚠️ No Bluetooth card."
@@ -461,6 +524,15 @@ do_r3() {
 	pre="$(active_profile "$card")"
 	cycle_to_headset "$card" || true
 	ACTION_MODE=cycle
+	# settle instrumentation (2026-10-15): seconds until the sink is back.
+	# R3 into a dying link never stabilizes — AUTO's escalation window starts
+	# here.
+	i=0
+	while [ "$i" -lt 5 ] && [ -z "$(bt_sink)" ]; do
+		sleep 1
+		i=$((i + 1))
+	done
+	SETTLE_SECS="$i"
 	sleep 1
 	post="$(active_profile "$card")"
 	notify "$(printf '🎧 R3 applied (profile cycle off→HFP).\nIf still lagged, rejoin the call.')"
@@ -471,8 +543,17 @@ r4_bringup() {
 	# Shared tail of R4a/R4b/R4c: wait for the card, ensure the call profile
 	# (guarded off→HFP cycle unless autoswitch already did it), wait for the
 	# sink, then re-pin the remembered playback streams and restore the default
-	# sink. Arg 1: space-separated sink-input ids. rc 0 = sink usable.
-	local ids="$1" card sink id i
+	# sink. Arg 1: space-separated sink-input ids. rc 0 = call profile + sink.
+	#
+	# 2026-10-15 race fix: the first ~1-2s after a reconnect has MULTIPLE async
+	# profile writers racing us (BlueZ initial card setup, WirePlumber's
+	# saved-profile restore). The old single-shot "cycle unless already HFP"
+	# was overwritten by a straggler — 11:27:02: R4a logged post=hhu while the
+	# toggle line, SAME SECOND, saw a2dp (user stuck in music mode, waybar
+	# "no audio"). Worse, success only required any bluez sink — an a2dp sink
+	# passes that too. Now: wait for the profile to stabilize, force HFP, then
+	# VERIFY it stuck (re-apply up to 3×), and success requires hhu AND sink.
+	local ids="$1" card sink id i p_prev p_now tries
 	i=0
 	while [ "$i" -lt 12 ] && [ -z "$(bt_card)" ]; do
 		sleep 1
@@ -481,14 +562,44 @@ r4_bringup() {
 	SETTLE_SECS="$i"
 	card="$(bt_card)"
 	[ -z "$card" ] && return 1
-	case "$(active_profile "$card")" in
-		headset-head-unit*) ;; # autoswitch got there first
+	# a) let the async writers finish: profile must read identical twice
+	p_prev="$(active_profile "$card")"
+	i=0
+	while [ "$i" -lt 3 ]; do
+		sleep 0.5
+		p_now="$(active_profile "$card")"
+		[ "$p_prev" = "$p_now" ] && break
+		p_prev="$p_now"
+		i=$((i + 1))
+	done
+	# b) force HFP (guarded cycle; in-place fallback)
+	case "$p_prev" in
+		headset-head-unit*) ;; # restore got there first
 		*)
 			cycle_to_headset "$card" ||
 				set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" ||
 				true
 			;;
 	esac
+	# c) WATCH & RE-ASSERT window (2026-10-15): an async actor applies a2dp
+	# ~2-3s after the card reappears (A2DP endpoint registration — fires even
+	# with autoswitch disabled and regardless of the saved default; proven by
+	# instrumented polling 11:46). A break-on-hhu loop exits BEFORE that window
+	# opens, so WATCH the full 5s with NO early break and re-apply HFP whenever
+	# the flip lands. Cost: +5s per R4a — correctness over speed.
+	tries=0
+	while [ "$tries" -lt 5 ]; do
+		sleep 1
+		case "$(active_profile "$card")" in
+			headset-head-unit*) ;;
+			*)
+				set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" >/dev/null 2>&1 || true
+				;;
+		esac
+		tries=$((tries + 1))
+	done
+	# d) sink wait + re-pin (sink alone is NOT proof of call mode — a2dp has a
+	# sink too; the profile gate in c) is the real authority)
 	i=0
 	while [ "$i" -lt 6 ] && [ -z "$(bt_sink)" ]; do
 		sleep 1
@@ -501,7 +612,20 @@ r4_bringup() {
 			pactl move-sink-input "$id" "$sink" 2>/dev/null || true
 		done
 	fi
-	[ -n "$sink" ]
+	# e) FINAL GATE (2026-10-15): a straggler can land between the verify loop
+	# and here — one last check right before returning; if lost, re-apply once
+	# and re-check (honest rc either way)
+	case "$(active_profile "$card")" in
+		headset-head-unit*) ;;
+		*)
+			set_profile "$card" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" >/dev/null 2>&1 || true
+			sleep 1
+			;;
+	esac
+	case "$(active_profile "$card")" in
+		headset-head-unit*) [ -n "$sink" ] && return 0 ;;
+	esac
+	return 1
 }
 
 do_r4a() {
@@ -518,6 +642,11 @@ do_r4a() {
 	fi
 	pre="$(active_profile "$(bt_card)")"
 	notify_force "$(printf '🔌 R4a: reconnecting headset %s…\n~10-15s audio gap — the call itself survives.' "$mac")"
+	# pre-arm (2026-10-15): setting HFP here makes WirePlumber SAVE hhu as the
+	# card's default profile, so its post-reconnect restore lands on hhu
+	# instead of whatever music mode left behind (that late a2dp restore was
+	# the 11:27:02 straggler that silently undid our bring-up).
+	set_profile "$(bt_card)" "headset-head-unit" "headset-head-unit" "headset-head-unit-cvsd" >/dev/null 2>&1 || true
 	# remember ALL playback streams so they can be re-pinned afterwards
 	ids="$(LC_ALL=C pactl list sink-inputs short 2>/dev/null | awk '{print $1}')"
 	timeout 10 bluetoothctl disconnect "$mac" >/dev/null 2>&1 || true
@@ -585,7 +714,7 @@ do_auto() {
 	# visibility the R1-R3 menu lacked), then run the matching fix. R3 is only
 	# chosen when the link is provably stable — pressing it into a collapsing
 	# transport removes the last working sink (2026-09-28 incident).
-	local pre
+	local pre fails_before fails_after
 	triage
 	notify_force "$(printf '🔍 AUTO verdict: %s\n%s\n→ plan: %s' "$TRIAGE_MODE" "$TRIAGE_LABEL" "$TRIAGE_PLAN")"
 	pre="$(active_profile "$(bt_card)")"
@@ -595,7 +724,20 @@ do_auto() {
 			do_r4a || do_r4b
 			;;
 		R2) do_r2 ;;
-		R3) do_r3 ;;
+		R3)
+			# verify & escalate (2026-10-15): if the link produced NEW failures
+			# during/after the cycle — or was already collapsing (≥2) when R3
+			# was chosen — R3 was the wrong layer: reconnect without waiting
+			# for another press.
+			fails_before="$(transport_failures 5)"
+			do_r3
+			sleep 3
+			fails_after="$(transport_failures 5)"
+			if [ "${fails_after:-0}" -gt "${fails_before:-0}" ] || [ "${fails_after:-0}" -ge 2 ]; then
+				notify_force "⚠️ Link still failing after R3 — escalating to R4a (reconnect, ~10-15s)…"
+				do_r4a || do_r4b
+			fi
+			;;
 		*)
 			notify "✅ AUTO: nothing to fix."
 			ACTION_MODE="auto-none"
@@ -749,7 +891,9 @@ I have a rofi helper (this script) that:
   - F9 toggle: flips the BT card profile A2DP (music) <-> headset-head-unit/HFP.
     Entering call mode uses a full off->HFP cycle (R3 mechanics, autoswitch-
     guarded) since 2026-08-26 — in-place A2DP->HFP switches were identified as
-    the mic-delay trigger.
+    the mic-delay trigger. Verified entry since 2026-10-15: link failures in
+    the last 2h, or an unstable cycle (fresh transport dies / no sink within
+    3s), trigger an automatic device reconnect (R4a) BEFORE joining the call.
   - R1: suspend/resume the bluez sink + source (gentle; flush buffers).
   - R2: move the browser PLAYBACK stream to a muted non-BT sink and back. If no
         stream is on the BT sink it prints "no playback stream on the BT sink

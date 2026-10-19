@@ -167,14 +167,26 @@ trap '[ -n "${BCC_PID:-}" ] && { pkill -P "$BCC_PID" 2>/dev/null; kill "$BCC_PID
 # View toggle: just set a flag (rendering inside the trap is unsafe mid-read).
 trap 'TRIGGER=1' USR1
 
-# `exec` replaces the coproc subshell with dbus-monitor itself: its cmdline then
-# reads "dbus-monitor" (not this script), so `pgrep bluetooth.sh` shows a clean
-# 2 watches, and killing BCC_PID hits dbus-monitor directly. The match filter
-# restricts the stream to org.bluez signals only (verified: non-bluez traffic
-# does not leak through), so the leader wakes only on real BlueZ events.
-coproc BCC { exec dbus-monitor --system "type='signal',sender='org.bluez'" 2>/dev/null; }
+# TWO event sources feed the same coproc pipe (2026-10-19: BlueZ-only was
+# not enough — PipeWire profile changes emit NO BlueZ signal, so the audio
+# guard's off→a2dp recovery and WirePlumber's post-call restore left the
+# widget stale at "⚠ audio off" while audio was actually fine):
+#   1) BlueZ signals (connect/disconnect/power/battery) via dbus-monitor,
+#      match-filtered to org.bluez (verified: non-bluez traffic does not leak)
+#   2) PipeWire CARD events via `pactl subscribe | grep 'on card'` — profile
+#      flips, card add/remove. Respawn loop: pactl subscribe dies when the
+#      audio stack restarts; retry after 5 s.
+# Both children share the coproc's stdout; pkill -P BCC_PID in the trap
+# still kills them both.
+coproc BCC {
+	dbus-monitor --system "type='signal',sender='org.bluez'" 2>/dev/null &
+	while :; do
+		LC_ALL=C pactl subscribe 2>/dev/null | grep --line-buffered -- 'on card'
+		sleep 5
+	done &
+	wait
+}
 [ -n "${BCC[0]:-}" ] || { sleep 2; exit 1; }
-
 coproc_alive() { [ -n "${BCC_PID:-}" ] && kill -0 "$BCC_PID" 2>/dev/null; }
 
 # Read everything the dbus-monitor stream emits until $1 seconds of silence.

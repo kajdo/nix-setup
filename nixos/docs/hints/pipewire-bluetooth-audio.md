@@ -335,3 +335,115 @@ into WHICH failure mode was live. Added:
 Audio breaks during a call → run **AUTO** (rofi or `rofi_call_prep.sh auto`).
 Read the verdict notification, let it fix the right layer. Manual R4 if you
 already know it's the link. R3 only when AUTO reports `STALE-LOOPBACK?`
+
+## 2026-10-15: Collapse raced past AUTO — triage hardened + escalation added
+
+### Incident
+
+Link sick BEFORE the call (09:59:47 A2DP transport death while idle — third
+incident with the "long-idle connection dies on first activity" pattern;
+battery 70 %). Full collapse 10:01:40–10:02:54 (~10 transport deaths / 75 s)
+during the Teams call. User pressed AUTO at ~10:01:41 — the decisive 10:01:40
+failure **was not yet flushed to the journal** → triage counted 1 instead of
+2 → false `STALE-LOOPBACK?` → R3 cycled onto the dying link → no effect.
+Manual **R4a + call restart fixed it** (first real-world R4a success).
+
+### Fixes (rofi_call_prep.sh)
+
+- **Triage hardening** — three collapse signals, any one fires:
+  (a) ≥2 transport failures / 5 min · (b) ≥4 bluez node-error lines / 5 min ·
+  (c) ANY transport failure in the last 2 min WHILE a call capture is active
+  (race-proof: even with total journal lag on the newest event, earlier
+  deaths are in the window; verified by journal replay of the exact morning).
+- **AUTO verify & escalate**: after R3, 3 s re-check — new or ongoing (≥2)
+  failures → auto-escalate R4a → R4b with a notification. A misclassified R3
+  now self-corrects within seconds.
+- **R3 settle instrumentation**: sink-wait ≤5 s, logged as `settle=`.
+
+### Follow-up (same day): verified call-mode entry (F9 / prep)
+
+User request: do a pre-emptive R4a when switching to call mode. Implemented
+as **conditional + verify** (best of both worlds — fast when healthy,
+protective when sick, covers the first call of the day on an empty journal):
+
+- any transport failure in the last 2h → straight to R4a reconnect (~10s,
+  measured), then call-ready
+- otherwise fast off→HFP cycle + 3s verify: fresh transport died or no sink
+  → automatic R4a BEFORE joining
+- healthy-path cost: ~5s (was ~3s). Live-tested 10:57 (2h look-back caught
+  the 10:12 failure): R4 + `mode=r4a-prep` logged, call-ready in 9.8s.
+
+### Open threads
+
+- Chronic link degradation continues (Sep 15 → Oct 15). CVSD probe and/or a
+  USB BT dongle remain the recommended next steps.
+
+### Follow-up 2 (same day): the reconnect profile race — R4a hardened
+
+**Incident:** after deploying the verified F9, both F9 presses took the
+sick-path (R4a). First one (11:27:02) silently ended in **a2dp** — R4's own
+log said `post=hhu` while the toggle line, same second, saw a2dp (waybar
+"no audio"). User rescued by a direct off→hhu cycle. Both F9s were also
+justified: the link died at 11:26:52 *again* (5th collapse cluster of the
+day: 10:01, 10:12, 11:26, 11:30, 11:36 — worst day yet, battery 70 %).
+
+**Root cause (instrumented, 0.25s profile polling):** an async actor applies
+**a2dp ~2.3 s after every card reconnect** (A2DP endpoint registration
+window), firing even with `autoswitch-to-headset-profile` disabled and
+regardless of the saved default (which says hhu). It is single-shot per
+reconnect. Identity inside WirePlumber unknown (not autoswitch policy, not
+default-profile, not bluetooth-autoswitch state) — behavior is fully
+characterized and defended against; a debug-logging WP restart would reveal
+the component if ever needed.
+
+**Fixes in r4_bringup/do_r4a:**
+1. **Pre-arm**: set HFP *before* disconnecting → WirePlumber saves hhu as
+   default → its post-reconnect restore lands on hhu (verified: card comes
+   back as hhu).
+2. **Watch & re-assert window**: 5×1s watch with NO early break (a
+   break-on-hhu loop exits before the actor's window opens — the subtle
+   second bug), re-applying HFP whenever the flip lands. R4a now ~15 s.
+3. **Final gate + honest rc**: success requires profile=hhu AND sink (a2dp
+   also has a sink — the old rc passed in a2dp!). enter_call_verified
+   likewise checks the *profile*, not just sink presence.
+
+Proven live: actor flip caught mid-window, hhu stable ≥25 s after.
+
+## 2026-10-19: "connected but off" zombie state → bt-audio-guard watcher
+
+**Incident:** after a rescued call, WirePlumber's post-call switch back to
+A2DP hit a dying transport (12:18:46, fd52) and parked the card at profile
+`off` — connected headset, zero sinks, waybar yellow "⚠ audio off", no
+audio until manual recovery. A connected headset without a sink is useless.
+
+**Fix: `bt_audio_guard.sh`** (systemd user service `bt-audio-guard`,
+deployed via scripts.nix):
+
+- polls every 10 s; if BT card = `off` while the headset is connected for
+  ≥ 30 s (debounce covers all transient off-states of R3/R4a cycles, whose
+  disconnect windows have *no card* instead of off), and no call-prep
+  action is running → runs `rofi_call_prep.sh music`, notifies, logs as
+  `guard` entries in call-prep.log
+- 90 s cooldown between attempts; retries naturally if the link is dead
+- recovery itself is the hardened music path; waybar warning doubles as
+  the visibility indicator (should self-clear yellow→green in ~40 s)
+
+Also this day: audio stack hang at call start (10:59, pactl timeouts) —
+cured with the Sep 9 recipe (user-unit restart + reconnect); F9 itself had
+succeeded (`mode=cycle-verify` logged).
+
+### Follow-up (same day): guard worked; widget needed PipeWire eyes
+
+First live fire of `bt-audio-guard`: watcher started 12:27:06, detected
+`connected+off` after the 30s debounce 12:27:46, recovered to music
+(`mode=inplace post=a2dp-sink`) — audio back, sink = 2ch A2DP. Exactly as
+designed, zero interaction.
+
+Residual: waybar still warned "⚠ audio off" — the widget's leader only
+listened to **BlueZ** D-Bus signals, but profile changes are **PipeWire**
+events with no BlueZ counterpart. Fix: the leader's coproc now merges TWO
+sources — dbus-monitor (BlueZ) + `LC_ALL=C pactl subscribe | grep
+--line-buffered -- 'on card'` (respawn-loop, 5 s retry after a stack
+restart). The LC_ALL=C matters: German locale prints "auf Karte" and a
+plain `grep 'on card'` never matches (re-discovered the hard way).
+Validated: two pactl profile flips → four card events delivered.
